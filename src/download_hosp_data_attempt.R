@@ -2,8 +2,12 @@
 # Download hospitalization data from list of urls
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Ensure that relevant directories exist
+# Load tidyverse
+library(tidyverse)
 
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Ensure that relevant directories exist
 if (!dir.exists('data/')) {
   dir.create('data/')
 }
@@ -16,38 +20,61 @@ if (!dir.exists('data/raw/hospital/')) {
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Read in list of urls
+# Function to (attempt to) download files
+attempt_file_download <- function(url_temp) {
+  # Attempts to download file located at the provided url, and prints feedback on progress
+  # param url_temp: A URL where a desired file should be located
+  
+  file_date <- str_sub(url_temp, 50, 59)
+  print(file_date)
+  
+  filename_store <- paste0('data/raw/hospital/hosp_dat_', file_date, '.csv')
+  if (file.exists(filename_store)) {
+    print('Duplicate detected!')
+    filename_store <- paste0('data/raw/hospital/hosp_dat_', file_date, '_DUP.csv')
+  }
+  
+  tryDownload <- try(download.file(url_temp, filename_store, quiet = TRUE))
+  if (class(tryDownload) == 'try-error') {
+    print('ERROR - File not found')
+  } else {
+    print('Done.')
+  }
+  
+  print('---------------------------')
+}
 
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Read in list of urls
+url_list <- read.table('data/raw/hosp_dat_urls.txt')
+url_list <- as.list(url_list[, 1])
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Check for duplicate dates
+dates_included <- c()
+for (filename_temp in url_list) {
+  dates_included <- c(dates_included, str_sub(filename_temp, 50, 59))
+}
+
+print(length(dates_included)) # 319
+print(length(unique(dates_included))) # 316
+# 3 repeats
+
+dates_included %>%
+  table() %>%
+  as.data.frame() %>%
+  filter(Freq > 1) %>%
+  print()
+# 2021-01-13; 2021-01-16; 2021-02-05
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Iterate over list and save files
-
-# file.no1 <- 7875
-# file.date <- as.Date('2021-03-04')
-#
-# for (i in 1:50) {
-#   filename.temp <- paste0('https://edoc.rki.de/bitstream/handle/176904/',
-#                           file.no1,
-#                           '/',
-#                           file.date,
-#                           '_12-15_teilbare_divi_daten.csv?sequence=1&isAllowed=y')
-#   
-#   file.no1 <- file.no1 - 3
-#   file.date <- file.date - 1
-#   
-#   # print(filename.temp)
-#   temp.store <- paste0('data_raw/hosp/hosp_dat_', file.date, '.csv')
-#   # temp.store <- tempfile()
-#   checkExists <- try(download.file(filename.temp, temp.store, quiet = TRUE))
-#   if (class(checkExists) == 'try-error') {
-#     print(filename.temp)
-#   }
-#   # print(class(a))
-# }
-# for 50 most recent dates, only 2 errors
-
-# NOTE: Deal with duplicates (corrections maybe?); ensure all urls actually lead to a csv
+lapply(url_list, slowly(attempt_file_download, rate = rate_delay(5)))
+# only 3 seem to have thrown errors: 2020-06-03; 2020-09-27; 2020-10-01
+# after a quick look, these do seem to be genuinely missing
 
 # ---------------------------------------------------------------------------------------------------------------------
 
