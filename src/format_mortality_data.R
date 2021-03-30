@@ -208,7 +208,7 @@ grid.arrange(plots_wave1[[length(plots_wave1)]], plots_wave2[[length(plots_wave2
 
 
 
-# Fit BYM2 model with no predictors:
+# Fit BYM2 model with no predictors?:
 library(INLA)
 library(spdep)
 
@@ -229,19 +229,30 @@ lim1 <- max(abs(log(map_df1$SMR))[abs(log(map_df1$SMR)) != Inf])
 lim2 <- max(abs(log(map_df2$SMR))[abs(log(map_df2$SMR)) != Inf])
 lim <- max(lim1, lim2)
 
+log_labs <- c(c(0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 33.0))
+
 p1 <- ggplot(map_df1) + geom_sf(aes(fill = log(SMR))) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   theme_void() + labs(fill = 'SMR') +
   scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
-                       limits = c(-1 * lim, lim))
+                       limits = c(-1 * lim, lim),
+                       breaks = log(log_labs),
+                       labels = log_labs)
 p2 <- ggplot(map_df2) + geom_sf(aes(fill = log(SMR))) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   theme_void() + labs(fill = 'SMR') +
   scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
-                       limits = c(-1 * lim, lim))
+                       limits = c(-1 * lim, lim),
+                       breaks = log(log_labs),
+                       labels = log_labs)
 grid.arrange(p1, p2, ncol = 2)
 
+# https://www.paulamoraga.com/book-geospatial/sec-arealdatatheory.html
+# https://www.r-bloggers.com/2019/11/spatial-data-analysis-with-inla/
+# https://stackoverflow.com/questions/63778872/error-message-when-running-mixed-effect-models-using-r-inla
+
+# ---------------------------------------------------------------------------------------------------------------------
 
 # incorporate a couple of predictors? (or at least plot a couple?)
-# animate (first and second waves separately); subtract out deaths from first wave for plotting?
+# animate (first and second waves separately)
 # download more recent data...
