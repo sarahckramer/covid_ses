@@ -6,10 +6,7 @@
 
 # Load libraries:
 library(tidyverse)
-library(viridis)
-library(sf)
 library(testthat)
-library(gridExtra)
 
 # Read in necessary functions:
 source('src/data_processing_fxns.R')
@@ -88,8 +85,9 @@ mortality_dat_wk <- mortality_dat %>%
 # Add column for year and for week number:
 mortality_dat_wk <- mortality_dat_wk %>%
   mutate(Year = format(date, '%Y'),
-         Week = format(date, '%U'),
-         .after = date)
+         Week = format(date, '%V'),
+         .after = date) %>%
+  mutate(Year = if_else(Week == 53, '2020', Year))
 
 # # Write data to file:
 # write_csv(mortality_dat_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE.csv')
@@ -113,10 +111,9 @@ mortality_inc <- mortality_inc1 %>%
   left_join(mortality_inc2, by = c('Week', 'lk')) %>%
   rename(death_rate.x = death_rate) %>%
   mutate(death_rate.y = deaths.y / pop * 100000)
-print(all.equal(mortality_inc$deaths.x, mortality_inc$deaths.y))
-# estimates are the same
+expect_true(all.equal(mortality_inc$deaths.x, mortality_inc$deaths.y))
 
-# 
+# Estimates are the same - keep only one data frame:
 mortality_inc <- mortality_inc1
 rm(mortality_inc1, mortality_inc2)
 print(length(mortality_inc$deaths[mortality_inc$deaths < 0])) # 17 negative values

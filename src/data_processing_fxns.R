@@ -47,6 +47,7 @@ convert_to_incident <- function(dat) {
     mutate(Year = format(date, '%Y'),
            Week = format(date, '%V'),
            .after = date) %>%
+    mutate(Year = ifelse(Week == 53, '2020', Year)) %>%
     mutate(death_rate = deaths / pop * 100000,
            .after = deaths)
   
