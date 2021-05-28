@@ -123,6 +123,10 @@ print(length(mortality_inc$deaths[mortality_inc$deaths < 0])) # 17 negative valu
 mortality_inc <- mortality_inc %>%
   mutate(deaths = ifelse(deaths < 0, NA, deaths))
 
+# Recalculate death rates:
+mortality_inc <- mortality_inc %>%
+  mutate(death_rate = deaths / pop * 100000)
+
 # # Write data to file:
 # write_csv(mortality_inc, file = 'data/formatted/weekly_covid_deaths_by_lk_INCIDENT.csv')
 
