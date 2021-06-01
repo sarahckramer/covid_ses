@@ -45,6 +45,23 @@ wave2_dat <- mortality_c %>%
          .after = deaths)
 expect_true(all(wave2_dat$deaths >= 0))
 
+# Get average mortality rates up to each week and calculated 'expected' cumulative deaths:
+avg_rates1 <- wave1_dat %>%
+  group_by(Week) %>%
+  summarise(rate = sum(deaths) / sum(pop))
+avg_rates2 <- wave2_dat %>%
+  group_by(Week) %>%
+  summarise(rate = sum(deaths) / sum(pop))
+
+wave1_dat <- wave1_dat %>%
+  left_join(avg_rates1, by = 'Week') %>%
+  mutate(expected = pop * rate,
+         SMR = deaths / expected)
+wave2_dat <- wave2_dat %>%
+  left_join(avg_rates2, by = 'Week') %>%
+  mutate(expected = pop * rate,
+         SMR = deaths / expected)
+
 # Merge data to shapefile:
 map_df1 <- map_base %>%
   left_join(wave1_dat, by = c('ARS' = 'lk'))
@@ -55,9 +72,12 @@ expect_equal(nrow(wave1_dat) / length(unique(wave1_dat$lk)) * nrow(map_base), nr
 expect_equal(nrow(wave2_dat) / length(unique(wave2_dat$lk)) * nrow(map_base), nrow(map_df2))
 
 # Plot cumulative deaths at several timepoints:
-plots_wave1 = plots_wave2 = list()
+plots_wave1 = plots_wave2 = plots_smr1 = plots_smr2 = list()
 wks1 <- c(14, 18, 22)
-wks2 <- c(40, 43, 46, 49, 52, 2, 5, 8)
+wks2 <- c(40, 43, 46, 49, 52, 2, 5, 8, 11, 14, 17, 20)
+
+smr_lim1 <- max(max(log(map_df1$SMR)), abs(min(log(map_df1$SMR)[log(map_df1$SMR) != -Inf])))
+smr_lim2 <- max(max(log(map_df2$SMR)), abs(min(log(map_df2$SMR)[log(map_df2$SMR) != -Inf])))
 
 for (i in 1:length(wks1)) {
   wk <- wks1[i]
@@ -67,7 +87,14 @@ for (i in 1:length(wks1)) {
     theme_void() +
     labs(title = paste0('Week ', wk), fill = 'Mortality Rate') +
     scale_fill_viridis(limits = c(0, max(map_df1$death_rate)))
+  p_smr_temp <- ggplot(dat_temp) + geom_sf(aes(fill = log(SMR))) +
+    geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+    theme_void() +
+    labs(title = paste0('Week ', wk), fill = 'SMR') +
+    scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
+                         limits = c(-smr_lim1, smr_lim1))
   plots_wave1[[i]] <- p_temp
+  plots_smr1[[i]] <- p_smr_temp
 }
 for (i in 1:length(wks2)) {
   wk <- wks2[i]
@@ -77,12 +104,23 @@ for (i in 1:length(wks2)) {
     theme_void() +
     labs(title = paste0('Week ', wk), fill = 'Mortality Rate') +
     scale_fill_viridis(limits = c(0, max(map_df2$death_rate)))
+  p_smr_temp <- ggplot(dat_temp) + geom_sf(aes(fill = log(SMR))) +
+    geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+    theme_void() +
+    labs(title = paste0('Week ', wk), fill = 'SMR') +
+    scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
+                         limits = c(-smr_lim2, smr_lim2))
   plots_wave2[[i]] <- p_temp
+  plots_smr2[[i]] <- p_smr_temp
 }
 
 # do.call('grid.arrange', c(plots_wave1, ncol = length(wks1)))
-# do.call('grid.arrange', c(plots_wave2, ncol = length(wks2) / 2))
+# do.call('grid.arrange', c(plots_wave2, ncol = length(wks2) / 3))
 # grid.arrange(plots_wave1[[length(plots_wave1)]], plots_wave2[[length(plots_wave2)]], ncol = 2)
+# 
+# do.call('grid.arrange', c(plots_smr1, ncol = length(wks1)))
+# do.call('grid.arrange', c(plots_smr2, ncol = length(wks2) / 2))
+# grid.arrange(plots_smr1[[length(plots_smr1)]], plots_smr2[[length(plots_smr2)]], ncol = 2)
 
 # pdf('results/plots/wave1.pdf', width = 12, height = 6.61)
 # do.call('grid.arrange', c(plots_wave1, ncol = length(wks1)))
@@ -97,8 +135,8 @@ for (i in 1:length(wks2)) {
 # dev.off()
 
 # Clean up:
-rm(wave1_dat, wave2_dat, map_df1, map_df2, plots_wave1, plots_wave2, wks1, wks2,
-   wk, dat_temp, p_temp, i)
+rm(wave1_dat, wave2_dat, map_df1, map_df2, plots_wave1, plots_wave2, plots_smr1, plots_smr2,
+   wks1, wks2, wk, dat_temp, p_temp, p_smr_temp, smr_lim1, smr_lim2, i)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -106,9 +144,11 @@ rm(wave1_dat, wave2_dat, map_df1, map_df2, plots_wave1, plots_wave2, wks1, wks2,
 
 # Merge both datasets to shapefile:
 map_c <- map_base %>%
-  left_join(mortality_c, by = c('ARS' = 'lk'))
+  left_join(mortality_c, by = c('ARS' = 'lk')) %>%
+  mutate(Week = if_else(Year == 2021, Week + 53, Week))
 map_i <- map_base %>%
-  left_join(mortality_i, by = c('ARS' = 'lk'))
+  left_join(mortality_i, by = c('ARS' = 'lk')) %>%
+  mutate(Week = if_else(Year == 2021, Week + 53, Week))
 
 expect_equal(nrow(mortality_c) / length(unique(mortality_c$lk)) * nrow(map_base), nrow(map_c))
 expect_equal(nrow(mortality_i) / length(unique(mortality_i$lk)) * nrow(map_base), nrow(map_i))
@@ -121,18 +161,14 @@ if (!dir.exists('results/temp/')) {
 
 # Generate and save weekly plots (cumulative, log-scale):
 max_c <- max(map_c$death_rate)
-for (wk in unique(mortality_c$Week)) {
+for (wk in unique(map_c$Week)) {
   print(wk)
-  save_wk <- wk
   
   dat_temp <- map_c[map_c$Week == wk, ]
   
   yr <- unique(dat_temp$Year)
   if (length(yr) > 1) {
     stop('Multiple years included in data.')
-  }
-  if (yr == 2021) {
-    save_wk <- wk + 53
   }
   
   p_temp <- ggplot() + geom_sf(data = dat_temp, aes(fill = death_rate), lwd = 1.0) +
@@ -148,26 +184,22 @@ for (wk in unique(mortality_c$Week)) {
                        trans = 'log',
                        na.value = 'gray65')
   
-  png(filename = paste0('results/temp/animate_c_wk', save_wk, '_log.png'),
+  png(filename = paste0('results/temp/animate_c_wk', wk, '_log.png'),
       width = 1200, height = 1200)
   print(p_temp)
   dev.off()
 }
 
 # Generate and save weekly plots (incident):
-max_i <- max(map_i$death_rate)
-for (wk in unique(mortality_i$Week)) {
+max_i <- max(map_i$death_rate, na.rm = TRUE)
+for (wk in unique(map_i$Week)) {
   print(wk)
-  save_wk <- wk
   
   dat_temp <- map_i[map_i$Week == wk, ]
   
   yr <- unique(dat_temp$Year)
   if (length(yr) > 1) {
     stop('Multiple years included in data.')
-  }
-  if (yr == 2021) {
-    save_wk <- wk + 53
   }
   
   # Plot on natural scale:
@@ -178,11 +210,11 @@ for (wk in unique(mortality_i$Week)) {
                          legend.text = element_text(size = 34),
                          legend.key.width = unit(1.5, 'cm'),
                          legend.key.height = unit(2.75, 'cm')) +
-    labs(title = paste0('Week ', wk), fill = 'ln(Mortality Rate)') +
+    labs(title = paste0('Week ', wk), fill = 'Mortality Rate') +
     scale_fill_viridis(limits = c(0, max_i),
                        na.value = 'gray65')
   
-  png(filename = paste0('results/temp/animate_i_wk', save_wk, '.png'),
+  png(filename = paste0('results/temp/animate_i_wk', wk, '.png'),
       width = 1200, height = 1200)
   print(p_temp)
   dev.off()
@@ -195,11 +227,11 @@ for (wk in unique(mortality_i$Week)) {
                          legend.text = element_text(size = 34),
                          legend.key.width = unit(1.5, 'cm'),
                          legend.key.height = unit(2.75, 'cm')) +
-    labs(title = paste0('Week ', wk), fill = 'ln(Mortality Rate)') +
+    labs(title = paste0('Week ', wk), fill = 'Mortality Rate') +
     scale_fill_viridis(limits = c(1, max_i),
                        na.value = 'gray65')
   
-  png(filename = paste0('results/temp/animate_i_wk', save_wk, '_no0.png'),
+  png(filename = paste0('results/temp/animate_i_wk', wk, '_no0.png'),
       width = 1200, height = 1200)
   print(p_temp)
   dev.off()
@@ -219,7 +251,7 @@ for (wk in unique(mortality_i$Week)) {
                        trans = 'log',
                        na.value = 'gray65')
   
-  png(filename = paste0('results/temp/animate_i_wk', save_wk, '_log.png'),
+  png(filename = paste0('results/temp/animate_i_wk', wk, '_log.png'),
       width = 1200, height = 1200)
   print(p_temp)
   dev.off()
@@ -242,12 +274,12 @@ try(dev.off())
 # animate_i <- image_animate(img_i, fps = 2, loop = 1)
 # image_write(animate_i, 'results/plots/animate_incident_deaths.gif')
 
-# img_i0 <- image_graph(1200, 1200, res = 72)
-# for (wk in 13:61) {
-#   img_i0 <- c(img_i0, image_read(paste0('results/temp/animate_i_wk', wk, '_no0.png')))
-# }
-# animate_i0 <- image_animate(img_i0, fps = 2, loop = 1)
-# image_write(animate_i0, 'results/plots/animate_incident_deaths_no0.gif')
+img_i0 <- image_graph(1200, 1200, res = 72)
+for (wk in 13:74) {
+  img_i0 <- c(img_i0, image_read(paste0('results/temp/animate_i_wk', wk, '_no0.png')))
+}
+animate_i0 <- image_animate(img_i0, fps = 2, loop = 1)
+image_write(animate_i0, 'results/plots/animate_incident_deaths_no0.gif')
 
 # img_i_log <- image_graph(1200, 1200, res = 72)
 # for (wk in 13:61) {

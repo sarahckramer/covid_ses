@@ -16,11 +16,13 @@ check_for_missing_dates <- function(dat) {
     print('At least one date has no associated data.')
   }
   
-  which_missing <- unique(dat$time_iso8601)[
-    which(!(as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
-                             as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
-                             by = 1)) %in%
-              as.character(unique(format(dat$time_iso8601, '%Y-%m-%d')))))]
+  which_missing <- as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
+                                    as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
+                                    by = 1))[
+                                      which(!(as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
+                                                               as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
+                                                               by = 1)) %in%
+                                                as.character(unique(format(dat$time_iso8601, '%Y-%m-%d')))))]
   
   return(which_missing)
 }
