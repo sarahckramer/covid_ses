@@ -33,7 +33,7 @@ missing_dates <- check_for_missing_dates(mortality_dat)
 mortality_dat <- mortality_dat %>%
   rename(date = time_iso8601) %>%
   mutate(date = as.Date(format(date, '%Y-%m-%d'))) %>%
-  filter(date != '2021-03-01') %>%
+  # filter(date != '2021-03-01') %>%
   pivot_longer(!date, names_to = 'lk', values_to = 'deaths') %>%
   mutate(lk = str_pad(lk, width = 5, side = 'left', pad = '0'))
 
@@ -103,12 +103,12 @@ mortality_inc1 <- convert_to_incident(mortality_dat_wk)
 # METHOD 2: Get daily deaths, then add over week:
 mortality_inc2 <- convert_to_incident(mortality_dat)
 mortality_inc2 <- mortality_inc2 %>%
-  group_by(lk, Week) %>%
+  group_by(lk, Week, Year) %>%
   summarise(deaths = sum(deaths))
 
 # Compare the two estimates:
 mortality_inc <- mortality_inc1 %>%
-  left_join(mortality_inc2, by = c('Week', 'lk')) %>%
+  left_join(mortality_inc2, by = c('Week', 'Year', 'lk')) %>%
   rename(death_rate.x = death_rate) %>%
   mutate(death_rate.y = deaths.y / pop * 100000)
 expect_true(all.equal(mortality_inc$deaths.x, mortality_inc$deaths.y))
@@ -116,7 +116,7 @@ expect_true(all.equal(mortality_inc$deaths.x, mortality_inc$deaths.y))
 # Estimates are the same - keep only one data frame:
 mortality_inc <- mortality_inc1
 rm(mortality_inc1, mortality_inc2)
-print(length(mortality_inc$deaths[mortality_inc$deaths < 0])) # 17 negative values
+print(length(mortality_inc$deaths[mortality_inc$deaths < 0])) # 12 negative values
 # no clear geographic pattern to these, and most have abs. val. < 10
 
 # Replace negatives with NAs:
