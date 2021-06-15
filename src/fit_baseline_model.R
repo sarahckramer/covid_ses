@@ -1,26 +1,36 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# Code to assess temporal/spatial dynamics of transmission, and fit model with no predictors
+# Build GAM for a single Bundesland
 # ---------------------------------------------------------------------------------------------------------------------
+
+# Setup
 
 # Load libraries:
 library(tidyverse)
 library(mgcv)
+library(ggeffects)
 library(sf)
 library(testthat)
 library(spdep)
+library(viridis)
+library(gridExtra)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Read in incident mortality data:
+# Read in and format data
+
+# Read in incident data:
 dat_inc <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT.csv')
 
-# Format data for model fitting:
+# Format:
 dat_inc <- dat_inc %>%
   mutate(Week = if_else(Year == 2020, Week, Week + 53)) %>%
-  mutate(time = Week - min(Week) + 1) %>%
-  # mutate(time = Week) %>%
+  # mutate(time = Week - min(Week) + 1) %>%
+  # filter(deaths <= cases) %>%
+  mutate(deaths = ifelse(deaths > cases, NA, deaths)) %>%
+  mutate(death_rate = deaths / pop * 100000) %>%
   drop_na()
 
+# Add column for Bundesland:
 dat_inc <- dat_inc %>%
   mutate(bundesland = lk,
          bundesland = if_else(str_starts(lk, '01'), 'SchleswigHolstein', bundesland),
@@ -40,214 +50,269 @@ dat_inc <- dat_inc %>%
          bundesland = if_else(str_starts(lk, '15'), 'SachsenAnhalt', bundesland),
          bundesland = if_else(str_starts(lk, '16'), 'Thueringen', bundesland))
 
-# ggplot(data = dat_inc, aes(x = time, y = death_rate, group = lk)) + geom_line() + theme_classic()
-
 # Get Landkreise as factor:
 dat_inc <- dat_inc %>%
   mutate(ARS = factor(lk))
 
-# Separate into first and second waves:
-dat_wave1 <- dat_inc %>%
-  filter(Week <= 22)
-dat_wave2 <- dat_inc %>%
-  filter(Week >= 40)
-
-# ggplot(data = dat_wave1, aes(x = time, y = death_rate, group = lk)) + geom_line() + theme_classic()
-# ggplot(data = dat_wave2, aes(x = time, y = death_rate, group = lk)) + geom_line() + theme_classic()
+#Plot:
+p1 <- ggplot(data = dat_inc, aes(x = Week, y = case_rate, group = lk)) +
+  geom_line(alpha = 0.2) + theme_classic()
+p2 <- ggplot(data = dat_inc, aes(x = Week, y = death_rate, group = lk)) +
+  geom_line(alpha = 0.2) + theme_classic()
+grid.arrange(p1, p2, ncol = 1)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Fit GAM with no additional predictors:
+# Add covariates
+age_dist <- read_csv('data/formatted/age_dist.csv')
+dat_inc <- dat_inc %>%
+  left_join(age_dist, by = 'lk')
 
-# Over time:
-m1 <- gamm(deaths ~ s(time) + offset(pop), random = list(bundesland = ~1, lk = ~1), data = dat_wave2, correlation = corAR1(form = ~time), family = poisson())
-m2 <- gamm(deaths ~ s(time) + offset(pop), random = list(bundesland = ~1, lk = ~1), data = dat_wave2, correlation = corAR1(form = ~time), family = nb())
+mig_dat <- read_csv('data/formatted/mig_hosp_dat.csv')
+dat_inc <- dat_inc %>%
+  left_join(mig_dat, by = 'lk')
 
-plot(m1$gam)
-plot(m2$gam)
+# ---------------------------------------------------------------------------------------------------------------------
 
-gam.check(m1$gam)
-gam.check(m2$gam)
+# # Plot covariates against incidence/mortality/each other
+# dat_inc %>%
+#   filter(Week == 55) %>%
+#   select(death_rate, case_rate, pop, prop65, prop.aus:cit.p.pop) %>%
+#   pairs(pch = 20)
 
-acf(dat_inc$death_rate)
-acf(m1$gam$residuals)
-acf(m2$gam$residuals)
+# ---------------------------------------------------------------------------------------------------------------------
 
-# Incorporating spatial patterns:
+# Get map data and relevant coordinates
+
+# Read in map data:
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 
 expect_true(all(unique(map_base$ARS) %in% unique(dat_inc$lk)))
 expect_true(all(unique(dat_inc$lk) %in% unique(map_base$ARS)))
 
+# Get neighborhood info:
 nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)
 attr(nb, 'region.id') <- map_base$ARS
 names(nb) <- attr(nb, 'region.id')
 
-# map_base$neighbors <- card(nb)
-# ggplot(map_base) + geom_sf() + geom_sf(aes(fill = neighbors)) + theme_void()
+# Get CENTROID coordinates:
+map_base[, c('long', 'lat')] <- st_centroid(map_base) %>% st_transform(., '+proj=longlat') %>% st_coordinates()
+# Note: eventually probably want to do population center and not centroid - centroids aren't necessarily within LK
 
-m3 <- gam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)), data = dat_wave2, family = poisson())
-m4 <- gam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time), data = dat_wave2, family = poisson())
-
-m5 <- gam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop), data = dat_wave2, family = poisson())
-# Error in gam.fit3(x = X, y = y, sp = L %*% lsp + lsp0, Eb = Eb, UrS = UrS,  : 
-#   innere Schleife 1; Schrittweite kann nicht korrigiert werden
-# In addition: Warning message:
-# Schrittweite wurde wegen Divergenz reduziert
-
-dat_wave2_fac <- dat_wave2 %>% mutate(bundesland = factor(bundesland))
-m6 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop) + s(bundesland, bs = 're'), data = dat_wave2_fac, family = poisson, nthreads = 4)
-m6.1 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop) + s(bundesland, bs = 're') + s(ARS, bs = 'mrf', xt = list(nb = nb), by = time), data = dat_wave2_fac, family = poisson, nthreads = 4)
-m6.21 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time, by = ARS) + offset(pop) + s(bundesland, bs = 're'), data = dat_wave2_fac, family = poisson, nthreads = 4)
-# m6.2 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop) + s(bundesland, bs = 're') + s(ARS, time, bs = 'fs', m = 1), data = dat_wave2_fac, family = poisson, nthreads = 4) # too long to fit
-m6.22 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop) + s(bundesland, bs = 're') + s(time, ARS, bs = 'fs', m = 1), data = dat_wave2_fac, family = poisson, nthreads = 4) # too long to fit
-# m6.5 <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop) + s(bundesland, bs = 're') + ti(ARS, time, bs = 'mrf', xt = list(nb = nb)), data = dat_wave2, family = poisson, nthreads = 4)
-# https://www.rdocumentation.org/packages/mgcv/versions/1.8-35/topics/smooth.construct.fs.smooth.spec
-
-# ctrl <- list(niterEM = 0, msVerbose = TRUE, optimMethod="L-BFGS-B")
-# ctrl <- gam.control(nthreads = 6)
-m7 <- bake(file = 'results/m7.rds',
-           expr = gamm(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop), random = list(bundesland = ~1), data = dat_wave2, correlation = corAR1(form = ~time | ARS), family = poisson())#, control = ctrl)
-)
-m8 <- bake(file = 'results/m8.rds',
-           expr = gamm(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop), random = list(bundesland = ~1), data = dat_wave2, correlation = corAR1(form = ~1 | ARS), family = poisson()))
-m9 <- bake(file = 'results/m9.rds',
-           expr = gamm(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop), random = list(bundesland = ~1), data = dat_wave2, correlation = corARMA(form = ~time | ARS, p = 3), family = poisson()))
-# m10 <- gamm(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb)) + s(time) + offset(pop), random = list(bundesland = ~1), data = dat_wave2, correlation = corARMA(form = ~1 | ARS, p = 3), family = poisson())
-# takes a really long time to fit - ultimately, time needs higher number of knots, and some convergence issues, but does seem to run
-
-plot(m7$gam)
-gam.check(m7$gam)
-acf(m7$gam$residuals)
-pacf(m7$gam$residuals)
-
-# write_rds(m7, file = 'results/m7.rds')
-# write_rds(m8, file = 'results/m8.rds')
-# write_rds(m9, file = 'results/m9.rds')
-# m7 and m8 are very similar, but not exactly the same; same results if you run it several times? - yes
-
-# Take case counts into account (instead of population data):
-
-
-
-
+# map_cent <- st_centroid(map_base)
+# ggplot() + geom_sf(data = map_base) + geom_sf(data = map_cent) + theme_void()
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Fit BYM2 model with no predictors:
-# library(INLA)
-# library(gridExtra)
-# library(viridis)
+# # Map covariates
+# dat_covar <- map_base %>%
+#   left_join(dat_inc %>%
+#               pivot_longer(c(pop, prop65, prop.aus:cit.p.pop), names_to = 'var') %>%
+#               select(ARS, var:value) %>%
+#               unique(),
+#             by = 'ARS') %>%
+#   mutate(var = factor(var))
 # 
-# # Read in cumulative data:
-# dat_c <- read_csv('data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE.csv')
-# 
-# # Format data for model fitting:
-# dat_c <- dat_c %>%
-#   mutate(Week = if_else(Year == 2020, Week, Week + 53)) %>%
-#   drop_na()
-# 
-# dat_c <- dat_c %>%
-#   mutate(bundesland = lk,
-#          bundesland = if_else(str_starts(lk, '01'), 'SchleswigHolstein', bundesland),
-#          bundesland = if_else(str_starts(lk, '02'), 'Hamburg', bundesland),
-#          bundesland = if_else(str_starts(lk, '03'), 'Niedersachsen', bundesland),
-#          bundesland = if_else(str_starts(lk, '04'), 'Bremen', bundesland),
-#          bundesland = if_else(str_starts(lk, '05'), 'NordrheinWestfalen', bundesland),
-#          bundesland = if_else(str_starts(lk, '06'), 'Hessen', bundesland),
-#          bundesland = if_else(str_starts(lk, '07'), 'RheinlandPfalz', bundesland),
-#          bundesland = if_else(str_starts(lk, '08'), 'BadenWuerttemberg', bundesland),
-#          bundesland = if_else(str_starts(lk, '09'), 'Bayern', bundesland),
-#          bundesland = if_else(str_starts(lk, '10'), 'Saarland', bundesland),
-#          bundesland = if_else(str_starts(lk, '11'), 'Berlin', bundesland),
-#          bundesland = if_else(str_starts(lk, '12'), 'Brandenburg', bundesland),
-#          bundesland = if_else(str_starts(lk, '13'), 'MecklenburgVorpommern', bundesland),
-#          bundesland = if_else(str_starts(lk, '14'), 'Sachsen', bundesland),
-#          bundesland = if_else(str_starts(lk, '15'), 'SachsenAnhalt', bundesland),
-#          bundesland = if_else(str_starts(lk, '16'), 'Thueringen', bundesland))
-# 
-# # Get Landkreise as factor:
-# dat_c <- dat_c %>%
-#   mutate(ARS = factor(lk))
-# 
-# # Separate into first and second waves:
-# dat_wave1 <- dat_c %>%
-#   filter(Week <= 22)
-# dat_wave2 <- dat_c %>%
-#   filter(Week >= 40)
-# 
-# # Limit to week(s) of interest (choose one for now; expand later):
-# dat_wave2_snap <- dat_wave2 %>%
-#   filter(Week == max(Week))
-# 
-# # Then fit BYM2 model w/o covariates:
-# map_df2 <- map_base %>% left_join(dat_wave2_snap, by = 'ARS')
-# 
-# map_df2$idarea <- 1:nrow(map_df2)
-# map_df2$ARS <- factor(map_df2$ARS)
-# 
-# nb <- spdep::poly2nb(map_df2, row.names = map_df2$ARS)
-# # attr(nb, 'region.id') <- map_base$ARS
-# # names(nb) <- attr(nb, 'region.id')
-# nb2INLA('map.adj', nb)
-# g <- inla.read.graph(filename = 'map.adj')
-# 
-# prior <- list(
-#   prec = list(
-#     prior = "pc.prec",
-#     param = c(0.5 / 0.31, 0.01)),
-#   phi = list(
-#     prior = "pc",
-#     param = c(0.5, 2 / 3))
-# )
-# 
-# formula <- deaths ~ f(idarea + offset(pop), model = 'bym2', graph = g, hyper = prior) + f(bundesland, model = 'iid')
-# # include random effect for BL - is this correct?; what about offset?
-# 
-# res <- inla(formula, family = 'poisson', data = map_df2, E = expected, verbose = F, control.predictor = list(compute = TRUE))
-# # res2 <- inla(formula, family = 'poisson', data = map_df2, verbose = T)
-# 
-# summary(res)
-# head(res$summary.fitted.values)
-# 
-# map_df2$RR <- res$summary.fitted.values$mean
-# map_df2$UL <- res$summary.fitted.values$`0.975quant`
-# map_df2$LL <- res$summary.fitted.values$`0.025quant`
-# map_df2$median <- res$summary.fitted.values$`0.5quant`
-# map_df2$sd <- res$summary.fitted.values$sd
-# 
-# p.res.rr <- ggplot(map_df2) + geom_sf(aes(fill = log(RR))) + 
-#   theme_void() + labs(fill = 'RR') +
-#   scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
-#                        limits = c(-1 * lim, lim),
-#                        breaks = log(log_labs),
-#                        labels = log_labs)
-# p.res.ll <- ggplot(map_df2) + geom_sf(aes(fill = log(LL))) + 
-#   theme_void() + labs(fill = 'LL') +
-#   scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
-#                        limits = c(-1 * lim, lim),
-#                        breaks = log(log_labs),
-#                        labels = log_labs)
-# p.res.ul <- ggplot(map_df2) + geom_sf(aes(fill = log(UL))) + 
-#   theme_void() + labs(fill = 'UL') +
-#   scale_fill_distiller(palette = 'RdBu', na.value = 'gray75',
-#                        limits = c(-1 * lim, lim),
-#                        breaks = log(log_labs),
-#                        labels = log_labs)
-# 
-# grid.arrange(p2, p.res.rr, p.res.ll, p.res.ul, ncol = 2)
-# 
-# p.sd <- ggplot(map_df2) + geom_sf(aes(fill = sd)) +
-#   theme_void() + labs(fill = 'St. Dev.') +
-#   scale_fill_viridis()
-# p.sd
-# 
-# map_df2$re <- res$summary.random$idarea[1:401, 'mean']
-# lim_re <- max(max(map_df2$re), abs(min(map_df2$re)))
-# 
-# p.re <- ggplot(map_df2) + geom_sf(aes(fill = re)) +
-#   theme_void() + labs(fill = 'Ran. Eff.') +
-#   scale_fill_distiller(palette = 'RdBu', limits = c(-lim_re, lim_re))
-# p.re
+# for (ix in levels(dat_covar$var)) {
+#   p <- ggplot(data = dat_covar[dat_covar$var == ix, ]) + geom_sf(aes(fill = value)) +
+#     theme_void() + scale_fill_viridis() + labs(title = ix)
+#   print(p)
+# }
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+# Begin to fit model with no predictors and using CENTROID lat/long
+
+# Add lat/long to deaths/cases data frame:
+dat_inc <- dat_inc %>%
+  left_join(map_base[, c('ARS', 'long', 'lat')],
+            by = 'ARS') %>%
+  select(-geometry)
+
+# Get number of regions and weeks:
+print(length(unique(dat_inc$ARS)))
+print(length(unique(dat_inc$Week)))
+
+# Need Bundesland as factor:
+dat_inc <- dat_inc %>%
+  mutate(bundesland = factor(bundesland))
+
+# Get specific data frame for deaths/cases analysis, where no cases == 0:
+dat_inc_fromCases <- dat_inc %>%
+  filter(cases > 0)
+
+# First, fit without interaction:
+n1a <- bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(pop)),
+           data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+n1b <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+           data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+# n1c <- bam(deaths ~ s(long, lat, bs = 'ds', m = 2, k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(pop)),
+#            data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+
+plot(n1a, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n1b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+# plot(n1c, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+par(mfrow = c(2, 2))
+gam.check(n1a)
+gam.check(n1b)
+# gam.check(n1c)
+
+summary(n1a)
+summary(n1b)
+# summary(n1c)
+
+n1a.pred <- ggpredict(n1a)
+n1b.pred <- ggpredict(n1b)
+# n1c.pred <- ggpredict(n1c)
+
+plot(n1a.pred$lat)
+plot(n1b.pred$lat)
+# plot(n1c.pred$lat)
+
+plot(n1a.pred$long)
+plot(n1b.pred$long)
+# plot(n1c.pred$long)
+
+plot(n1a.pred$Week)
+plot(n1b.pred$Week)
+# plot(n1c.pred$Week)
+
+plot(n1a.pred$bundesland)
+plot(n1b.pred$bundesland)
+# plot(n1c.pred$bundesland)
+
+# # Check that better than poisson:
+# n1a.pois <- bam(cases ~ s(long, lat, bs = 'ds', m = 2, k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(pop)),
+#                 data = dat_inc, family = 'poisson', method = 'fREML', nthreads = 4, discrete = TRUE)
+# n1b.pois <- bam(deaths ~ s(long, lat, bs = 'ds', m = 2, k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+#                 data = dat_inc_fromCases, family = 'poisson', method = 'fREML', nthreads = 4, discrete = TRUE)
+# 
+# AIC(n1a, n1a.pois)
+# BIC(n1a, n1a.pois)
+# AIC(n1b, n1b.pois)
+# BIC(n1b, n1b.pois)
+# # NB consistently better
+# 
+# rm(n1a.pois, n1b.pois)
+
+# Now include interaction between space and time:
+n2a <- bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) +
+             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
+             s(bundesland, bs = 're', k = 16) + offset(log(pop)),
+           data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+
+tic <- Sys.time()
+n2b <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
+             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
+             s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+           data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+toc <- Sys.time()
+print(toc - tic)
+# with ~100/20, <10 min; with 200/20, 1.35 hours (!!)
+# would love to explore with k a bit more, but... this is really time intensive! try to use the cluster for this??
+
+par(mfrow = c(2, 2))
+# gam.check(n2a)
+gam.check(n2b)
+
+# plot(n2a, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n2b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+# summary(n2a)
+summary(n2b)
+summary(n2b.first)
+
+# n2a.pred <- ggpredict(n2b)
+n2b.pred <- ggpredict(n2b)
+n2b.pred.old <- ggpredict(n2b.first)
+
+# plot(n2a.pred$lat)
+plot(n2b.pred$lat)
+plot(n2b.pred.old$lat)
+
+# plot(n2a.pred$long)
+plot(n2b.pred$long)
+plot(n2b.pred.old$long)
+
+# plot(n2a.pred$Week)
+plot(n2b.pred$Week)
+plot(n2b.pred.old$Week)
+
+plot(n2a.pred$bundesland)
+plot(n2b.pred$bundesland)
+
+pdata <- with(dat_inc,
+              expand.grid(cases = 100,
+                          # bundesland = unique(dat_inc$bundesland),
+                          bundesland = 'Bayern',
+                          Week = seq(min(Week), max(Week), by = 4),
+                          long = seq(min(long), max(long), length = 100),
+                          lat = seq(min(lat), max(lat), length = 100)))
+
+n1b.fit <- predict(n1b, pdata)
+n2b.fit <- predict(n2b, pdata)
+n2b.fit.old <- predict(n2b.first, pdata)
+# or add in observed case data and plot out predicted deaths / cases
+
+ind <- exclude.too.far(pdata$long, pdata$lat, dat_inc$long, dat_inc$lat, dist = 0.1)
+n1b.fit[ind] <- NA
+n2b.fit[ind] <- NA
+n2b.fit.old[ind] <- NA
+
+n1b.pred <- cbind(pdata, fitted = n1b.fit)
+n2b.pred <- cbind(pdata, fitted = n2b.fit)
+n2b.pred.old <- cbind(pdata, fitted = n2b.fit.old)
+
+p3 <- ggplot(n1b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+p4 <- ggplot(n2b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+p4.old <- ggplot(n2b.pred.old, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+print(p3)
+print(p4)
+grid.arrange(p4, p4.old, ncol = 2)
+# Of course, these also show the overall change week to week
+
+# If we want to map just the relative intensity in a given week, we need to standardize somehow:
+n1b.pred.stand <- n1b.pred %>%
+  drop_na() %>%
+  group_by(Week) %>%
+  mutate(fitted = fitted - mean(fitted))
+n2b.pred.stand <- n2b.pred %>%
+  drop_na() %>%
+  group_by(Week) %>%
+  mutate(fitted = fitted - mean(fitted))
+n2b.pred.stand.old <- n2b.pred.old %>%
+  drop_na() %>%
+  group_by(Week) %>%
+  mutate(fitted = fitted - mean(fitted))
+
+p3 <- ggplot(n1b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+p4 <- ggplot(n2b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+p4.old <- ggplot(n2b.pred.stand.old, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') +
+  coord_quickmap() + theme_void()
+
+print(p3)
+print(p4)
+grid.arrange(p4, p4.old, ncol = 2)
