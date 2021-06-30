@@ -13,6 +13,7 @@ library(testthat)
 library(spdep)
 library(viridis)
 library(gridExtra)
+library(pomp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -195,13 +196,23 @@ plot(n1b.pred$bundesland)
 # # NB consistently better
 # 
 # rm(n1a.pois, n1b.pois)
+# 
+# # Check zero-inflated (note that mgcv does not yet allow for zero-inflated NB, so may need to use another package if this is necessary):
+# n1b.zip <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+#                data = dat_inc_fromCases, family = 'ziP', method = 'fREML', nthreads = 4, discrete = TRUE)
+# 
+# AIC(n1b, n1b.zip)
+# BIC(n1b, n1b.zip)
+# NB still looks better than zero-inflated, but might eventually want to check zero-inflated NB
+#
+# rm(n1b.zip)
 
 # Now include interaction between space and time:
 # tic <- Sys.time()
-# n2a <- bake(file = 'results/fitted_models/n2b_401_62_100_20.rds',
+# n2a <- bake(file = 'results/fitted_models/n2b_401_62_200_20.rds',
 #             expr = {
 #               bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) +
-#                     ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
+#                     ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
 #                     s(bundesland, bs = 're', k = 16) + offset(log(pop)),
 #                   data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
 #             }
@@ -218,10 +229,6 @@ n2b <- bake(file = 'results/fitted_models/n2b_401_62_200_20.rds',
                   data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
             }
 )
-# n2b <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
-#              ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
-#              s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-#            data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
 toc <- Sys.time()
 print(toc - tic)
 # with ~100/20, <10 min; with 200/20, 1.35 hours (!!)
@@ -266,17 +273,14 @@ pdata <- with(dat_inc,
 
 n1b.fit <- predict(n1b, pdata)
 n2b.fit <- predict(n2b, pdata)
-n2b.fit.old <- predict(n2b.first, pdata)
 # or add in observed case data and plot out predicted deaths / cases
 
 ind <- exclude.too.far(pdata$long, pdata$lat, dat_inc$long, dat_inc$lat, dist = 0.1)
 n1b.fit[ind] <- NA
 n2b.fit[ind] <- NA
-n2b.fit.old[ind] <- NA
 
 n1b.pred <- cbind(pdata, fitted = n1b.fit)
 n2b.pred <- cbind(pdata, fitted = n2b.fit)
-n2b.pred.old <- cbind(pdata, fitted = n2b.fit.old)
 
 p3 <- ggplot(n1b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
   facet_wrap(~ Week, ncol = 4) +
@@ -284,18 +288,12 @@ p3 <- ggplot(n1b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted))
   coord_quickmap() + theme_void()
 
 p4 <- ggplot(n2b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
-  scale_fill_viridis(na.value = 'transparent') +
-  coord_quickmap() + theme_void()
-
-p4.old <- ggplot(n2b.pred.old, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
+  facet_wrap(~ Week, ncol = 8) +
   scale_fill_viridis(na.value = 'transparent') +
   coord_quickmap() + theme_void()
 
 print(p3)
 print(p4)
-grid.arrange(p4, p4.old, ncol = 2)
 # Of course, these also show the overall change week to week
 
 # If we want to map just the relative intensity in a given week, we need to standardize somehow:
@@ -307,10 +305,6 @@ n2b.pred.stand <- n2b.pred %>%
   drop_na() %>%
   group_by(Week) %>%
   mutate(fitted = fitted - mean(fitted))
-n2b.pred.stand.old <- n2b.pred.old %>%
-  drop_na() %>%
-  group_by(Week) %>%
-  mutate(fitted = fitted - mean(fitted))
 
 p3 <- ggplot(n1b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
   facet_wrap(~ Week, ncol = 4) +
@@ -318,18 +312,12 @@ p3 <- ggplot(n1b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fi
   coord_quickmap() + theme_void()
 
 p4 <- ggplot(n2b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
-  scale_fill_viridis(na.value = 'transparent') +
-  coord_quickmap() + theme_void()
-
-p4.old <- ggplot(n2b.pred.stand.old, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
+  facet_wrap(~ Week, ncol = 8) +
   scale_fill_viridis(na.value = 'transparent') +
   coord_quickmap() + theme_void()
 
 print(p3)
 print(p4)
-grid.arrange(p4, p4.old, ncol = 2)
 
 # Try adding predictors (for now just as proof of concept):
 tic <- Sys.time()
