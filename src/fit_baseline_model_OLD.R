@@ -251,3 +251,205 @@ pacf(m7$gam$residuals)
 # p.re
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+# Old code to add in predictors:
+
+# Read in and format data
+
+# Read in incident data:
+dat_inc <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT.csv')
+
+# Format:
+dat_inc <- dat_inc %>%
+  mutate(Week = if_else(Year == 2020, Week, Week + 53)) %>%
+  # mutate(time = Week - min(Week) + 1) %>%
+  # filter(deaths <= cases) %>%
+  mutate(deaths = ifelse(deaths > cases, NA, deaths)) %>%
+  mutate(death_rate = deaths / pop * 100000) %>%
+  drop_na()
+
+# Add column for Bundesland:
+dat_inc <- dat_inc %>%
+  mutate(bundesland = lk,
+         bundesland = if_else(str_starts(lk, '01'), 'SchleswigHolstein', bundesland),
+         bundesland = if_else(str_starts(lk, '02'), 'Hamburg', bundesland),
+         bundesland = if_else(str_starts(lk, '03'), 'Niedersachsen', bundesland),
+         bundesland = if_else(str_starts(lk, '04'), 'Bremen', bundesland),
+         bundesland = if_else(str_starts(lk, '05'), 'NordrheinWestfalen', bundesland),
+         bundesland = if_else(str_starts(lk, '06'), 'Hessen', bundesland),
+         bundesland = if_else(str_starts(lk, '07'), 'RheinlandPfalz', bundesland),
+         bundesland = if_else(str_starts(lk, '08'), 'BadenWuerttemberg', bundesland),
+         bundesland = if_else(str_starts(lk, '09'), 'Bayern', bundesland),
+         bundesland = if_else(str_starts(lk, '10'), 'Saarland', bundesland),
+         bundesland = if_else(str_starts(lk, '11'), 'Berlin', bundesland),
+         bundesland = if_else(str_starts(lk, '12'), 'Brandenburg', bundesland),
+         bundesland = if_else(str_starts(lk, '13'), 'MecklenburgVorpommern', bundesland),
+         bundesland = if_else(str_starts(lk, '14'), 'Sachsen', bundesland),
+         bundesland = if_else(str_starts(lk, '15'), 'SachsenAnhalt', bundesland),
+         bundesland = if_else(str_starts(lk, '16'), 'Thueringen', bundesland))
+
+# Get Landkreise as factor:
+dat_inc <- dat_inc %>%
+  mutate(ARS = factor(lk))
+
+#Plot:
+p1 <- ggplot(data = dat_inc, aes(x = Week, y = case_rate, group = lk)) +
+  geom_line(alpha = 0.2) + theme_classic()
+p2 <- ggplot(data = dat_inc, aes(x = Week, y = death_rate, group = lk)) +
+  geom_line(alpha = 0.2) + theme_classic()
+grid.arrange(p1, p2, ncol = 1)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Add covariates
+age_dist <- read_csv('data/formatted/age_dist.csv')
+dat_inc <- dat_inc %>%
+  left_join(age_dist, by = 'lk')
+
+mig_dat <- read_csv('data/formatted/mig_hosp_dat.csv')
+dat_inc <- dat_inc %>%
+  left_join(mig_dat, by = 'lk')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# # Plot covariates against incidence/mortality/each other
+# dat_inc %>%
+#   filter(Week == 55) %>%
+#   select(death_rate, case_rate, pop, prop65, prop.aus:cit.p.pop) %>%
+#   pairs(pch = 20)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# # Map covariates
+# dat_covar <- map_base %>%
+#   left_join(dat_inc %>%
+#               pivot_longer(c(pop, prop65, prop.aus:cit.p.pop), names_to = 'var') %>%
+#               select(ARS, var:value) %>%
+#               unique(),
+#             by = 'ARS') %>%
+#   mutate(var = factor(var))
+# 
+# for (ix in levels(dat_covar$var)) {
+#   p <- ggplot(data = dat_covar[dat_covar$var == ix, ]) + geom_sf(aes(fill = value)) +
+#     theme_void() + scale_fill_viridis() + labs(title = ix)
+#   print(p)
+# }
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Try adding predictors (for now just as proof of concept)
+tic <- Sys.time()
+n3b <- bake(file = 'results/fitted_models/n3b_TEST.rds',
+            expr = {
+              bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
+                    ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
+                    s(prop65, k = 100) + s(hosp.beds, k = 100) + #s(prop.aus) +
+                    s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                  data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+            }
+)
+toc <- Sys.time()
+print(toc - tic)
+# 1.40 hours
+
+n4b <- bam(deaths ~ s(Week, k = 62) + s(prop65, k = 100) + s(hosp.beds, k = 100) +
+             s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+           data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+
+par(mfrow = c(2, 2))
+gam.check(n3b)
+gam.check(n4b)
+
+# summary(n3b)
+# summary(n4b)
+
+n3b.pred <- ggpredict(n3b)
+n4b.pred <- ggpredict(n4b)
+
+plot(n3b.pred$lat)
+plot(n3b.pred$long)
+
+plot(n3b.pred$Week)
+plot(n4b.pred$Week)
+
+plot(n3b.pred$prop65)
+plot(n4b.pred$prop65)
+
+plot(n3b.pred$hosp.beds)
+plot(n4b.pred$hosp.beds)
+
+plot(n3b.pred$bundesland)
+plot(n4b.pred$bundesland)
+
+plot(n3b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n4b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+# Finally, try interaction(s) with time and covariates:
+tic <- Sys.time()
+n5b <- bake(file = 'results/fitted_models/n5b_TEST.rds',
+            expr = {
+              bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
+                    ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
+                    s(prop65, k = 100) + s(hosp.beds, k = 100) + #s(prop.aus) +
+                    ti(Week, prop65) + ti(Week, hosp.beds) +
+                    s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                  data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+            }
+)
+toc <- Sys.time()
+print(toc - tic)
+
+par(mfrow = c(2, 2))
+gam.check(n5b)
+
+n5b.pred <- ggpredict(n5b)
+
+plot(n5b.pred$lat)
+plot(n5b.pred$long)
+plot(n5b.pred$Week)
+plot(n5b.pred$prop65)
+plot(n5b.pred$hosp.beds)
+# plot(n5b.pred$bundesland)
+
+n5b.pred.int1 <- ggpredict(n5b, terms = c('Week', 'prop65'))
+n5b.pred.int2 <- ggpredict(n5b, terms = c('Week', 'hosp.beds'))
+
+plot(n5b.pred.int1)
+plot(n5b.pred.int2)
+
+# Plot model fits:
+dat_inc_FIT <- dat_inc_fromCases %>%
+  mutate(fit1 = predict(n1b, type = 'response'),
+         fit2 = predict(n2b, type = 'response'))
+dat_inc_FIT2 <- dat_inc_fromCases %>%
+  filter(!is.na(prop65)) %>%
+  filter(!is.na(hosp.beds)) %>%
+  mutate(fit3 = predict(n3b, type = 'response'),
+         fit4 = predict(n4b, type = 'response'),
+         fit5 = predict(n5b, type = 'response'))
+
+dat_inc_FIT <- dat_inc_FIT %>%
+  left_join(dat_inc_FIT2[, c('date', 'Year', 'Week', 'lk', 'fit3', 'fit4', 'fit5')])
+rm(dat_inc_FIT2)
+
+map_fit <- map_base %>%
+  left_join(dat_inc_FIT, by = c('ARS')) %>%
+  # filter(Week %in% seq(min(Week), max(Week), by = 4)) %>%
+  filter(Week %in% c(17, 58))
+
+p.dat <- ggplot(map_fit) + geom_sf(aes(fill = deaths / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+p.fit1 <- ggplot(map_fit) + geom_sf(aes(fill = fit1 / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+p.fit2 <- ggplot(map_fit) + geom_sf(aes(fill = fit2 / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+p.fit3 <- ggplot(map_fit) + geom_sf(aes(fill = fit3 / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+p.fit4 <- ggplot(map_fit) + geom_sf(aes(fill = fit4 / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+p.fit5 <- ggplot(map_fit) + geom_sf(aes(fill = fit5 / cases)) + facet_wrap(~ Week) +
+  theme_void() + scale_fill_viridis(na.value = 'gray80', trans = 'log', limits = c(0.0009, 1.0))
+
+grid.arrange(p.dat, p.fit1, p.fit2, p.fit3, p.fit4, p.fit5, ncol = 2)
+grid.arrange(p.dat, p.fit2, p.fit4, p.fit3, ncol = 1)
