@@ -18,49 +18,7 @@ library(pomp)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in and format data
-
-# Read in incident data:
-dat_inc <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT.csv')
-
-# Format:
-dat_inc <- dat_inc %>%
-  mutate(Week = if_else(Year == 2020, Week, Week + 53)) %>%
-  # mutate(time = Week - min(Week) + 1) %>%
-  # filter(deaths <= cases) %>%
-  mutate(deaths = ifelse(deaths > cases, NA, deaths)) %>%
-  mutate(death_rate = deaths / pop * 100000) %>%
-  drop_na()
-
-# Add column for Bundesland:
-dat_inc <- dat_inc %>%
-  mutate(bundesland = lk,
-         bundesland = if_else(str_starts(lk, '01'), 'SchleswigHolstein', bundesland),
-         bundesland = if_else(str_starts(lk, '02'), 'Hamburg', bundesland),
-         bundesland = if_else(str_starts(lk, '03'), 'Niedersachsen', bundesland),
-         bundesland = if_else(str_starts(lk, '04'), 'Bremen', bundesland),
-         bundesland = if_else(str_starts(lk, '05'), 'NordrheinWestfalen', bundesland),
-         bundesland = if_else(str_starts(lk, '06'), 'Hessen', bundesland),
-         bundesland = if_else(str_starts(lk, '07'), 'RheinlandPfalz', bundesland),
-         bundesland = if_else(str_starts(lk, '08'), 'BadenWuerttemberg', bundesland),
-         bundesland = if_else(str_starts(lk, '09'), 'Bayern', bundesland),
-         bundesland = if_else(str_starts(lk, '10'), 'Saarland', bundesland),
-         bundesland = if_else(str_starts(lk, '11'), 'Berlin', bundesland),
-         bundesland = if_else(str_starts(lk, '12'), 'Brandenburg', bundesland),
-         bundesland = if_else(str_starts(lk, '13'), 'MecklenburgVorpommern', bundesland),
-         bundesland = if_else(str_starts(lk, '14'), 'Sachsen', bundesland),
-         bundesland = if_else(str_starts(lk, '15'), 'SachsenAnhalt', bundesland),
-         bundesland = if_else(str_starts(lk, '16'), 'Thueringen', bundesland))
-
-# Get Landkreise as factor:
-dat_inc <- dat_inc %>%
-  mutate(ARS = factor(lk))
-
-#Plot:
-p1 <- ggplot(data = dat_inc, aes(x = Week, y = case_rate, group = lk)) +
-  geom_line(alpha = 0.2) + theme_classic()
-p2 <- ggplot(data = dat_inc, aes(x = Week, y = death_rate, group = lk)) +
-  geom_line(alpha = 0.2) + theme_classic()
-grid.arrange(p1, p2, ncol = 1)
+source('src/load_data.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -173,7 +131,7 @@ plot(n1b.pred$bundesland)
 
 # Now include interaction between space and time:
 tic <- Sys.time()
-n2a <- bake(file = 'results/fitted_models/n2a_401_62_200_20.rds',
+n2a <- bake(file = 'results/fitted_models/n2a_401_62_200_20_NEW.rds',
             expr = {
               bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) +
                     ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
@@ -185,7 +143,7 @@ toc <- Sys.time()
 print(toc - tic)
 
 tic <- Sys.time()
-n2b <- bake(file = 'results/fitted_models/n2b_401_62_200_20.rds',
+n2b <- bake(file = 'results/fitted_models/n2b_401_62_200_20_NEW.rds',
             expr = {
               bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
                     ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
@@ -232,7 +190,7 @@ pdata <- with(dat_inc,
                           long = seq(min(long), max(long), length = 100),
                           lat = seq(min(lat), max(lat), length = 100)))
 
-n1b.fit <- predict(n1b, pdata)
+# n1b.fit <- predict(n1b, pdata)
 n2b.fit <- predict(n2b, pdata)
 # or add in observed case data and plot out predicted deaths / cases
 
@@ -244,7 +202,7 @@ n1b.pred <- cbind(pdata, fitted = n1b.fit)
 n2b.pred <- cbind(pdata, fitted = n2b.fit)
 
 p3 <- ggplot(n1b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
+  facet_wrap(~ Week, ncol = 8) +
   scale_fill_viridis(na.value = 'transparent') +
   coord_quickmap() + theme_void()
 
@@ -255,6 +213,7 @@ p4 <- ggplot(n2b.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted))
 
 print(p3)
 print(p4)
+grid.arrange(p3, p4, ncol = 1)
 # Of course, these also show the overall change week to week
 
 # If we want to map just the relative intensity in a given week, we need to standardize somehow:
@@ -268,7 +227,7 @@ n2b.pred.stand <- n2b.pred %>%
   mutate(fitted = fitted - mean(fitted))
 
 p3 <- ggplot(n1b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
-  facet_wrap(~ Week, ncol = 4) +
+  facet_wrap(~ Week, ncol = 8) +
   scale_fill_viridis(na.value = 'transparent') +
   coord_quickmap() + theme_void()
 
@@ -279,5 +238,94 @@ p4 <- ggplot(n2b.pred.stand, aes(x = long, y = lat)) + geom_raster(aes(fill = fi
 
 print(p3)
 print(p4)
+grid.arrange(p3, p4, ncol = 1)
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+# explore different k values (for 1 and 2)
+# no need to do random effect for BL once interaction between space and time included? (actually, seems to still play a role...)
+# how to do model building with GAMs, since would need to adjust k as more predictors added/removed? (check French paper?)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Try with MRF instead
+
+# Reload data:
+source('src/load_data.R')
+
+# Need ARS and Bundesland as factor:
+dat_inc <- dat_inc %>%
+  mutate(ARS = factor(ARS),
+         bundesland = factor(bundesland))
+
+# Get specific data frame for deaths/cases analysis, where no cases == 0:
+dat_inc_fromCases <- dat_inc %>%
+  filter(cases > 0)
+
+# Fit w/o interaction:
+m1b <- bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+           data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+
+par(mfrow = c(2, 2))
+gam.check(m1b)
+
+plot(m1b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+# Fit w/ interaction:
+tic <- Sys.time()
+m2b <- bake(file = 'results/fitted_models/m2b_401_62_200_20.rds',
+            expr = {
+              bam(deaths ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 401) + s(Week, k = 62) + 
+                    te(Week, ARS, bs = c('fs', 'mrf'), xt = list(Week = NULL, ARS = list(nb = nb)), k = c(20, 200)) +
+                    s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                  data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+            }
+)
+toc <- Sys.time()
+print(toc - tic)
+# 1.44 hours; comparable to model using lat/long
+
+par(mfrow = c(2, 2))
+gam.check(m2b)
+
+plot(m2b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+# Plot predictions:
+pdata <- with(dat_inc_fromCases,
+              expand.grid(cases = 100,
+                          bundesland = 'Bayern',
+                          ARS = ARS,
+                          Week = seq(min(Week), max(Week), by = 8)))
+
+m1.fit <- predict(m1b, pdata)
+m2.fit <- predict(m2b, pdata)
+
+m1.pred <- cbind(pdata, fitted = m1.fit)
+m2.pred <- cbind(pdata, fitted = m2.fit)
+
+map.m1pred <- map_base %>%
+  left_join(m1.pred, by = 'ARS')
+map.m2pred <- map_base %>%
+  left_join(m2.pred, by = 'ARS')
+
+p5 <- ggplot(map.m1pred) + geom_sf(aes(fill = fitted)) + facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') + theme_void()
+p6 <- ggplot(map.m2pred) + geom_sf(aes(fill = fitted)) + facet_wrap(~ Week, ncol = 4) +
+  scale_fill_viridis(na.value = 'transparent') + theme_void()
+grid.arrange(p5, p6, ncol = 1)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compare lat/long vs. MRF?
+
+plot(m1b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n1b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+plot(m2b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n2b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+# estimates for week look similar in model 1, but once interaction is included, estimates seem to have much wider
+# confidence intervals when using MRF than when using lat/long
+
+AIC(m1b, n1b, m2b, n2b)
+BIC(m1b, n1b, m2b, n2b)
+# AIC consistently better for MRF, but also higher df; BIC lower for lat/long
