@@ -7,24 +7,22 @@
 # Load libraries:
 library(tidyverse)
 
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Population data
-
-# Read in population data by Landkreis:
-pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
-# Source: https://www-genesis.destatis.de/genesis/online
-
-# Format:
-pop_dat <- pop_dat %>%
-  select(-X2) %>%
-  rename(lk = X1, pop = X3) %>%
-  mutate(pop = as.numeric(pop)) %>%
-  filter(!is.na(pop))
-
-# This is handled in the case/death data formatting code
+# # Population data
+# 
+# # Read in population data by Landkreis:
+# pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
+# # Source: https://www-genesis.destatis.de/genesis/online
+# 
+# # Format:
+# pop_dat <- pop_dat %>%
+#   select(-X2) %>%
+#   rename(lk = X1, pop = X3) %>%
+#   mutate(pop = as.numeric(pop)) %>%
+#   filter(!is.na(pop))
+# 
+# # This is also handled in the case/death data formatting code
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -33,85 +31,21 @@ pop_dat <- pop_dat %>%
 # Read in downloaded data:
 inkar_dat <- read_csv2('data/raw/independent_vars/inkar_data_2017.csv')
 # most data from 2017
-# 2015: Ausländische Gäste in FV-Betrieben (1)
-# 2016: Krankenhausbetten, Haushalte mit niedrigem Einkommen (2)
-# 2018: Erreichbarkeit von Autobahnen, Flughafen, Bahnhöfen, Oberzentren, Mittelzentren (5)
+# 2016: Krankenhausbetten
 
 # Remove years:
 inkar_dat <- inkar_dat[-1, ]
 
 # Keep only columns of interest:
 inkar_dat <- inkar_dat %>%
-  select(Kennziffer:Aggregat, `Einwohner 65 Jahre und älter`:Frauenanteil, Siedlungsdichte, Ausländeranteil,
-         Wohnfläche, `Anteil Wohnungen in Mehrfamilienhäusern`, `Beschäftigte in personenbezogenen Dienstleistungsberufen`,
-         Aufstocker, Pflegeheimplätze, Krankenhausbetten, `Nahversorgung Apotheken Durchschnittsdistanz`)
-
-# # Reorganize columns:
-# inkar_demo <- inkar_dat[, c(1:3, 12:16, 40, 54:59, 82)]
-# inkar_econ <- inkar_dat[, c(1:6, 35:39, 52:53, 60:62, 64:65, 76:78, 80, 83)]
-# inkar_housing <- inkar_dat[, c(1:3, 7:9)]
-# inkar_work <- inkar_dat[, c(1:3, 10:11, 81)]
-# inkar_imm <- inkar_dat[, c(1:3, 17:25, 63)]
-# inkar_pol <- inkar_dat[, c(1:3, 28:34)]
-# inkar_health <- inkar_dat[, c(1:3, 26:27, 41:48, 49:51, 71:72, 79)]
-# inkar_mob <- inkar_dat[, c(1:3, 66:70, 73:75)]
-
-# inkar_demo <- inkar_demo %>%
-#   select(Kennziffer:Aggregat, Kreistyp:Regionstyp, `Einwohner 65 Jahre und älter`:Frauenanteil, Siedlungsdichte, Ländlichkeit)
-# plot(inkar_demo[, 4:ncol(inkar_demo)], pch = 20)
-
-# inkar_econ %>%
-#   select(Kennziffer:Aggregat, Arbeitslosenquote, `Beschäftigte am Wohnort ohne Berufsabschluss`:`Beschäftigte am Wohnort mit akademischem Abschluss`, Haushaltseinkommen, Medianeinkommen, Schuldnerquote)
-# plot(inkar_econ[, 4:ncol(inkar_econ)], pch = 20)
-
-# inkar_housing <- inkar_housing %>%
-#   select(Kennziffer:Aggregat, Wohnfläche:`Anteil Wohnungen in Mehrfamilienhäusern`)
-# plot(inkar_housing[, 4:ncol(inkar_housing)], pch = 20)
-
-# inkar_work <- inkar_work %>%
-#   select(Kennziffer:Aggregat, `Beschäftigte in personenbezogenen Dienstleistungsberufen`:Aufstocker)
-# plot(inkar_work[, 4:ncol(inkar_work)], pch = 20)
-
-# inkar_imm <- inkar_imm %>%
-#   select(Kennziffer:Aggregat, Ausländeranteil, `Anteil Schutzsuchender an Bevölkerung`:Asylbewerber)
-# plot(inkar_imm[, 4:ncol(inkar_imm)], pch = 20)
-
-# plot(inkar_pol[, 4:ncol(inkar_pol)], pch = 20)
-# rm(inkar_pol)
-
-# inkar_health <- inkar_health %>%
-#   select(Kennziffer:Lebenserwartung, `Vorzeitige Sterblichkeit`, Pflegeheimplätze,
-#          `Ärzte je  Einwohner`, `Personal in Pflegeheimen`:`Personal in Pflegediensten`, Krankenhausbetten, Apotheken,
-#          `Nahversorgung Apotheken Durchschnittsdistanz`)
-# inkar_health <- inkar_health %>%
-#   select(Kennziffer:Aggregat, Pflegeheimplätze, Krankenhausbetten, `Nahversorgung Apotheken Durchschnittsdistanz`, `Personal in Pflegediensten`)
-# plot(inkar_health[, 4:ncol(inkar_health)], pch = 20)
-# # inkar_health <- inkar_health %>%
-# #   mutate(`Stationäre Pflege` = Pflegebedürftige * (`Stationäre Pflege` / 100))#,
-# #          # `Personal in Pflegeheimen` = `Personal in Pflegeheimen` * `Stationäre Pflege` / 10000 * pop,
-# # plot(inkar_health[, 4:ncol(inkar_health)], pch = 20)
-
-# inkar_mob <- inkar_mob %>%
-#   select(Kennziffer:Aggregat, `Erreichbarkeit von Autobahnen`:`Erreichbarkeit von IC/EC/ICE-Bahnhöfen`, `Übernachtungen in FV-Betrieben`:`Ausländische Gäste in FV-Betrieben`) %>%
-#   mutate(`Ausländische Gäste in FV-Betrieben` = `Übernachtungen in FV-Betrieben` * (`Ausländische Gäste in FV-Betrieben` / 100))
-# plot(inkar_mob[, 4:ncol(inkar_mob)], pch = 20)
-# # if we will already have info on how places are connected to each other, then these seem most relevant as info on tourism, which in turn is likely only relevant early on - or am I missing something?
-# # the relevance of these variables is very much going to depend on whether there were travel restrictions in place at each timepoint, and what types of travel restrictions; without a way of formalizing these
-# # relationships in the model itself, I'm not sure it makes much sense to use these; unless multiply by zero when travel restrictions in place?
-# # actual measures of travel, even averaged over the pandemic, will likely be more informative
-# rm(inkar_mob)
-
-
-
+  select(Kennziffer:Aggregat, `Einwohner 65 Jahre und älter`:Frauenanteil, Siedlungsdichte,
+         Ausländeranteil, `Verhältnis der Beschäftigungsquote von Ausländern zu gesamt`,
+         Wohnfläche, `Anteil Wohnungen in Mehrfamilienhäusern`,
+         `Beschäftigte in personenbezogenen Dienstleistungsberufen`,
+         Pflegeheimplätze, Krankenhausbetten, `Nahversorgung Apotheken Durchschnittsdistanz`)
 
 # Convert variables to percentages of full/sub-population as needed:
-
-# check: Siedlungsdichte; Beschäftigte in...; Aufstocker; others are all percentage (or per 1000) of total population
-
-
-
-
-
+# Beschäftigte in personenbezogenen Dienstleistungsberufen?
 
 # Rename variables:
 inkar_dat <- inkar_dat %>%
@@ -124,10 +58,10 @@ inkar_dat <- inkar_dat %>%
          'perc_women' = 'Frauenanteil',
          'pop_dens' = 'Siedlungsdichte',
          'perc_imm' = 'Ausländeranteil',
+         'employ_rate_ratio' = 'Verhältnis der Beschäftigungsquote von Ausländern zu gesamt',
          'living_area' = 'Wohnfläche',
          'perc_apt_multifamily' = 'Anteil Wohnungen in Mehrfamilienhäusern',
          'perc_service' = 'Beschäftigte in personenbezogenen Dienstleistungsberufen',
-         'perc_employees_welfare' = 'Aufstocker',
          'long_term_care_beds' = 'Pflegeheimplätze',
          'hosp_beds' = 'Krankenhausbetten',
          'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz')
@@ -135,87 +69,96 @@ inkar_dat <- inkar_dat %>%
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
   select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_65plus:perc_women, long_term_care_beds,
-         perc_imm, pop_dens, living_area:perc_employees_welfare)
+         perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service)
 
 # Plot:
 plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
 
-# need to reformat any percentages of subgroups; need to rename variables; need to join all into single dataframe and save;
-# update all data to current state/decide on cutoff week (end of wave 2?); write notes; clean up code;
-# why do weekly values from RKI mobility data differ from means?;
-# this code can be just for formatting, but should try to plot all in a neat way; calculate Moran's I values; update population data?
+# # Visualize similar types of data:
+# inkar_demo <- inkar_dat[, c(6:9, 13)]
+# inkar_housing <- inkar_dat[, 14:15]
+# # inkar_work <- inkar_dat[, 16]
+# inkar_imm <- inkar_dat[, 11:12]
+# inkar_health <- inkar_dat[, c(4:5, 10)]
+# 
+# plot(inkar_demo, pch = 20)
+# plot(inkar_housing, pch = 20)
+# plot(inkar_imm, pch = 20)
+# plot(inkar_health, pch = 20)
+# 
+# rm(inkar_demo, inkar_housing, inkar_imm, inkar_health)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Format GENESIS data
-
-# Read in individual data files:
-gen_dat_mig1 <- read_csv2('data/raw/independent_vars/AI-Z1-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
-gen_dat_mig1 <- gen_dat_mig1[, c(2:3, 7)]
-names(gen_dat_mig1) <- c('lk_code', 'lk_name', 'perc_MHG')
-# 2011
-
-gen_dat_mig2 <- read_csv2('data/raw/independent_vars/12111-07-01-4.csv', col_names = FALSE, skip = 11, n_max = 5380)
-names(gen_dat_mig2) <- c('lk_code', 'lk_name', 'age', 'pop_private', 'all_german', 'german_wo_MHG', 'german_w_MHG', 'other_citizenship')
-gen_dat_mig2 <- gen_dat_mig2 %>%
-  filter(age == 'Insgesamt') %>%
-  select(-c(lk_name, age, all_german))
-# 2011
-
-gen_dat_mig3 <- read_csv2('data/raw/independent_vars/12711-03-02-4-B.csv', col_names = FALSE, skip = 9, n_max = 1467)
-gen_dat_mig3 <- gen_dat_mig3[, c(2, 4, 8)]
-names(gen_dat_mig3) <- c('lk_code', 'citizenship', 'migration_from_outside_DE')
-gen_dat_mig3 <- gen_dat_mig3 %>%
-  filter(citizenship != 'Deutsche' & citizenship != 'Insgesamt') %>%
-  select(-citizenship) %>%
-  mutate(lk_code = if_else(lk_code %in% c('02000', '11000'), str_sub(lk_code, 1, 2), lk_code))
-# 2019
-
-gen_dat_household <- read_csv2('data/raw/independent_vars/AI-Z3-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
-gen_dat_household <- gen_dat_household[, c(2, 4:5)]
-names(gen_dat_household) <- c('lk_code', 'avg_household_size', 'perc_1person_households')
-# 2011
-
-gen_dat_essential <- read_csv2('data/raw/independent_vars/13312-01-05-4.csv', col_names = FALSE, skip = 7, n_max = 1614)
-gen_dat_essential <- gen_dat_essential[, c(1:2, 4, 11)]
-names(gen_dat_essential) <- c('year', 'lk_code', 'total_workers', 'workers_publicservice_education_health')
-gen_dat_essential <- gen_dat_essential %>%
-  filter(year == 2019) %>%
-  select(-year)
-# 2019
-
-# Join data into one tibble:
-genesis_dat <- gen_dat_mig1 %>%
-  full_join(gen_dat_mig2, by = 'lk_code') %>%
-  full_join(gen_dat_mig3, by = 'lk_code') %>%
-  full_join(gen_dat_household, by = 'lk_code') %>%
-  full_join(gen_dat_essential, by = 'lk_code')
-
-# Remove individual datasets:
-rm(gen_dat_mig1, gen_dat_mig2, gen_dat_mig3, gen_dat_household, gen_dat_essential)
-
-# Reduce to LKs:
-genesis_dat <- genesis_dat %>%
-  filter(str_length(lk_code) == 5 | lk_code %in% c('02', '11')) %>%
-  mutate(lk_code = str_pad(lk_code, width = 5, side = 'right', pad = '0'))
-
-# Join population data:
-genesis_dat <- genesis_dat %>%
-  right_join(pop_dat, by = c('lk_code' = 'lk'))
-
-# Reformat data:
-genesis_dat <- genesis_dat %>%
-  mutate(across(c(perc_MHG, avg_household_size:workers_publicservice_education_health), ~ str_replace(.x, ',', '.'))) %>%
-  mutate(across(perc_MHG:workers_publicservice_education_health, as.numeric)) %>%
-  mutate(perc_wo_MHG = german_wo_MHG / pop_private * 100,
-         perc_w_MHG_German = german_w_MHG / pop_private * 100,
-         perc_other_cit = other_citizenship / pop_private * 100,
-         migration_from_outside_DE = migration_from_outside_DE / pop * 1000,
-         perc_workers_ServEduHealth = workers_publicservice_education_health / total_workers * 100) %>%
-  select(lk_code:perc_MHG, perc_w_MHG_German:perc_other_cit, migration_from_outside_DE:perc_1person_households, perc_workers_ServEduHealth)
-
-# Data from 2011 missing values for 7 LKs, 6 from Mecklenburg-Vorpommern and 1 from Niedersachsen - these appear
-# to be newer Landkreise
+# # Format GENESIS data
+# 
+# # Read in individual data files:
+# gen_dat_mig1 <- read_csv2('data/raw/independent_vars/AI-Z1-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
+# gen_dat_mig1 <- gen_dat_mig1[, c(2:3, 7)]
+# names(gen_dat_mig1) <- c('lk_code', 'lk_name', 'perc_MHG')
+# # 2011
+# 
+# gen_dat_mig2 <- read_csv2('data/raw/independent_vars/12111-07-01-4.csv', col_names = FALSE, skip = 11, n_max = 5380)
+# names(gen_dat_mig2) <- c('lk_code', 'lk_name', 'age', 'pop_private', 'all_german', 'german_wo_MHG', 'german_w_MHG', 'other_citizenship')
+# gen_dat_mig2 <- gen_dat_mig2 %>%
+#   filter(age == 'Insgesamt') %>%
+#   select(-c(lk_name, age, all_german))
+# # 2011
+# 
+# gen_dat_mig3 <- read_csv2('data/raw/independent_vars/12711-03-02-4-B.csv', col_names = FALSE, skip = 9, n_max = 1467)
+# gen_dat_mig3 <- gen_dat_mig3[, c(2, 4, 8)]
+# names(gen_dat_mig3) <- c('lk_code', 'citizenship', 'migration_from_outside_DE')
+# gen_dat_mig3 <- gen_dat_mig3 %>%
+#   filter(citizenship != 'Deutsche' & citizenship != 'Insgesamt') %>%
+#   select(-citizenship) %>%
+#   mutate(lk_code = if_else(lk_code %in% c('02000', '11000'), str_sub(lk_code, 1, 2), lk_code))
+# # 2019
+# 
+# gen_dat_household <- read_csv2('data/raw/independent_vars/AI-Z3-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
+# gen_dat_household <- gen_dat_household[, c(2, 4:5)]
+# names(gen_dat_household) <- c('lk_code', 'avg_household_size', 'perc_1person_households')
+# # 2011
+# 
+# gen_dat_essential <- read_csv2('data/raw/independent_vars/13312-01-05-4.csv', col_names = FALSE, skip = 7, n_max = 1614)
+# gen_dat_essential <- gen_dat_essential[, c(1:2, 4, 11)]
+# names(gen_dat_essential) <- c('year', 'lk_code', 'total_workers', 'workers_publicservice_education_health')
+# gen_dat_essential <- gen_dat_essential %>%
+#   filter(year == 2019) %>%
+#   select(-year)
+# # 2019
+# 
+# # Join data into one tibble:
+# genesis_dat <- gen_dat_mig1 %>%
+#   full_join(gen_dat_mig2, by = 'lk_code') %>%
+#   full_join(gen_dat_mig3, by = 'lk_code') %>%
+#   full_join(gen_dat_household, by = 'lk_code') %>%
+#   full_join(gen_dat_essential, by = 'lk_code')
+# 
+# # Remove individual datasets:
+# rm(gen_dat_mig1, gen_dat_mig2, gen_dat_mig3, gen_dat_household, gen_dat_essential)
+# 
+# # Reduce to LKs:
+# genesis_dat <- genesis_dat %>%
+#   filter(str_length(lk_code) == 5 | lk_code %in% c('02', '11')) %>%
+#   mutate(lk_code = str_pad(lk_code, width = 5, side = 'right', pad = '0'))
+# 
+# # Join population data:
+# genesis_dat <- genesis_dat %>%
+#   right_join(pop_dat, by = c('lk_code' = 'lk'))
+# 
+# # Reformat data:
+# genesis_dat <- genesis_dat %>%
+#   mutate(across(c(perc_MHG, avg_household_size:workers_publicservice_education_health), ~ str_replace(.x, ',', '.'))) %>%
+#   mutate(across(perc_MHG:workers_publicservice_education_health, as.numeric)) %>%
+#   mutate(perc_wo_MHG = german_wo_MHG / pop_private * 100,
+#          perc_w_MHG_German = german_w_MHG / pop_private * 100,
+#          perc_other_cit = other_citizenship / pop_private * 100,
+#          migration_from_outside_DE = migration_from_outside_DE / pop * 1000,
+#          perc_workers_ServEduHealth = workers_publicservice_education_health / total_workers * 100) %>%
+#   select(lk_code:perc_MHG, perc_w_MHG_German:perc_other_cit, migration_from_outside_DE:perc_1person_households, perc_workers_ServEduHealth)
+# 
+# # Data from 2011 missing values for 7 LKs, 6 from Mecklenburg-Vorpommern and 1 from Niedersachsen - these appear
+# # to be newer Landkreise?
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -225,8 +168,8 @@ genesis_dat <- genesis_dat %>%
 di_dat <- read_csv('data/raw/independent_vars/deprivation_index_NEW.csv')
 di_dat <- di_dat %>%
   filter(Jahr == 2017) %>%
-  select(Kreiskennziffer, GISD_Score:TS_Arbeitswelt_adj)
-# updated version does differ - why? what adjustments are made?
+  select(Kreiskennziffer, GISD_Score:TS_Arbeitswelt_adj) %>%
+  mutate(Kreiskennziffer = str_pad(Kreiskennziffer, width = 5, side = 'left', pad = '0'))
 
 # Then, get individual variables (and similar variables):
 di_variables_dat <- read_csv2('data/raw/independent_vars/inkar_data_deprivationsindex_individual_variables.csv')
@@ -236,18 +179,28 @@ di_variables_dat <- di_variables_dat %>%
   select(Kennziffer,
          `Schulabgänger ohne Abschluss`, `Anteil Beschäftigte mit akademischem Berufsabschluss`, `Anteil Beschäftigte ohne Berufsabschluss`,
          Schuldnerquote, Haushaltseinkommen, Steuerkraft,
-         Arbeitslosigkeit, Bruttoverdienst, Beschäftigtenquote) %>%
-  rename('Schulabgänger_ohne_Abschluss' = `Schulabgänger ohne Abschluss`,
-         'Anteil_akademischem_Berufabschluss' = `Anteil Beschäftigte mit akademischem Berufsabschluss`,
-         'Anteil_ohne_Berufabschluss' = `Anteil Beschäftigte ohne Berufsabschluss`)
+         Arbeitslosigkeit, Bruttoverdienst, Beschäftigtenquote)
 
-# di_variables_dat <- di_variables_dat %>%
-#   mutate(Anteil_Fach_oder_Hochschulabschluss = `Anteil Beschäftigte mit Berufsabschluss` + `Anteil Beschäftigte mit akademischem Berufsabschluss`) %>%
-#   select(Kennziffer:Arbeitslosigkeit, Bruttoverdienst, Beschäftigtenquote, `Schulabgänger ohne Abschluss`, Anteil_Fach_oder_Hochschulabschluss, Schuldnerquote, Haushaltseinkommen, Steuerkraft) %>%
-#   rename('Schulabgänger_ohne_Abschluss' = `Schulabgänger ohne Abschluss`)
-# need to double check that this is the correct interpretation of their (fach-)hoch-schule variable
+# Merge:
+di_dat <- di_dat %>%
+  left_join(di_variables_dat, by = c('Kreiskennziffer' = 'Kennziffer'))
+rm(di_variables_dat)
 
-plot(di_variables_dat[, 4:ncol(di_variables_dat)], pch = 20)
+# Rename variables:
+di_dat <- di_dat %>%
+  rename('lk_code' = 'Kreiskennziffer',
+         'perc_no_degree' = `Schulabgänger ohne Abschluss`,
+         'perc_workers_academic_degree' = `Anteil Beschäftigte mit akademischem Berufsabschluss`,
+         'perc_workers_no_voc_degree' = `Anteil Beschäftigte ohne Berufsabschluss`,
+         'perc_debt' = 'Schuldnerquote',
+         'household_income' = 'Haushaltseinkommen',
+         'tax_force' = 'Steuerkraft',
+         'unemployment' = 'Arbeitslosigkeit',
+         'gross_income' = 'Bruttoverdienst',
+         'perc_SV_workers' = 'Beschäftigtenquote')
+
+# Plot:
+plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -272,16 +225,16 @@ mobility_rki_dat <- mobility_rki_dat %>%
 mobility_rki_dat %>%
   group_by(year, week, mobility_change_weekly) %>%
   summarise(mean = mean(mobility_change))
-# no, they sometimes differ; try to figure out why, but use RKI's weekly counts for now
+# No, they sometimes differ; use RKI's weekly counts
 
 # Remove daily values:
 mobility_rki_dat <- mobility_rki_dat %>%
   select(-mobility_change) %>%
   unique()
 
-# Plot:
-ggplot(data = mobility_rki_dat, aes(x = week, y = mobility_change_weekly, group = NUTS3)) + geom_line() +
-  facet_wrap(~year) + theme_classic()
+# # Plot:
+# ggplot(data = mobility_rki_dat, aes(x = week, y = mobility_change_weekly, group = NUTS3)) + geom_line() +
+#   facet_wrap(~year) + theme_classic()
 
 # Convert NUTS3 codes to Landkreis codes:
 convert_names <- read_csv2('data/raw/independent_vars/Referenz Gebietsstand 2017-1.csv')
@@ -305,15 +258,15 @@ rm(convert_names)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Behavior tracker data
-
-behav_dat <- read_csv('data/raw/independent_vars/yougov_tracker_germany.csv')
-
-behav_dat %>%
-  select(RecordNo:qweek, gender:state, i12_health_1:i12_health_20, i12_health_21:i12_health_25, i12_health_26:i12_health_29, d1_health_1:d1_health_13, WCRV_4)
-# i12_health are public health measures; d1_health are health conditions
-
-# Only available at Bundesland level, but could be useful
+# # Behavior tracker data
+# 
+# behav_dat <- read_csv('data/raw/independent_vars/yougov_tracker_germany.csv')
+# 
+# behav_dat %>%
+#   select(RecordNo:qweek, gender:state, i12_health_1:i12_health_20, i12_health_21:i12_health_25, i12_health_26:i12_health_29, d1_health_1:d1_health_13, WCRV_4)
+# # i12_health are public health measures; d1_health are health conditions
+# 
+# # Only available at Bundesland level, but could be useful
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -360,20 +313,19 @@ index_dat <- index_dat %>%
 
 # Merge datasets as needed
 
-a <- inkar_dat %>% 
-  left_join(genesis_dat %>% select(-lk_name), by = 'lk_code')
-plot(a[, 4:23], pch = 20)
-
-
-
+# SES/health indicators:
+ses_dat <- inkar_dat %>%
+  left_join(di_dat, by = 'lk_code')
+rm(inkar_dat, di_dat)
+# plot(ses_dat[, 4:ncol(ses_dat)], pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Output formatted data
 
-
-
-
+write_csv(ses_dat, file = 'data/formatted/independent_vars/ses_independent_variables.csv')
+write_csv(mobility_rki_dat, file = 'data/formatted/independent_vars/mobility_dat_WEEKLY.csv')
+write_csv(index_dat, file = 'data/formatted/independent_vars/stringency_and_containment_indices.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
