@@ -15,7 +15,7 @@ library(spdep)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in and format data
-source('src/load_data.R')
+source('src/functions/load_data.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ plot(n1b.pred.noise)
 # MRF weights based on travel?
 
 # Reload and format data:
-source('src/load_data.R')
+source('src/functions/load_data.R')
 
 # Need ARS and Bundesland as factor:
 dat_inc <- dat_inc %>%

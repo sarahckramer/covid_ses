@@ -9,7 +9,7 @@ library(tidyverse)
 library(testthat)
 
 # Read in necessary functions:
-source('src/data_processing_fxns.R')
+source('src/functions/data_processing_fxns.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ expect_equal(dim(mortality_dat)[1], length(unique(mortality_dat$date)) * length(
 # Incorporate population data
 
 # Get population data by Landkreis:
-pop_dat <- read_csv2('data/raw/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
+pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
 # Source: https://www-genesis.destatis.de/genesis/online
 
 pop_dat <- pop_dat %>%

@@ -18,7 +18,7 @@ library(pomp)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in and format data
-source('src/load_data.R')
+source('src/functions/load_data.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -251,7 +251,7 @@ grid.arrange(p3, p4, ncol = 1)
 # Try with MRF instead
 
 # Reload data:
-source('src/load_data.R')
+source('src/functions/load_data.R')
 
 # Need ARS and Bundesland as factor:
 dat_inc <- dat_inc %>%

@@ -9,7 +9,7 @@ library(tidyverse)
 library(testthat)
 
 # Read in necessary functions:
-source('src/data_processing_fxns.R')
+source('src/functions/data_processing_fxns.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
