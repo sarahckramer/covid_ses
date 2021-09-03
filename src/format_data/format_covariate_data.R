@@ -62,13 +62,13 @@ inkar_dat <- inkar_dat %>%
          'living_area' = 'Wohnfläche',
          'perc_apt_multifamily' = 'Anteil Wohnungen in Mehrfamilienhäusern',
          'perc_service' = 'Beschäftigte in personenbezogenen Dienstleistungsberufen',
-         'long_term_care_beds' = 'Pflegeheimplätze',
+         'care_home_beds' = 'Pflegeheimplätze',
          'hosp_beds' = 'Krankenhausbetten',
          'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz')
 
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
-  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_65plus:perc_women, long_term_care_beds,
+  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_65plus:perc_women, care_home_beds,
          perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service)
 
 # Plot:
