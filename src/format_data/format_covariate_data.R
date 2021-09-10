@@ -30,11 +30,13 @@ library(tidyverse)
 
 # Read in downloaded data:
 inkar_dat <- read_csv2('data/raw/independent_vars/inkar_data_2017.csv')
+inkar_dat2 <- read_csv2('data/raw/independent_vars/inkar_dat_2017_UPDATES.csv')
 # most data from 2017
 # 2016: Krankenhausbetten
 
 # Remove years:
 inkar_dat <- inkar_dat[-1, ]
+inkar_dat2 <- inkar_dat2[-1, ]
 
 # Keep only columns of interest:
 inkar_dat <- inkar_dat %>%
@@ -43,9 +45,17 @@ inkar_dat <- inkar_dat %>%
          Wohnfläche, `Anteil Wohnungen in Mehrfamilienhäusern`,
          `Beschäftigte in personenbezogenen Dienstleistungsberufen`,
          Pflegeheimplätze, Krankenhausbetten, `Nahversorgung Apotheken Durchschnittsdistanz`)
+inkar_dat2 <- inkar_dat2 %>%
+  select(Kennziffer, Einpendler:Auspendler, `Beschäftigte in Produktionsberufen`)
+
+# Join tibbles:
+inkar_dat <- inkar_dat %>%
+  inner_join(inkar_dat2, by = 'Kennziffer')
+rm(inkar_dat2)
 
 # Convert variables to percentages of full/sub-population as needed:
-# Beschäftigte in personenbezogenen Dienstleistungsberufen?
+# Beschäftigte in personenbezogenen Dienstleistungsberufen, in Produktionsberufen; Ein/Auspendler
+# As far as I can tell, would only even be possible for Auspendler
 
 # Rename variables:
 inkar_dat <- inkar_dat %>%
@@ -64,29 +74,19 @@ inkar_dat <- inkar_dat %>%
          'perc_service' = 'Beschäftigte in personenbezogenen Dienstleistungsberufen',
          'care_home_beds' = 'Pflegeheimplätze',
          'hosp_beds' = 'Krankenhausbetten',
-         'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz')
+         'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz',
+         'commuters_in' = 'Einpendler',
+         'commuters_out' = 'Auspendler',
+         'perc_production' = 'Beschäftigte in Produktionsberufen')
 
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
   select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_65plus:perc_women, care_home_beds,
-         perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service)
+         perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service, perc_production,
+         commuters_in:commuters_out)
 
 # Plot:
 plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
-
-# # Visualize similar types of data:
-# inkar_demo <- inkar_dat[, c(6:9, 13)]
-# inkar_housing <- inkar_dat[, 14:15]
-# # inkar_work <- inkar_dat[, 16]
-# inkar_imm <- inkar_dat[, 11:12]
-# inkar_health <- inkar_dat[, c(4:5, 10)]
-# 
-# plot(inkar_demo, pch = 20)
-# plot(inkar_housing, pch = 20)
-# plot(inkar_imm, pch = 20)
-# plot(inkar_health, pch = 20)
-# 
-# rm(inkar_demo, inkar_housing, inkar_imm, inkar_health)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

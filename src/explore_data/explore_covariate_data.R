@@ -31,7 +31,7 @@ ses_dat <- ses_dat %>%
 pairs(ses_dat[, -1], pch = 20)#, lower.panel = NULL)
 
 # Plot histograms of variables:
-par(mfrow = c(4, 4))
+par(mfrow = c(4, 5))
 for (i in 2:ncol(ses_dat)) {
   hist(unlist(ses_dat[, i]), breaks = 25, main = names(ses_dat)[i])
 }
@@ -67,6 +67,8 @@ corrplot(cor_mat_spearman, method = 'color', diag = FALSE, type = 'upper', p.mat
 corrplot(cor_mat_kendall, method = 'color', diag = FALSE, type = 'upper', p.mat = p_mat_kendall)
 # May be a good idea to remove average distance to pharmacies - this seems to be highly related to population density
 # Potentially remove percent of apartments in multi-family housing, too - population density and living area should be enough
+# Commuters in and out are also highly positively correlated, but there are likely some regions (cities in particular) where
+# there are a lot of incoming and very few outgoing commuters, so they could still both be informative
 
 ses_dat <- ses_dat %>%
   select(-c(avg_dist_pharm, perc_apt_multifamily))
@@ -185,7 +187,7 @@ lw <- nb2listw(nb, style = "W", zero.policy = FALSE)
 for (var in vars_to_plot) {
   print(var)
   
-  if (var == 'hosp_beds') {
+  if (var %in% c('hosp_beds', 'commuters_out')) {
     moran.mc(map_base[, var][[1]], lw, nsim = 999, alternative = 'less') %>%
       print()
   } else {
@@ -197,7 +199,8 @@ for (var in vars_to_plot) {
 }
 
 # All significant; strongest positive autocorrelation with: GISD and Income/Work dimensions, living area, perc_imm, perc_65plus;
-# only hospital beds significantly less clustered than expected; <0.3: perc_women, perc_service, education dimension
+# only hospital beds and outbound commuters significantly less clustered than expected;
+# <0.3: perc_women, perc_service, perc_production, commuters_in, education dimension
 
 # Now do local Moran's I:
 for (var in vars_to_plot) {
