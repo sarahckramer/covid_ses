@@ -1,5 +1,9 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # 
+#
+# https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
+# https://jroy042.github.io/nonlinear/week4.html
+# https://m-clark.github.io/generalized-additive-models/appendix.html#time-and-space
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
@@ -46,7 +50,7 @@ map_base[, c('long', 'lat')] <- st_centroid(map_base) %>% st_transform(., '+proj
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Limit data to a specific BL (for testing):
-bl <- 'Brandenburg'
+bl <- 'NordrheinWestfalen'
 dat_inc <- dat_inc %>% filter(bundesland == bl)
 # BadenWuerttemberg, Bayern, Berlin + Brandenburg, Hessen, MecklenburgVorpommern, Niedersachen + Bremen,
 # NordrheinWestfalen, RheinlandPfalz, Saarland, Sachsen, SachsenAnhalt, SchleswigHolstein + Hamburg,
@@ -108,20 +112,6 @@ dat_deaths_wave2 <- dat_deaths_wave2 %>%
   filter(cases > 0)
 dat_deaths_wave2_lagged <- dat_deaths_wave2_lagged %>%
   filter(cases_lagged > 0)
-
-# # Get data for single LK:
-# dat_list_lk <- list(dat_cases, dat_cases_wave1, dat_cases_wave2,
-#                     dat_deaths, dat_deaths_wave1, dat_deaths_wave2, dat_deaths_wave2_lagged)
-# ggplot(data = dat_cases, aes(x = Week, y = case_rate)) + geom_line() + facet_wrap(~ lk) + theme_classic()
-# ggplot(data = dat_deaths, aes(x = Week, y = death_rate_per_case)) + geom_line() + facet_wrap(~ lk) + theme_classic()
-# # try 05112, 05966
-# 
-# dat_list_lk1 <- lapply(dat_list_lk, function(ix) {
-#   ix <- ix %>% filter(lk == '05112')
-# })
-# dat_list_lk2 <- lapply(dat_list_lk, function(ix) {
-#   ix <- ix %>% filter(lk == '05966')
-# })
 
 # Get cumulative deaths across first and second parts of first and second waves:
 dat_cum <- read_csv('data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE.csv')
@@ -201,17 +191,18 @@ dat_deaths_wave2_lagged <- dat_deaths_wave2_lagged %>%
   select(-geometry)
 
 dat_deaths %>% pull(lk) %>% unique() %>% length()
+lk_num <- dat_deaths %>% pull(lk) %>% unique() %>% length()
 
-a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 18) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 18)) +
+a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+            # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 18)) +
             offset(log(cases)),
           data = dat_deaths_wave1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 23) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 23)) +
+a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+            # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 23)) +
             offset(log(cases)),
           data = dat_deaths_wave2, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-a3 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 23) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 23)) +
+a3 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+            # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(53, 23)) +
             offset(log(cases_lagged)),
           data = dat_deaths_wave2_lagged, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
 
@@ -220,44 +211,34 @@ gam.check(a1, rep = 50)
 gam.check(a2, rep = 50)
 gam.check(a3, rep = 50)
 
-# These actually do look much better, although gam.check saying k is too low for interaction (and sometimes for space)
+# These actually do look much better, although gam.check sometimes saying k is too low for space
 
-# Do qqplots change if we lower k for the interaction?
-a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 18) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-            offset(log(cases)),
-          data = dat_deaths_wave1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 23) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 15)) +
-            offset(log(cases)),
-          data = dat_deaths_wave2, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-a3 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 23) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 15)) +
-            offset(log(cases_lagged)),
-          data = dat_deaths_wave2_lagged, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-
-par(mfrow = c(2, 2))
-gam.check(a1, rep = 50)
-gam.check(a2, rep = 50)
-gam.check(a3, rep = 50)
-# This may have made them a bit worse; would adding covariates help at all?
-# Note also that not lagging the cases seems to work better, although this may be only for this specific BL;
-# depending on how late cases are typically reported, a one-week lag may be better
+# # Do qqplots change if we add an interaction between time and space?
+# a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+#             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+#             offset(log(cases)),
+#           data = dat_deaths_wave1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+# a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+#             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 15)) +
+#             offset(log(cases)),
+#           data = dat_deaths_wave2, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+# a3 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+#             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 15)) +
+#             offset(log(cases_lagged)),
+#           data = dat_deaths_wave2_lagged, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+# 
+# par(mfrow = c(2, 2))
+# gam.check(a1, rep = 50)
+# gam.check(a2, rep = 50)
+# gam.check(a3, rep = 50)
+# # Not much better
+# # Note also that not lagging the cases seems to work better, although this may be only for this specific BL;
+# # depending on how late cases are typically reported, a one-week lag may be better
 
 plot(a1, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 plot(a2, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 
 # Explore patterns in temporal autocorrelation of residuals:
-acf(a1$residuals)
-pacf(a1$residuals)
-
-acf(a2$residuals)
-pacf(a2$residuals)
-
-acf(a3$residuals)
-pacf(a3$residuals)
-# But this doesn't break them down by LK, right?
-
 dat_deaths_wave1$resid <- a1$residuals
 dat_deaths_wave2$resid <- a2$residuals
 dat_deaths_wave2_lagged$resid <- a3$residuals
@@ -301,14 +282,14 @@ dat_deaths <- dat_deaths %>%
             by = 'ARS') %>%
   select(-geometry)
 
-# a4 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 62) +
+# a4 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 62) +
 #             ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(25, 62)) +
 #             offset(log(cases)),
 #           data = dat_deaths, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
 
 dat_deaths_red <- dat_deaths %>% filter(Week <= 66)
-a5 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 54) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(25, 54)) +
+a5 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 54) +
+            # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(25, 54)) +
             offset(log(cases)),
           data = dat_deaths_red, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
 
@@ -316,14 +297,21 @@ par(mfrow = c(2, 2))
 # gam.check(a4, rep = 50)
 gam.check(a5, rep = 50)
 
-# acf(a4$residuals)
-# pacf(a4$residuals)
-acf(a5$residuals)
-pacf(a5$residuals)
+plot(a5, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 
-# Here the problem with the residuals is worse again, but there doesn't seem to be substantial temporal autocorrelation
+dat_deaths_red$resid <- a5$residuals
+list_waves12 <- split(dat_deaths_red, dat_deaths_red$lk)
+par(mfrow = c(6, 6))
+acfs_waves12 <- lapply(list_waves12, function(ix) {
+  acf(ix$resid, lag.max = 10, plot = TRUE)
+})
+
+# ---------------------------------------------------------------------------------------------------------------------
 
 # How do these findings change with different BL?
+
+# issues/autocorrelation: NordrheinWestfalen
+
 
 # okay: BadenWuerttemberg, NordrheinWestfalen, 
 # issues: Bayern, Brandenburg wave 2? (but small)
@@ -334,69 +322,187 @@ pacf(a5$residuals)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Try temporal model (for individual waves and whole time series) with a single LK
-# dat_list_lk1, dat_list_lk2
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 # For single BL, try 1) controlling for cases/deaths in the previous week, and 2) gamm
 # Both for individual waves, and for entire time series
 # dat_deaths_wave1, dat_deaths_wave2, dat_deaths_wave2_lagged, dat_deaths, (dat_cases_wave1, dat_cases_wave2, dat_cases)
 
-dat_deaths_red <- dat_deaths_red %>%
-  left_join(dat_deaths_red %>% select(Week, lk, deaths) %>% mutate(Week = Week + 1),
-            by = c('Week', 'lk')) %>%
-  rename('deaths' = 'deaths.x',
-         'deaths_past' = 'deaths.y')
+# dat_deaths_red <- dat_deaths_red %>%
+#   left_join(dat_deaths_red %>% select(Week, lk, deaths) %>% mutate(Week = Week + 1),
+#             by = c('Week', 'lk')) %>%
+#   rename('deaths' = 'deaths.x',
+#          'deaths_past' = 'deaths.y')
+# 
+# d1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 53) +
+#             # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(25, 53)) +
+#             s(deaths_past) + offset(log(cases)),
+#           data = dat_deaths_red, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+# 
+# par(mfrow = c(2, 2))
+# gam.check(d1, rep = 50)
+# 
+# plot(d1, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+# 
+# # This actually appears to make the residuals look worse
 
-d1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 53) + s(Week, k = 53) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(25, 53)) +
-            s(deaths_past) + offset(log(cases)),
-          data = dat_deaths_red, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+a5 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, bs = 'cr', k = 54) +
+             # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(5, 5)) +
+             offset(log(cases)),
+           data = dat_deaths_red, family = 'nb')
+a1 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+             offset(log(cases)),
+           data = dat_deaths_wave1, family = 'nb')
+a2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+             offset(log(cases)),
+           data = dat_deaths_wave2, family = 'nb')
+
+d_full <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, bs = 'cr', k = 54) +
+                 # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(5, 5)) +
+                 offset(log(cases)),
+               data = dat_deaths_red, family = 'nb', correlation = corARMA(form = ~Week|ARS, p = 1))
+d1 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+             offset(log(cases)),
+           data = dat_deaths_wave1, family = 'nb', correlation = corARMA(form = ~Week|ARS, p = 1)) # form = ~1|ARS or ~Week|ARS?
+d2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+             offset(log(cases)),
+           data = dat_deaths_wave2, family = 'nb', correlation = corARMA(form = ~Week|ARS, p = 1))
+
+# d_full_2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 54) +
+#                  offset(log(cases)),
+#                data = dat_deaths_red, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 2))
+d1_2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+               offset(log(cases)),
+             data = dat_deaths_wave1, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 2)) # form = ~1|ARS or ~Week|ARS?
+d2_2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+               offset(log(cases)),
+             data = dat_deaths_wave2, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 2))
+
+
+d_full_3 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 54) +
+                   offset(log(cases)),
+                 data = dat_deaths_red, family = 'nb', correlation = corARMA(form = ~Week|ARS, p = 3))
+# d1_3 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 18) +
+#              offset(log(cases)),
+#            data = dat_deaths_wave1, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 3)) # form = ~1|ARS or ~Week|ARS?
+# d2_3 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = lk_num) + s(Week, k = 23) +
+#              offset(log(cases)),
+#            data = dat_deaths_wave2, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 3))
+
+a1$lme$logLik
+d1$lme$logLik
+
+a2$lme$logLik
+d2$lme$logLik
+
+a5$lme$logLik
+d_full$lme$logLik
+d_full_3$lme$logLik
+# only actually improves fit for second wave
+# using LK-level RE might improve fit though; any way to do nested RE in gams?
+
+plot(a1$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(d1$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+plot(a2$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(d2$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+
+plot(a5$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(d_full$gam, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 
 par(mfrow = c(2, 2))
-gam.check(d1, rep = 50)
+gam.check(a1$gam, rep = 50)
+gam.check(d1$gam, rep = 50)
 
-plot(d1, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+gam.check(a2$gam, rep = 50)
+gam.check(d2$gam, rep = 50)
 
-acf(d1$residuals)
-pacf(d1$residuals)
+gam.check(a5$gam, rep = 50)
+gam.check(d_full$gam, rep = 50)
+# Residuals appear unchanged; sometimes makes k too low for spatial effect though?
+# Also seems difficult to get model to fit with ARMA and space-time interaction
+# RE again has little influence on residuals
 
-# This actually appears to make the residuals look worse
+dat_deaths_wave1$resid <- resid(d1$lme, type = 'normalized')
+dat_deaths_wave2$resid <- resid(d2$lme, type = 'normalized')
+dat_deaths_red$resid <- resid(d_full$lme, type = 'normalized')
 
-d2_full <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 54) +
-                  ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(100, 25)) +
-                  offset(log(cases)),
-                data = dat_deaths_red, family = 'nb')
-d2_1 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 18) +
-               ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(100, 10)) +
-               offset(log(cases)),
-             data = dat_deaths_wave1, family = 'nb', correlation = corARMA(form = ~1|ARS, p = 1)) # or form = ~1|ARS?
-d2_2 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 23) +
-               ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(100, 15)) +
-               offset(log(cases)),
-             data = dat_deaths_wave2, family = 'nb')
+list_wave1 <- split(dat_deaths_wave1, dat_deaths_wave1$lk)
+par(mfrow = c(4, 6))
+acfs_wave1 <- lapply(list_wave1, function(ix) {
+  acf(ix$resid, lag.max = 10, plot = TRUE)
+})
+
+list_wave2 <- split(dat_deaths_wave2, dat_deaths_wave2$lk)
+par(mfrow = c(4, 6))
+acfs_wave2 <- lapply(list_wave2, function(ix) {
+  acf(ix$resid, lag.max = 10, plot = TRUE)
+})
+
+list_waves12 <- split(dat_deaths_red, dat_deaths_red$lk)
+par(mfrow = c(4, 6))
+acfs_waves12 <- lapply(list_waves12, function(ix) {
+  acf(ix$resid, lag.max = 10, plot = TRUE)
+})
+# And some LK still have noticeable autocorrelation - increase p and q?
+# In some cases it even appears to make autocorrelation worse - some tradeoff with space?
 
 
+# 05770, 05754, 05562, 05154, 05124, 05112
 
+# Fit individually; fit without; fit only
 
-a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 18) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+dat1 <- dat_deaths_red %>% filter(lk %in% c('05770', '05754', '05562', '05154', '05124', '05112')) %>%
+  mutate(ARS = factor(ARS))
+dat2 <- dat_deaths_red %>% filter(!(lk %in% c('05770', '05754', '05562', '05154', '05124', '05112'))) %>%
+  mutate(ARS = factor(ARS))
+dat3 <- dat_deaths_red %>% filter(lk == '05112')
+
+a1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 6) + s(Week, k = 54) +
             offset(log(cases)),
-          data = dat_deaths_wave1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 23) +
-            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 15)) +
+          data = dat1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+a2 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 47) + s(Week, k = 54) +
             offset(log(cases)),
-          data = dat_deaths_wave2, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+          data = dat2, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+a3 <- bam(deaths ~ s(Week, k = 54) + offset(log(cases)),
+          data = dat3, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+
+d1 <- gamm(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 6) + s(Week, k = 54) +
+             # ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(6, 54)) +
+             offset(log(cases)), random = list(ARS=~1),
+           data = dat1, family = 'nb', correlation = corCAR1())
+
+par(mfrow = c(2, 2))
+gam.check(a1, rep = 50)
+gam.check(a2, rep = 50)
+gam.check(a3, rep = 50)
+
+acf(a3$residuals) # actually no temporal autocorrelation when only one LK included
+# Model has issue fitting temporal autocorrelation for many LK at once?
+
+dat1$resid <- resid(d1$lme, type = 'normalized')
+for (i in levels(dat1$ARS)) {
+  acf(dat1$resid[dat1$ARS == i])
+}
+# Again, seems to be a tradeoff between spatial fit and temporal autocorrelation
+
+b1 <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 6) + s(Week, k = 54) +
+            ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(6, 54)) +
+            offset(log(cases)),
+          data = dat1, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+par(mfrow = c(2, 2))
+gam.check(b1, rep = 50)
+# Temporal autocorrelation already much better by including time-space interaction!
+# Incorporating time-space interaction and temporal autocorrelation in residuals leads to smoothest time fxn, but
+# also leads to a lot of smoothing in other terms
+
+
+
 
 
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Fit to monthly data (individual waves and full time series)
-# 
+# Fit to monthly data
+# Could reduce noisiness of the signal and size of the problem, but sacrifices temporal granularity
 
 
 
@@ -494,106 +600,3 @@ grid.arrange(p1, p2, p3, p4, ncol = 2)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-
-# Begin to fit model with no predictors and using CENTROID lat/long
-
-# Add lat/long to deaths/cases data frame:
-dat_inc <- dat_inc %>%
-  left_join(map_base[, c('ARS', 'long', 'lat')],
-            by = 'ARS') %>%
-  select(-geometry)
-
-# Get number of regions and weeks:
-print(length(unique(dat_inc$ARS)))
-print(length(unique(dat_inc$Week)))
-
-# Need Bundesland as factor:
-dat_inc <- dat_inc %>%
-  mutate(bundesland = factor(bundesland))
-
-# Get specific data frame for deaths/cases analysis, where no cases == 0:
-dat_inc_fromCases <- dat_inc %>%
-  filter(cases > 0)
-
-# First, fit without interaction:
-n1a <- bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-           data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-n1b <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-           data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-# n1c <- bam(deaths ~ s(long, lat, bs = 'ds', m = 2, k = 401) + s(Week, k = 62) + s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-#            data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-
-plot(n1a, pages = 1, scheme = 2, shade = TRUE, scale = 0)
-plot(n1b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
-# plot(n1c, pages = 1, scheme = 2, shade = TRUE, scale = 0)
-
-par(mfrow = c(2, 2))
-gam.check(n1a)
-gam.check(n1b)
-# gam.check(n1c)
-
-summary(n1a)
-summary(n1b)
-# summary(n1c)
-
-n1a.pred <- ggpredict(n1a)
-n1b.pred <- ggpredict(n1b)
-# n1c.pred <- ggpredict(n1c)
-
-plot(n1a.pred$lat)
-plot(n1b.pred$lat)
-# plot(n1c.pred$lat)
-
-plot(n1a.pred$long)
-plot(n1b.pred$long)
-# plot(n1c.pred$long)
-
-plot(n1a.pred$Week)
-plot(n1b.pred$Week)
-# plot(n1c.pred$Week)
-
-plot(n1a.pred$bundesland)
-plot(n1b.pred$bundesland)
-# plot(n1c.pred$bundesland)
-
-# Now include interaction between space and time:
-tic <- Sys.time()
-n2a <- bake(file = 'results/fitted_models/n2a_401_62_200_20_NEW.rds',
-            expr = {
-              bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) +
-                    ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
-                    s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-                  data = dat_inc, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-            }
-)
-toc <- Sys.time()
-print(toc - tic)
-
-tic <- Sys.time()
-n2b <- bake(file = 'results/fitted_models/n2b_401_62_200_20_NEW.rds',
-            expr = {
-              bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62) + 
-                    ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'tp'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
-                    s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                  data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-            }
-)
-toc <- Sys.time()
-print(toc - tic)
-# with ~100/20, <10 min; with 200/20, 1.35 hours (!!)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
