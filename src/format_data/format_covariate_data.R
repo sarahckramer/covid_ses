@@ -258,6 +258,172 @@ rm(convert_names)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Measures against COVID-19
+
+# Read in categories and subcategories:
+measures_dat_ober <- read_csv('data/raw/cdp/kr_massnahmen_oberkategorien.csv')
+measures_dat_unter <- read_csv('data/raw/cdp/kr_massnahmen_unterkategorien.csv')
+
+# Format larger categories:
+measures_dat_ober <- measures_dat_ober %>%
+  select(-c(`_id`:bundesland, kreis)) %>%
+  filter(m_code %in% c('M02a', 'M02b', 'M03', 'M14', 'M15', 'M16', 'M21')) %>%
+  pivot_longer(-c(ags5:m_code), names_to = 'date', values_to = 'val') %>%
+  mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d'))
+
+# Plot/explore:
+# ggplot(data = measures_dat_ober, aes(x = date, y = val, group = ags5)) + geom_line() + facet_wrap(~ m_code) + theme_classic()
+
+measures_dat_ober %>% group_by(ags5, m_code) %>% summarise(prop = sum(val) / length(val)) %>%
+  ggplot(aes(x = ags5, y = prop)) + geom_point() + facet_wrap(~ m_code) + theme_classic()
+# Whether or not measures are in place seem to be mostly a factor of the individual Bundesland, but maybe looking at
+# the more specific categories will change this pattern
+# Masking in particular looks very similar everywhere
+
+# Format subcategories:
+measures_dat_unter <- measures_dat_unter %>%
+  select(-c(`_id`:bundesland, kreis)) %>%
+  filter(str_detect(code, '^M02|^M03|^M16|^M21')) %>%
+  pivot_longer(-c(ags5:code), names_to = 'date', values_to = 'val') %>%
+  mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d'),
+         val = ifelse(val == -99, NA, val))
+
+# Split into categories and recode:
+school_pol_dat <- measures_dat_unter %>%
+  filter(str_detect(code, '^M02')) %>%
+  filter(!str_detect(code, '^M02a_01|^M02b_01'))
+expect_true(school_pol_dat %>%
+              group_by(ags5, date, str_sub(code, 1, 7)) %>%
+              summarise(val = all(is.na(val))) %>%
+              filter(val) %>%
+              nrow() == 0)
+school_pol_dat <- school_pol_dat %>%
+  group_by(ags5, date, str_sub(code, 1, 7)) %>%
+  summarise(val = any(val > 0 & !is.na(val))) %>%
+  rename('code' = `str_sub(code, 1, 7)`) %>%
+  mutate(val = as.numeric(val))
+# ggplot(data = school_pol_dat, aes(x = date, y = val, group = ags5)) + geom_line() + facet_wrap(~ code) + theme_classic()
+school_pol_dat <- school_pol_dat %>%
+  pivot_wider(names_from = 'code', values_from = 'val') %>%
+  mutate(school_closures2 = ifelse(M02a_04 == 1, 3, NA),
+         school_closures2 = if_else(M02a_03 == 1 & is.na(school_closures2), 2, school_closures2),
+         school_closures2 = if_else(M02a_02 == 1 & is.na(school_closures2), 1, school_closures2),
+         school_closures2 = if_else(is.na(school_closures2), 0, school_closures2),
+         school_closures1 = ifelse(M02b_04 == 1, 3, NA),
+         school_closures1 = if_else(M02b_03 == 1 & is.na(school_closures1), 2, school_closures1),
+         school_closures1 = if_else(M02b_02 == 1 & is.na(school_closures1), 1, school_closures1),
+         school_closures1 = if_else(is.na(school_closures1), 0, school_closures1)) %>%
+  select(ags5:date, school_closures1, school_closures2) %>%
+  pivot_longer(school_closures1:school_closures2,
+               names_to = 'code',
+               values_to = 'val')
+# summary(a1 %>% filter(school_closures2 == 3))
+# # measures aren't mutually exclusive somehow? take highest/most intensive measure for each date/LK
+# table(a1$school_closures1, a1$school_closures2)
+# cor.test(a1$school_closures1, a1$school_closures2, method = 'kendall')
+# # measures are correlated, but not exactly the same; looks like when secondary school are closed, so are many elementary schools,
+# # but not necessarily vice versa
+# # highly correlated as well: kendall's tau = 0.811, spearman's rho = 0.830
+
+kita_pol_dat <- measures_dat_unter %>%
+  filter(str_detect(code, '^M03')) %>%
+  filter(!str_detect(code, '^M03_01'))
+expect_true(kita_pol_dat %>%
+              group_by(ags5, date, str_sub(code, 1, 6)) %>%
+              summarise(val = all(is.na(val))) %>%
+              filter(val) %>%
+              nrow() == 0)
+kita_pol_dat <- kita_pol_dat %>%
+  group_by(ags5, date, str_sub(code, 1, 6)) %>%
+  summarise(val = any(val > 0 & !is.na(val))) %>%
+  rename('code' = `str_sub(code, 1, 6)`) %>%
+  mutate(val = as.numeric(val))
+# ggplot(data = kita_pol_dat, aes(x = date, y = val, group = ags5)) + geom_line() + facet_wrap(~ code) + theme_classic()
+kita_pol_dat <- kita_pol_dat %>%
+  pivot_wider(names_from = 'code', values_from = 'val') %>%
+  mutate(kita_closures = ifelse(M03_06 == 1, 4, NA),
+         kita_closures = if_else(M03_05 == 1 & is.na(kita_closures), 3, kita_closures),
+         kita_closures = if_else(M03_03 == 1 & is.na(kita_closures), 2, kita_closures),
+         kita_closures = if_else(M03_02 == 1 & is.na(kita_closures), 1, kita_closures),
+         kita_closures = if_else(is.na(kita_closures), 0 , kita_closures)) %>%
+  select(ags5:date, kita_closures) %>%
+  pivot_longer(kita_closures,
+               names_to = 'code',
+               values_to = 'val')
+# summary(a1 %>% filter(kita_closures == 4))
+# # also not mutually exclusive; expansion is most highly correlated with total closures, but all correlations are weak
+
+mask_pol_dat <- measures_dat_unter %>%
+  # filter(str_detect(code, '^M16_02|^M16_03|^M16_04|^M16_05|^M16_10')) %>%
+  filter(str_detect(code, '^M16_03|^M16_04'))
+expect_true(mask_pol_dat %>%
+              group_by(ags5, date, str_sub(code, 1, 6)) %>%
+              summarise(val = all(is.na(val))) %>%
+              filter(val) %>%
+              nrow() == 0)
+mask_pol_dat <- mask_pol_dat %>%
+  group_by(ags5, date, str_sub(code, 1, 6)) %>%
+  summarise(val = any(val > 0 & !is.na(val))) %>%
+  rename('code' = `str_sub(code, 1, 6)`) %>%
+  mutate(val = as.numeric(val),
+         code = if_else(code == 'M16_03', 'masks_transport', 'masks_shopping'))
+# ggplot(data = mask_pol_dat, aes(x = date, y = val, group = ags5)) + geom_line() + facet_wrap(~ code) + theme_classic()
+
+# test_pol_dat <- measures_dat_unter %>%
+#   filter(str_detect(code, '^M21')) %>%
+#   filter(!str_detect(code, '^M21_01'))
+# test_pol_dat <- test_pol_dat %>%
+#   group_by(ags5, date, str_sub(code, 1, 6)) %>%
+#   summarise(val = any(val[!is.na(val)] > 0)) %>%
+#   rename('code' = `str_sub(code, 1, 6)`) %>%
+#   mutate(val = as.numeric(val))
+# ggplot(data = test_pol_dat, aes(x = date, y = val, group = ags5)) + geom_line() + facet_wrap(~ code) + theme_classic()
+
+# Join into single data frame:
+policy_dat <- school_pol_dat %>%
+  bind_rows(kita_pol_dat) %>%
+  bind_rows(mask_pol_dat)
+
+# Clean up:
+rm(measures_dat_ober, measures_dat_unter, school_pol_dat, kita_pol_dat, mask_pol_dat)
+
+# Plot/explore:
+policy_dat %>% group_by(ags5, code) %>% summarise(weighted_avg = sum(val) / length(val)) %>%
+  ggplot(aes(x = ags5, y = weighted_avg)) + geom_point() + facet_wrap(~ code, scales = 'free_y') +
+  theme_classic()
+
+summary(policy_dat) # no NAs
+
+for (pol in unique(policy_dat$code)) {
+  dat_temp <- policy_dat %>%
+    filter(code == pol) %>%
+    mutate(bundesland = str_sub(ags5, 1, 2))
+  
+  p_temp <- ggplot(dat_temp, aes(x = date, y = val, group = ags5)) +
+    geom_line() + facet_wrap(~ bundesland) + theme_classic() +
+    labs(x = 'Date', y = 'Value', title = pol)
+  print(p_temp)
+}
+rm(dat_temp, p_temp, pol)
+# Most of the between-LK variability in a BL seems to come from the early stages of the pandemic (kitas more variable)
+# Mask policy shows less variability within a BL than school/kita closures, as well as less between-BL variability
+
+# An alternative use of the mask data (especially if we use cumulative data) would be the date on which mask mandates first went into effect (at least for first wave)
+
+policy_dat_WIDE <- policy_dat %>%
+  pivot_wider(names_from = code, values_from = val)
+cor_mat <- matrix(data = NA, nrow = 5, ncol = 5)
+for (i in 1:5) {
+  for (j in 1:5) {
+    cor_mat[i, j] <- cor(policy_dat_WIDE[, i + 2], policy_dat_WIDE[, j + 2], method = 'spearman')
+  }
+}
+rm(policy_dat_WIDE, i, j)
+# Secondary and elementary school closures are highly correlated, and both correlated moderately with kita closures
+# Mask policies are also highly correlated with each other, but aren't correlated with school closure policies
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # # Behavior tracker data
 # 
 # behav_dat <- read_csv('data/raw/independent_vars/yougov_tracker_germany.csv')
@@ -308,6 +474,15 @@ index_dat <- index_dat %>%
 # make sure week 53 is correct; for months 3,5,10,12, need German names or change locale
 
 # Only available at the country level
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# COVID-19 vaccination rates
+
+
+
+
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 
