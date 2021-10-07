@@ -202,7 +202,7 @@ cdp_dat_mo <- cdp_dat_mo %>%
   select(Year:Month, lk, deaths:death_rate, pop)
 
 # Write data to file:
-write_csv(cdp_dat_mo, file = 'data/formatted/monthly_covid_cases_by_lk_CDP.csv')
+write_csv(cdp_dat_mo, file = 'data/formatted/monthly_covid_deaths_by_lk_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -335,7 +335,7 @@ mortality_all <- mortality_all %>%
 # Plot:
 p4 <- ggplot(data = mortality_all, aes(x = date, y = deaths, col = Source, lty = Source)) +
   geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic()
-print(p4)
+# print(p4)
 # Less similar than case data, but still relatively close; however, it does seem like CDP data tend to rise/peak before
 # the crowdsourced data, as expected if the reporting dates are when the case was initially reported, and not when the
 # deaths itself was reported
