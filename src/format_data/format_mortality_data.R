@@ -120,14 +120,14 @@ write_csv(mortality_dat_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_CUM
 # Get weekly data (CDP data)
 
 # Add week and year numbers:
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat %>%
   mutate(Week = format(date, '%V'),
          Year = format(date, '%Y'),
          Year = if_else(Week == 53, '2020', Year),
          year_week = paste(Year, Week, sep = '_'))
 
 # Remove incomplete weeks:
-dates_to_remove <- cdp_dat %>%
+dates_to_remove <- cdp_dat_wk %>%
   group_by(lk, year_week) %>%
   summarise(len = length(deaths)) %>%
   filter(len < 7) %>%
@@ -135,11 +135,11 @@ dates_to_remove <- cdp_dat %>%
   select(-c(lk, len)) %>%
   unique()
 
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat_wk %>%
   filter(!(year_week %in% dates_to_remove$year_week))
 
 # Sum over each LK/week:
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat_wk %>%
   group_by(lk, Year, Week, pop) %>%
   summarise(deaths = sum(deaths)) %>%
   mutate(death_rate = deaths / pop * 100000) %>%
@@ -147,7 +147,62 @@ cdp_dat <- cdp_dat %>%
   select(Year:Week, lk, deaths:death_rate, pop)
 
 # Write data to file:
-write_csv(cdp_dat, file = 'data/formatted/weekly_covid_deaths_by_lk_CDP.csv')
+write_csv(cdp_dat_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_CDP.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get monthly data (crowdsourced data)
+
+# Limit data to only rows at month ends:
+month_ends <- mortality_dat %>%
+  mutate(year = format(date, '%Y'),
+         month = format(date, '%m')) %>%
+  group_by(year, month) %>%
+  summarise(date = max(date)) %>%
+  pull(date) %>%
+  unname()
+# remove last month if incomplete?
+month_ends <- month_ends[1:(length(month_ends) - 1)]
+
+mortality_dat_mo <- mortality_dat %>%
+  filter(mortality_dat$date %in% month_ends)
+
+# Add column for year and for month number:
+mortality_dat_mo <- mortality_dat_mo %>%
+  mutate(Year = format(date, '%Y'),
+         Month = format(date, '%m'),
+         .after = date)
+
+# Write data to file:
+write_csv(mortality_dat_mo, file = 'data/formatted/monthly_covid_deaths_by_lk_CUMULATIVE.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get monthly data (CDP data)
+
+# Add month and year numbers:
+cdp_dat_mo <- cdp_dat %>%
+  mutate(Month = format(date, '%m'),
+         Year = format(date, '%Y'),
+         year_month = paste(Year, Month, sep = '_'))
+
+# Remove incomplete months:
+if (format(max(cdp_dat_mo$date), '%m') == format((max(cdp_dat_mo$date) + 1), '%m')) {
+  cdp_dat_mo <- cdp_dat_mo %>%
+    filter(!(Year == format(max(cdp_dat_mo$date), '%Y') &
+               Month == format(max(cdp_dat_mo$date), '%m')))
+}
+
+# Sum over each LK/month:
+cdp_dat_mo <- cdp_dat_mo %>%
+  group_by(lk, Year, Month, pop) %>%
+  summarise(deaths = sum(deaths)) %>%
+  mutate(death_rate = deaths / pop * 100000) %>%
+  ungroup() %>%
+  select(Year:Month, lk, deaths:death_rate, pop)
+
+# Write data to file:
+write_csv(cdp_dat_mo, file = 'data/formatted/monthly_covid_cases_by_lk_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -189,6 +244,44 @@ write_csv(mortality_inc, file = 'data/formatted/weekly_covid_deaths_by_lk_INCIDE
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Convert to monthly cases (rather than cumulative)
+
+# Subtract values from previous month:
+mortality_inc_mo <- mortality_dat_mo %>%
+  select(date, lk, deaths) %>%
+  pivot_wider(names_from = lk, values_from = deaths)
+
+for (i in nrow(mortality_inc_mo):2) {
+  mortality_inc_mo[i, 2:ncol(mortality_inc_mo)] <- mortality_inc_mo[i, 2:ncol(mortality_inc_mo)] - mortality_inc_mo[i - 1, 2:ncol(mortality_inc_mo)]
+}
+
+mortality_inc_mo <- mortality_inc_mo %>%
+  pivot_longer(!date, names_to = 'lk', values_to = 'deaths') %>%
+  left_join(mortality_dat_mo[, c('date', 'lk', 'pop')],
+            by = c('date', 'lk')) %>%
+  mutate(Year = format(date, '%Y'),
+         Month = format(date, '%m'),
+         .after = date) %>%
+  mutate(death_rate = deaths / pop * 100000,
+         .after = deaths)
+
+expect_equal(dim(mortality_dat_mo)[1], dim(mortality_inc_mo)[1])
+print(length(mortality_inc_mo$deaths[mortality_inc_mo$deaths < 0])) # 10 negative values
+# typically relatively small - never less than -10
+
+# Replace negatives with NAs:
+mortality_inc_mo <- mortality_inc_mo %>%
+  mutate(deaths = ifelse(deaths < 0, NA, deaths))
+
+# Recalculate case rates:
+mortality_inc_mo <- mortality_inc_mo %>%
+  mutate(death_rate = deaths / pop * 100000)
+
+# Write data to file:
+write_csv(mortality_inc_mo, file = 'data/formatted/monthly_covid_deaths_by_lk_INCIDENT.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Explore data for obvious patterns/issues
 
 # Check for obvious weekend effect:
@@ -210,13 +303,24 @@ p2 <- ggplot(mortality_dat[mortality_dat$lk %in% not_strictly_inc, ], aes(x = da
   labs(x = 'Date', y = 'Cumulative Deaths')
 print(p2)
 
+not_strictly_inc <- mortality_dat_mo %>%
+  group_by(lk) %>%
+  mutate(check = cummax(deaths)) %>%
+  filter(deaths != check) %>%
+  pull(lk) %>%
+  unique()
+p3 <- ggplot(mortality_dat[mortality_dat$lk %in% not_strictly_inc, ], aes(x = date, y = deaths)) +
+  geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic() +
+  labs(x = 'Date', y = 'Cumulative Deaths')
+print(p3)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Compare two data sources
 
 # Join data sets:
 mortality_all <- mortality_inc %>%
-  left_join(cdp_dat, by = c('lk', 'Year', 'Week'))
+  left_join(cdp_dat_wk, by = c('lk', 'Year', 'Week'))
 expect_true(all.equal(mortality_all$pop.x, mortality_all$pop.y))
 
 # Format:
@@ -229,9 +333,9 @@ mortality_all <- mortality_all %>%
                values_to = 'deaths')
 
 # Plot:
-p3 <- ggplot(data = mortality_all, aes(x = date, y = deaths, col = Source, lty = Source)) +
+p4 <- ggplot(data = mortality_all, aes(x = date, y = deaths, col = Source, lty = Source)) +
   geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic()
-print(p3)
+print(p4)
 # Less similar than case data, but still relatively close; however, it does seem like CDP data tend to rise/peak before
 # the crowdsourced data, as expected if the reporting dates are when the case was initially reported, and not when the
 # deaths itself was reported

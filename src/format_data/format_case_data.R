@@ -122,14 +122,14 @@ write_csv(case_dat_wk, file = 'data/formatted/weekly_covid_cases_by_lk_CUMULATIV
 # Get weekly data (CDP data)
 
 # Add week and year numbers:
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat %>%
   mutate(Week = format(date, '%V'),
          Year = format(date, '%Y'),
          Year = if_else(Week == 53, '2020', Year),
          year_week = paste(Year, Week, sep = '_'))
 
 # Remove incomplete weeks:
-dates_to_remove <- cdp_dat %>%
+dates_to_remove <- cdp_dat_wk %>%
   group_by(lk, year_week) %>%
   summarise(len = length(cases)) %>%
   filter(len < 7) %>%
@@ -137,11 +137,11 @@ dates_to_remove <- cdp_dat %>%
   select(-c(lk, len)) %>%
   unique()
 
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat_wk %>%
   filter(!(year_week %in% dates_to_remove$year_week))
 
 # Sum over each LK/week:
-cdp_dat <- cdp_dat %>%
+cdp_dat_wk <- cdp_dat_wk %>%
   group_by(lk, Year, Week, pop) %>%
   summarise(cases = sum(cases)) %>%
   mutate(case_rate = cases / pop * 100000) %>%
@@ -149,7 +149,62 @@ cdp_dat <- cdp_dat %>%
   select(Year:Week, lk, cases:case_rate, pop)
 
 # Write data to file:
-write_csv(cdp_dat, file = 'data/formatted/weekly_covid_cases_by_lk_CDP.csv')
+write_csv(cdp_dat_wk, file = 'data/formatted/weekly_covid_cases_by_lk_CDP.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get monthly data (crowdsourced data)
+
+# Limit data to only rows at month ends:
+month_ends <- case_dat %>%
+  mutate(year = format(date, '%Y'),
+         month = format(date, '%m')) %>%
+  group_by(year, month) %>%
+  summarise(date = max(date)) %>%
+  pull(date) %>%
+  unname()
+# remove last month if incomplete?
+month_ends <- month_ends[1:(length(month_ends) - 1)]
+
+case_dat_mo <- case_dat %>%
+  filter(case_dat$date %in% month_ends)
+
+# Add column for year and for month number:
+case_dat_mo <- case_dat_mo %>%
+  mutate(Year = format(date, '%Y'),
+         Month = format(date, '%m'),
+         .after = date)
+
+# Write data to file:
+write_csv(case_dat_mo, file = 'data/formatted/monthly_covid_cases_by_lk_CUMULATIVE.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get monthly data (CDP data)
+
+# Add month and year numbers:
+cdp_dat_mo <- cdp_dat %>%
+  mutate(Month = format(date, '%m'),
+         Year = format(date, '%Y'),
+         year_month = paste(Year, Month, sep = '_'))
+
+# Remove incomplete months:
+if (format(max(cdp_dat_mo$date), '%m') == format((max(cdp_dat_mo$date) + 1), '%m')) {
+  cdp_dat_mo <- cdp_dat_mo %>%
+    filter(!(Year == format(max(cdp_dat_mo$date), '%Y') &
+               Month == format(max(cdp_dat_mo$date), '%m')))
+}
+
+# Sum over each LK/month:
+cdp_dat_mo <- cdp_dat_mo %>%
+  group_by(lk, Year, Month, pop) %>%
+  summarise(cases = sum(cases)) %>%
+  mutate(case_rate = cases / pop * 100000) %>%
+  ungroup() %>%
+  select(Year:Month, lk, cases:case_rate, pop)
+
+# Write data to file:
+write_csv(cdp_dat_mo, file = 'data/formatted/monthly_covid_cases_by_lk_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -193,6 +248,44 @@ write_csv(case_inc, file = 'data/formatted/weekly_covid_cases_by_lk_INCIDENT.csv
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Convert to monthly cases (rather than cumulative)
+
+# Subtract values from previous month:
+case_inc_mo <- case_dat_mo %>%
+  select(date, lk, cases) %>%
+  pivot_wider(names_from = lk, values_from = cases)
+
+for (i in nrow(case_inc_mo):2) {
+  case_inc_mo[i, 2:ncol(case_inc_mo)] <- case_inc_mo[i, 2:ncol(case_inc_mo)] - case_inc_mo[i - 1, 2:ncol(case_inc_mo)]
+}
+
+case_inc_mo <- case_inc_mo %>%
+  pivot_longer(!date, names_to = 'lk', values_to = 'cases') %>%
+  left_join(case_dat_mo[, c('date', 'lk', 'pop')],
+            by = c('date', 'lk')) %>%
+  mutate(Year = format(date, '%Y'),
+         Month = format(date, '%m'),
+         .after = date) %>%
+  mutate(case_rate = cases / pop * 100000,
+         .after = cases)
+
+expect_equal(dim(case_dat_mo)[1], dim(case_inc_mo)[1])
+print(length(case_inc_mo$cases[case_inc_mo$cases < 0])) # 23 negative values
+# can be pretty substantial - up to -456
+
+# Replace negatives with NAs:
+case_inc_mo <- case_inc_mo %>%
+  mutate(cases = ifelse(cases < 0, NA, cases))
+
+# Recalculate case rates:
+case_inc_mo <- case_inc_mo %>%
+  mutate(case_rate = cases / pop * 100000)
+
+# Write data to file:
+write_csv(case_inc_mo, file = 'data/formatted/monthly_covid_cases_by_lk_INCIDENT.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Explore data for obvious patterns/issues
 
 # Check where cumulative data not strictly increasing over time:
@@ -208,13 +301,25 @@ p1 <- ggplot(case_dat[case_dat$lk %in% not_strictly_inc, ], aes(x = date, y = ca
   labs(x = 'Date', y = 'Cumulative Cases')
 print(p1)
 
+not_strictly_inc <- case_dat_mo %>%
+  group_by(lk) %>%
+  mutate(check = cummax(cases)) %>%
+  filter(cases != check) %>%
+  pull(lk) %>%
+  unique()
+# 23 - so only once per LK for monthly data
+p2 <- ggplot(case_dat[case_dat$lk %in% not_strictly_inc, ], aes(x = date, y = cases)) +
+  geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic() +
+  labs(x = 'Date', y = 'Cumulative Cases')
+print(p2)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Compare two data sources
 
 # Join data sets:
 cases_all <- case_inc %>%
-  left_join(cdp_dat, by = c('lk', 'Year', 'Week'))
+  left_join(cdp_dat_wk, by = c('lk', 'Year', 'Week'))
 expect_true(all.equal(cases_all$pop.x, cases_all$pop.y))
 
 # Format:
@@ -227,9 +332,9 @@ cases_all <- cases_all %>%
                values_to = 'cases')
 
 # Plot:
-p2 <- ggplot(data = cases_all, aes(x = date, y = cases, col = Source, lty = Source)) +
+p3 <- ggplot(data = cases_all, aes(x = date, y = cases, col = Source, lty = Source)) +
   geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic()
-# print(p2)
+# print(p3)
 # Not exactly the same, but very similar
 
 # ---------------------------------------------------------------------------------------------------------------------
