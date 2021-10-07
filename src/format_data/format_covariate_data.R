@@ -6,6 +6,7 @@
 
 # Load libraries:
 library(tidyverse)
+library(ISOweek)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -455,10 +456,162 @@ index_dat <- index_dat %>%
 
 # COVID-19 vaccination rates
 
+# # Read in data:
+# vacc_dat <- read_csv('data/raw/cdp/impfdaten_regional.csv')
+# 
+# # Format:
+# vacc_dat <- vacc_dat %>%
+#   select(-c(`_id`:bundesland, kreis)) %>%
+#   rename('date' = 'datum') %>%
+#   mutate(Year = format(date, '%Y'),
+#          Week = format(date, '%V'),
+#          .after = date) %>%
+#   mutate(Year = if_else(Week == '53', '2020', Year)) %>%
+#   mutate(year_week = paste(Year, Week, sep = '_'),
+#          .after = Week)
+# 
+# # Keep measures of interest:
+# vacc_dat <- vacc_dat %>%
+#   select(ags5:kr_erstimpf, kr_zweitimpf)
+# 
+# # Remove incomplete weeks:
+# vacc_dat <- vacc_dat %>%
+#   filter(year_week != '2021_39')
+# # Several weeks/LKs with less than 7 observations, but removing these will definitely prevent us from calculating
+# # the total vaccination coverage over time; assume these values represent no vaccinations
+# # Note that these mostly happen near the beginning of the vaccination period
+# 
+# # Sum to get weekly values:
+# vacc_dat <- vacc_dat %>%
+#   group_by(ags5, Year, Week, year_week) %>%
+#   summarise(first_dose = sum(kr_erstimpf),
+#             second_dose = sum(kr_zweitimpf)) %>%
+#   ungroup()
+# 
+# # Fill in missing LK/year/weeks with 0:
+# vacc_dat <- vacc_dat %>%
+#   expand(ags5, year_week) %>%
+#   left_join(vacc_dat, by = c('ags5', 'year_week')) %>%
+#   mutate(Year = str_sub(year_week, 1, 4),
+#          Week = str_sub(year_week, 6, 7)) %>%
+#   replace_na(list(first_dose = 0, second_dose = 0))
+# # Does this make sense? Are there really LK where vaccination didn't start until week 14 of 2021?
+# 
+# expect_equal(nrow(vacc_dat), length(unique(vacc_dat$year_week)) * length(unique(vacc_dat$ags5)))
+# 
+# # Convert to cumulative vaccinations:
+# vacc_dat <- vacc_dat %>%
+#   mutate(date = ISOweek2date(paste0(Year, '-W', Week, '-1')))
+# 
+# vacc_cumulative1 <- vacc_dat %>%
+#   select(!second_dose) %>%
+#   pivot_wider(names_from = ags5, values_from = first_dose) %>%
+#   arrange(date)
+# vacc_cumulative2 <- vacc_dat %>%
+#   select(!first_dose) %>%
+#   pivot_wider(names_from = ags5, values_from = second_dose) %>%
+#   arrange(date)
+# 
+# vacc_cumulative1_ORIG <- vacc_cumulative1
+# vacc_cumulative2_ORIG <- vacc_cumulative2
+# 
+# for (i in 2:nrow(vacc_cumulative1)) {
+#   vacc_cumulative1[i, 5:ncol(vacc_cumulative1)] <- vacc_cumulative1[i, 5:ncol(vacc_cumulative1)] + vacc_cumulative1[i - 1, 5:ncol(vacc_cumulative1)]
+# }
+# for (i in 2:nrow(vacc_cumulative2)) {
+#   vacc_cumulative2[i, 5:ncol(vacc_cumulative2)] <- vacc_cumulative2[i, 5:ncol(vacc_cumulative2)] + vacc_cumulative2[i - 1, 5:ncol(vacc_cumulative2)]
+# }
+# 
+# vacc_cumulative1_CHECK <- vacc_cumulative1
+# for (i in nrow(vacc_cumulative1_CHECK):2) {
+#   vacc_cumulative1_CHECK[i, 5:ncol(vacc_cumulative1_CHECK)] <- vacc_cumulative1_CHECK[i, 5:ncol(vacc_cumulative1_CHECK)] - vacc_cumulative1_CHECK[i - 1, 5:ncol(vacc_cumulative1_CHECK)]
+# }
+# vacc_cumulative2_CHECK <- vacc_cumulative2
+# for (i in nrow(vacc_cumulative1_CHECK):2) {
+#   vacc_cumulative2_CHECK[i, 5:ncol(vacc_cumulative2_CHECK)] <- vacc_cumulative2_CHECK[i, 5:ncol(vacc_cumulative2_CHECK)] - vacc_cumulative2_CHECK[i - 1, 5:ncol(vacc_cumulative2_CHECK)]
+# }
+# 
+# expect_true(all.equal(vacc_cumulative1_ORIG, vacc_cumulative1_CHECK))
+# expect_true(all.equal(vacc_cumulative2_ORIG, vacc_cumulative2_CHECK))
+# 
+# rm(vacc_cumulative1_ORIG, vacc_cumulative1_CHECK, vacc_cumulative2_ORIG, vacc_cumulative2_CHECK, i)
+# 
+# # Lengthen and rejoin:
+# vacc_cumulative1 <- vacc_cumulative1 %>%
+#   pivot_longer(-c(year_week, Year, Week, date),
+#                names_to = 'ags5',
+#                values_to = 'first_dose')
+# vacc_cumulative2 <- vacc_cumulative2 %>%
+#   pivot_longer(-c(year_week, Year, Week, date),
+#                names_to = 'ags5',
+#                values_to = 'second_dose')
+# 
+# vacc_dat <- vacc_cumulative1 %>%
+#   inner_join(vacc_cumulative2)
+# rm(vacc_cumulative1, vacc_cumulative2)
+# 
+# # Double-check values:
+# vacc_dat %>% filter(date == '2021-07-19') %>% pull(first_dose) %>% sum() # 48463582
+# vacc_dat %>% filter(date == '2021-07-19') %>% pull(second_dose) %>% sum() # 41150131
+# # First doses are lower than reported in wikipedia, but second doses are higher
+# 
+# # Get population data and calculate % vaccinated:
+# pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
+# pop_dat <- pop_dat %>%
+#   select(-X2) %>%
+#   rename(lk = X1, pop = X3) %>%
+#   mutate(pop = as.numeric(pop)) %>%
+#   filter(!is.na(pop))
+# 
+# vacc_dat <- vacc_dat %>%
+#   rename('lk' = 'ags5') %>%
+#   left_join(pop_dat, by = 'lk')
+# rm(pop_dat)
+# 
+# vacc_dat <- vacc_dat %>%
+#   mutate(prop1 = first_dose / pop * 100,
+#          prop2 = second_dose / pop * 100,
+#          .after = second_dose)
+# # many exceed 100% - clearly people being vaccinated in BL where they don't live
+# # although many of these tend to be cities
+# 
+# # Explore extent of variability by Bundesland:
+# vacc_dat <- vacc_dat %>%
+#   mutate(bl = str_sub(lk, 1, 2))
+# 
+# ggplot(data = vacc_dat, aes(x = date, y = prop1, group = lk, col = bl)) + geom_line() + theme_classic() + facet_wrap(~ bl)
+# ggplot(data = vacc_dat, aes(x = date, y = prop2, group = lk, col = bl)) + geom_line() + theme_classic() + facet_wrap(~ bl)
+# # can be quite a bit of variability between LK in a BL, esp. for 07 (RP), 08 (BW), 09 (BY), 10 (SL), 12 (BB), 16 (TH)
 
+# Read in and format BL-level data:
+vacc_dat_bl <- read_csv('data/raw/cdp/impfdaten.csv')
 
+vacc_dat_bl <- vacc_dat_bl %>%
+  select(ags2:datum, bl_erstimpf_quote, bl_zweitimpf_quote) %>%
+  rename('bl' = 'ags2',
+         'date' = 'datum',
+         'prop_first_dose' = 'bl_erstimpf_quote',
+         'prop_second_dose' = 'bl_zweitimpf_quote') %>%
+  mutate(Year = format(date, '%Y'),
+         Week = format(date, '%V'),
+         .after = date) %>%
+  mutate(Year = if_else(Week == '53', '2020', Year)) %>%
+  mutate(year_week = paste(Year, Week, sep = '_'),
+         .after = Week)
 
+vacc_dat_bl <- vacc_dat_bl %>%
+  filter(year_week != '2021_35')
 
+vacc_dat_bl <- vacc_dat_bl %>%
+  group_by(bl, bundesland, Year, Week, year_week) %>%
+  summarise(prop_first_dose = max(prop_first_dose),
+            prop_second_dose = max(prop_second_dose)) %>%
+  # ungroup() %>% group_by(bl) %>% mutate(check = cummax(prop_first_dose)) %>% filter(prop_first_dose != check)
+  # ungroup() %>% group_by(bl) %>% mutate(check = cummax(prop_second_dose)) %>% filter(prop_second_dose != check)
+  ungroup()
+# data are not strictly increasing in the original, but taking the highest value from each week yields monotonically increasing values
+
+expect_equal(nrow(vacc_dat_bl), length(unique(vacc_dat_bl$year_week)) * 16)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -478,6 +631,7 @@ write_csv(ses_dat, file = 'data/formatted/independent_vars/ses_independent_varia
 write_csv(mobility_rki_dat, file = 'data/formatted/independent_vars/mobility_dat_WEEKLY.csv')
 write_csv(index_dat, file = 'data/formatted/independent_vars/stringency_and_containment_indices.csv')
 write_csv(policy_dat, file = 'data/formatted/independent_vars/policy_dat_WEEKLY.csv')
+write_csv(vacc_dat_bl, file = 'data/formatted/independent_vars/vacc_dat_WEEKLY_BL.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
