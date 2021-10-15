@@ -384,6 +384,31 @@ n1a_cdp_2 <- bake(file = 'results/fitted_models/n1a_cdp_2.rds',
                   }
 )
 
+# Alternative formulations:
+n1b_zip <- bake(file = 'results/fitted_models/n1b_cdp_zip.rds',
+                expr = {
+                  bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                        ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+                        s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
+                        ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
+                        ti(GISD_Score, Month) + ti(pop_dens, Month) +
+                        s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                      data = dat_mo[[4]], family = 'ziP', method = 'fREML', nthreads = 4, discrete = TRUE)
+                }
+)
+
+n1b_re <- bake(file = 'results/fitted_models/n1b_cdp_re.rds',
+               expr = {
+                 bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                       ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+                       s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
+                       ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
+                       ti(GISD_Score, Month) + ti(pop_dens, Month) +
+                       s(ARS, bs = 're', k = 401) + offset(log(cases)),
+                     data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+               }
+)
+
 # Weekly:
 n1a_cdp_wk <- bake(file = 'results/fitted_models/n1a_cdp_wk.rds',
                    expr = {
@@ -573,7 +598,7 @@ dat_mo[[4]]$resid <- residuals(n1b_cdp_2, type = 'deviance')
 
 gam_resid <- bake(file = 'results/fitted_models/n1b_cdp_2_RESID.rds',
                   expr = {
-                    bam(rsd ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                    bam(resid ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
                           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
                           s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
                           s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
@@ -612,6 +637,28 @@ gam_fitted <- bake(file = 'results/fitted_models/n1b_cdp_2_FITTED.rds',
 
 par(mfrow = c(2, 2))
 gam.check(gam_fitted)
+
+dat_mo[[4]]$resid <- residuals(gam_fitted, type = 'deviance')
+gam_resid_fitted <- bake(file = 'results/fitted_models/n1b_cdp_2_RESID_FITTED.rds',
+                         expr = {
+                           bam(resid ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                                 ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+                                 s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
+                                 s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
+                                 ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
+                                 ti(GISD_Score, Month) + ti(pop_dens, Month) +
+                                 s(bundesland, bs = 're', k = 16),
+                               data = dat_mo[[4]], family = 'scat', method = 'fREML', nthreads = 4, discrete = TRUE)
+                         }
+)
+
+summary(gam_resid_fitted)
+
+gam_resid_pred <- ggpredict(gam_resid_fitted, terms = 'Month')
+plot(gam_resid_pred)
+
+par(mfrow = c(2, 2))
+gam.check(gam_resid_fitted)
 
 # DHARMa workflow:
 # https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
