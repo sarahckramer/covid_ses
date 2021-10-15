@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# 
+# Explore potential solutions for spatiotemporal model
 #
 # https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
 # https://jroy042.github.io/nonlinear/week4.html
@@ -350,7 +350,6 @@ ggplot(data = dat_deaths_wave2, aes(x = Week, y = deaths/cases, group = lk)) + g
 
 # If noise is an issue, using monthly data could help
 
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # How do these findings change with different BL?
@@ -360,10 +359,6 @@ ggplot(data = dat_deaths_wave2, aes(x = Week, y = deaths/cases, group = lk)) + g
 
 # okay: BadenWuerttemberg, NordrheinWestfalen, 
 # issues: Bayern, Brandenburg wave 2? (but small)
-
-
-
-
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -539,19 +534,6 @@ gam.check(b1, rep = 50)
 # Incorporating time-space interaction and temporal autocorrelation in residuals leads to smoothest time fxn, but
 # also leads to a lot of smoothing in other terms
 
-
-
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Fit to monthly data
-# Could reduce noisiness of the signal and size of the problem, but sacrifices temporal granularity
-
-
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Fit to cumulative rates over half-waves (no time component)
@@ -627,21 +609,5 @@ p3 <- ggplot(n2_1.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)
 p4 <- ggplot(n2_2.pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
   scale_fill_viridis(na.value = 'transparent') + coord_quickmap() + theme_void()
 grid.arrange(p1, p2, p3, p4, ncol = 2)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Does adding covariates help?
-# dat_deaths_wave1, dat_deaths_wave2
-
-
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Explore model residuals with dharma package
-
-
-
 
 # ---------------------------------------------------------------------------------------------------------------------
