@@ -428,15 +428,15 @@ dat_wk[[4]] <- dat_wk[[4]] %>%
   mutate(masks_shopping = factor(masks_shopping),
          school_closures2 = factor(school_closures2))
 n1b_cdp_wk_add_2 <- bake(file = 'results/fitted_models/n1b_cdp_wk_fullplus2.rds',
-                       expr = {
-                         bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                               ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                               s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-                               ti(perc_65plus, Week) + ti(perc_women, Week) + ti(hosp_beds, Week) + ti(care_home_beds, Week) +
-                               ti(GISD_Score, Week) + ti(pop_dens, Week) + s(stringency_index) + masks_shopping + school_closures2 +
-                               s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                             data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                       }
+                         expr = {
+                           bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
+                                 ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
+                                 s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                                 ti(perc_65plus, Week) + ti(perc_women, Week) + ti(hosp_beds, Week) + ti(care_home_beds, Week) +
+                                 ti(GISD_Score, Week) + ti(pop_dens, Week) + s(stringency_index) + masks_shopping + school_closures2 +
+                                 s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                               data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+                         }
 )
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -520,90 +520,115 @@ for (i in 1:length(models_deaths_wk)) {
 
 # Focus here on monthly cases/deaths, as well as weekly deaths
 
+# Plot residuals vs. fitted values:
+par(mfrow = c(2, 2))
+plot(fitted(n1b_cdp_2), residuals(n1b_cdp_2, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Monthly Mortality')
+plot(fitted(n1a_cdp_2), residuals(n1a_cdp_2, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Monthly Incidence')
+plot(fitted(n1b_cdp_wk_full), residuals(n1b_cdp_wk_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Weekly Mortality')
 
+# Plot residuals vs. predictors:
+rsd <- residuals(n1b_cdp_2, type = 'deviance')
 
+par(mfrow = c(3, 3))
+boxplot(rsd ~ Month, data = dat_mo[[4]])
+plot(dat_mo[[4]]$perc_65plus, rsd)
+plot(dat_mo[[4]]$perc_women, rsd)
+plot(dat_mo[[4]]$hosp_beds, rsd)
+plot(dat_mo[[4]]$care_home_beds, rsd)
+plot(dat_mo[[4]]$GISD_Score, rsd)
+plot(dat_mo[[4]]$pop_dens, rsd)
 
+rsd <- residuals(n1a_cdp_2, type = 'deviance')
 
+par(mfrow = c(3, 3))
+boxplot(rsd ~ Month, data = dat_mo[[3]])
+plot(dat_mo[[3]]$perc_65plus, rsd)
+plot(dat_mo[[3]]$perc_women, rsd)
+plot(dat_mo[[3]]$care_home_beds, rsd)
+plot(dat_mo[[3]]$GISD_Score, rsd)
+plot(dat_mo[[3]]$pop_dens, rsd)
+plot(dat_mo[[3]]$living_area, rsd)
+plot(dat_mo[[3]]$perc_service, rsd)
+plot(dat_mo[[3]]$perc_production, rsd)
 
+rsd <- residuals(n1b_cdp_wk_full, type = 'deviance')
 
+par(mfrow = c(3, 3))
+boxplot(rsd ~ Week, data = dat_wk[[4]])
+plot(dat_wk[[4]]$perc_65plus, rsd)
+plot(dat_wk[[4]]$perc_women, rsd)
+plot(dat_wk[[4]]$hosp_beds, rsd)
+plot(dat_wk[[4]]$care_home_beds, rsd)
+plot(dat_wk[[4]]$GISD_Score, rsd)
+plot(dat_wk[[4]]$pop_dens, rsd)
 
+# Fit model of residuals vs. covariates:
+dat_mo[[4]]$resid <- residuals(n1b_cdp_2, type = 'deviance')
 
+gam_resid <- bake(file = 'results/fitted_models/n1b_cdp_2_RESID.rds',
+                  expr = {
+                    bam(rsd ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
+                          s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
+                          ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
+                          ti(GISD_Score, Month) + ti(pop_dens, Month) +
+                          s(bundesland, bs = 're', k = 16),
+                        data = dat_mo[[4]], family = 'scat', method = 'fREML', nthreads = 4, discrete = TRUE)
+                  }
+)
 
+summary(gam_resid)
 
+gam_resid_pred <- ggpredict(gam_resid, terms = 'Month')
+plot(gam_resid_pred)
 
-# Residuals check:
-# focus on: n1b_cdp, n1b_cdp_tweedie, n1b_cdp_1/n1b_cdp_2
+par(mfrow = c(2, 2))
+gam.check(gam_resid)
 
-plot(dat_mo[[4]]$time, residuals(mod))
-plot(dat_mo[[4]]$bundesland, residuals(n1b_cdp))
-plot(dat_mo[[4]]$lat, residuals(n1b_cdp))
-plot(dat_mo[[4]]$long, residuals(n1b_cdp))
+# Fit fitted values using same model:
+dat_mo[[4]]$fitted <- rnbinom(n = nrow(dat_mo[[4]]),
+                              size = 8.423,
+                              mu = predict(n1b_cdp_2, type = 'response'))
 
-plot(dat_mo[[4]]$time, residuals(n1b_cdp_small_tweedie))
-plot(dat_mo[[4]]$bundesland, residuals(n1b_cdp_small_tweedie))
-plot(dat_mo[[4]]$lat, residuals(n1b_cdp_small_tweedie))
-plot(dat_mo[[4]]$long, residuals(n1b_cdp_small_tweedie))
+gam_fitted <- bake(file = 'results/fitted_models/n1b_cdp_2_FITTED.rds',
+                   expr = {
+                     bam(fitted ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
+                           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
+                           s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
+                           s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
+                           ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
+                           ti(GISD_Score, Month) + ti(pop_dens, Month) +
+                           s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                         data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+                   }
+)
 
-plot(dat_mo[[4]]$time, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$bundesland, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$lat, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$long, residuals(n1b_cdp_1))
-
-plot(dat_mo[[4]]$perc_65plus, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$perc_women, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$hosp_beds, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$care_home_beds, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$GISD_Score, residuals(n1b_cdp_1))
-plot(dat_mo[[4]]$pop_dens, residuals(n1b_cdp_1))
-
-rsd <- residuals(n1b_cdp, type = 'deviance')
-dat_mo[[4]]$res <- rsd
-a <- gam(rsd ~ s(lat) + s(long) + s(Month) - 1, data = dat_mo[[4]], select = TRUE)
-a <- bam(rsd ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 10)) +
-           s(bundesland, bs = 're', k = 16),
-         data = dat_mo[[4]], select = TRUE, method = 'fREML', nthreads = 4)
-# seems that there is still a pattern in the residuals over time, BL, and the time-space interaction
-# but above, when we plot residuals vs. time, no pattern is observed
-
-rsd <- residuals(n1b_cdp_1, type = 'deviance')
-a <- bam(rsd ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 10)) +
-           # s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-           s(bundesland, bs = 're', k = 16), # + offset(log(cases)),
-         data = dat_mo[[4]], select = TRUE, method = 'fREML', nthreads = 4)
-# also still a lot of patterns by predictors
-
-p <- predict(n1b_cdp_small, type = 'response')
-dat_mo[[4]]$pred_dat <- round(p)
-
-a <- bam(pred_dat ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 10)) +
-           s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-         data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-
-rsd <- residuals(a, type = 'deviance')
-qqnorm(rsd) # these actually look pretty normal? what's happening in gam.check?
-
-dat_mo[[4]]$res <- rsd
-b <- bam(res ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 10)) +
-           s(bundesland, bs = 're', k = 16),
-         data = dat_mo[[4]], method = 'fREML', nthreads = 4, discrete = TRUE)
-
+par(mfrow = c(2, 2))
+gam.check(gam_fitted)
 
 # DHARMa workflow:
+# https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 library(Rcpp)
 library(DHARMa)
 
+par(mfrow = c(1, 1))
+
+# monthly mortality:
 # https://aosmith.rbind.io/2017/12/21/using-dharma-for-residual-checks-of-unsupported-models/
-mus <- predict(n1b_cdp, type = 'response')
+mus <- predict(n1b_cdp_2, type = 'response')
 sim_n1b_cdp <- replicate(1000, rnbinom(n = nrow(dat_mo[[4]]),
-                                       size = 8.497,
+                                       size = 8.423,
                                        mu = mus))
 sim_res_n1b_cdp <- createDHARMa(simulatedResponse = sim_n1b_cdp,
                                 observedResponse = dat_mo[[4]]$deaths,
-                                fittedPredictedResponse = predict(n1b_cdp, type = 'response'),
+                                fittedPredictedResponse = predict(n1b_cdp_2, type = 'response'),
                                 integerResponse = TRUE)
 
 plot(sim_res_n1b_cdp)
@@ -617,50 +642,70 @@ testDispersion(sim_res_n1b_cdp)
 
 testZeroInflation(sim_res_n1b_cdp)
 
-testQuantiles(sim_res_n1b_cdp)
-# fits a quantile regression or residuals against a predictor (default predicted value), and tests if this conforms to the expected quantile
+# testQuantiles(sim_res_n1b_cdp)
+# # fits a quantile regression or residuals against a predictor (default predicted value), and tests if this conforms to the expected quantile
 
-testUniformity(sim_res_n1b_cdp)
-# tests if the overall distribution conforms to expectations
+# testUniformity(sim_res_n1b_cdp)
+# # tests if the overall distribution conforms to expectations
 
-testTemporalAutocorrelation(sim_res_n1b_cdp)
-testSpatialAutocorrelation(sim_res_n1b_cdp)
+testTemporalAutocorrelation(recalculateResiduals(sim_res_n1b_cdp, group = dat_mo[[4]]$Month)$scaledResiduals,
+                            time = unique(dat_mo[[4]]$Month))
 
+dat_ars <- dat_mo[[4]] %>%
+  group_by(ARS) %>%
+  summarise(lat = unique(lat),
+            long = unique(long))
+testSpatialAutocorrelation(recalculateResiduals(sim_res_n1b_cdp, group = dat_mo[[4]]$ARS)$scaledResiduals,
+                           x = dat_ars$long, y = dat_ars$lat)
 
+# monthly incidence:
+mus <- predict(n1a_cdp_2, type = 'response')
+sim_n1a_cdp <- replicate(1000, rnbinom(n = nrow(dat_mo[[3]]),
+                                       size = 21.614,
+                                       mu = mus))
+sim_res_n1a_cdp <- createDHARMa(simulatedResponse = sim_n1a_cdp,
+                                observedResponse = dat_mo[[3]]$cases,
+                                fittedPredictedResponse = predict(n1a_cdp_2, type = 'response'),
+                                integerResponse = TRUE)
 
+plot(sim_res_n1a_cdp)
+plotResiduals(sim_res_n1a_cdp, form = dat_mo[[3]]$Month)
+testOutliers(sim_res_n1a_cdp, type = 'bootstrap')
+testDispersion(sim_res_n1a_cdp)
+testZeroInflation(sim_res_n1a_cdp)
+# testUniformity(sim_res_n1a_cdp)
+testTemporalAutocorrelation(recalculateResiduals(sim_res_n1a_cdp, group = dat_mo[[3]]$Month)$scaledResiduals,
+                            time = unique(dat_mo[[3]]$Month))
+dat_ars <- dat_mo[[3]] %>%
+  group_by(ARS) %>%
+  summarise(lat = unique(lat),
+            long = unique(long))
+testSpatialAutocorrelation(recalculateResiduals(sim_res_n1a_cdp, group = dat_mo[[3]]$ARS)$scaledResiduals,
+                           x = dat_ars$long, y = dat_ars$lat)
 
-mus <- predict(n1a, type = 'response')
-sim_n1a <- replicate(1000, rnbinom(n = nrow(dat_mo[[3]]),
-                                   size = 16.147,
-                                   mu = mus))
-sim_res_n1a <- createDHARMa(simulatedResponse = sim_n1a,
-                            observedResponse = dat_mo[[3]]$cases,
-                            fittedPredictedResponse = predict(n1a, type = 'response'),
-                            integerResponse = TRUE)
+# weekly mortality:
+mus <- predict(n1b_cdp_wk_full, type = 'response')
+sim_n1b_cdp_wk <- replicate(1000, rnbinom(n = nrow(dat_wk[[4]]),
+                                          size = 7.064,
+                                          mu = mus))
+sim_res_n1b_cdp_wk <- createDHARMa(simulatedResponse = sim_n1b_cdp_wk,
+                                   observedResponse = dat_wk[[4]]$deaths,
+                                   fittedPredictedResponse = predict(n1b_cdp_wk_full, type = 'response'),
+                                   integerResponse = TRUE)
 
-plot(sim_res_n1a)
-plotResiduals(sim_res_n1a, form = dat_mo[[3]]$Month)
-
-testOutliers(sim_res_n1a, type = 'bootstrap')
-# tests if there are more simulation outliers than expected
-
-testDispersion(sim_res_n1a)
-# tests if the simulated dispersion is equal to the observed dispersion
-
-testZeroInflation(sim_res_n1a)
-
-testQuantiles(sim_res_n1a)
-# fits a quantile regression or residuals against a predictor (default predicted value), and tests if this conforms to the expected quantile
-
-testUniformity(sim_res_n1a)
-
-
-
-
-
-
-
-
-
+plot(sim_res_n1b_cdp_wk)
+plotResiduals(sim_res_n1b_cdp_wk, form = dat_wk[[4]]$Week)
+testOutliers(sim_res_n1b_cdp_wk, type = 'bootstrap')
+testDispersion(sim_res_n1b_cdp_wk)
+testZeroInflation(sim_res_n1b_cdp_wk)
+# testUniformity(sim_res_n1b_cdp_wk)
+testTemporalAutocorrelation(recalculateResiduals(sim_res_n1b_cdp_wk, group = dat_wk[[4]]$Week)$scaledResiduals,
+                            time = unique(dat_wk[[4]]$Week))
+dat_ars <- dat_wk[[4]] %>%
+  group_by(ARS) %>%
+  summarise(lat = unique(lat),
+            long = unique(long))
+testSpatialAutocorrelation(recalculateResiduals(sim_res_n1b_cdp_wk, group = dat_wk[[4]]$ARS)$scaledResiduals,
+                           x = dat_ars$long, y = dat_ars$lat)
 
 # ---------------------------------------------------------------------------------------------------------------------
