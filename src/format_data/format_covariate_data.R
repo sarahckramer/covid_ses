@@ -210,6 +210,13 @@ plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 # RKI data (from cell phone network):
 mobility_rki_dat <- read_csv('data/raw/independent_vars/mobility_change_kreise_NEW.csv')
 
+# Check for issue in week 53 calculations:
+mobility_rki_dat %>%
+  select(NUTS3:week, mobility_change, mobility_change_weekly) %>%
+  mutate(year = str_sub(date, 1, 4)) %>%
+  mutate(year = if_else(week == 53, '2020', year)) %>%
+  filter(week == 53)
+
 # Add years and reduce columns:
 mobility_rki_dat <- mobility_rki_dat %>%
   select(NUTS3:week, mobility_change, mobility_change_weekly) %>%
@@ -224,14 +231,20 @@ mobility_rki_dat <- mobility_rki_dat %>%
 
 # Check whether weekly change is a simple mean:
 mobility_rki_dat %>%
-  group_by(year, week, mobility_change_weekly) %>%
-  summarise(mean = mean(mobility_change))
-# No, they sometimes differ; use RKI's weekly counts
+  group_by(NUTS3, year, week, mobility_change_weekly) %>%
+  summarise(mean_change_weekly = mean(mobility_change))
+# No, they sometimes differ
 
-# Remove daily values:
+# To avoid issue with week 53, use our calculations:
 mobility_rki_dat <- mobility_rki_dat %>%
-  select(-mobility_change) %>%
-  unique()
+  group_by(NUTS3, year, week) %>%
+  summarise(mobility_change_weekly = mean(mobility_change)) %>%
+  ungroup()
+
+# # Remove daily values:
+# mobility_rki_dat <- mobility_rki_dat %>%
+#   select(-mobility_change) %>%
+#   unique()
 
 # # Plot:
 # ggplot(data = mobility_rki_dat, aes(x = week, y = mobility_change_weekly, group = NUTS3)) + geom_line() +
@@ -251,7 +264,7 @@ convert_names <- convert_names %>%
 
 mobility_rki_dat <- mobility_rki_dat %>%
   left_join(convert_names, by = 'NUTS3') %>%
-  select(krs17, name:mobility_change_weekly) %>%
+  select(krs17, year:mobility_change_weekly) %>%
   rename(lk_code = 'krs17')
 
 # Clean up:

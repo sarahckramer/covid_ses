@@ -155,29 +155,67 @@ toc <- Sys.time()
 print(toc - tic)
 # with ~100/20, <10 min; with 200/20, 1.35 hours (!!)
 
-par(mfrow = c(2, 2))
-gam.check(n2a)
-gam.check(n2b)
+tic <- Sys.time()
+n2b.alt <- bake(file = 'results/fitted_models/n2b_401_62_200_20_cr.rds',
+                expr = {
+                  bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62, bs = 'cr') + 
+                        ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 20)) +
+                        s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                      data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+                }
+)
+toc <- Sys.time()
+print(toc - tic)
 
-plot(n2a, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+tic <- Sys.time()
+n2b.alt2 <- bake(file = 'results/fitted_models/n2b_401_62_100_20_cr.rds',
+                 expr = {
+                   bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62, bs = 'cr') +
+                         ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
+                         s(bundesland, bs = 're', k = 16) + offset(log(cases)),
+                       data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
+                 }
+)
+toc <- Sys.time()
+print(toc - tic)
+
+dat_inc_fromCases <- dat_inc_fromCases %>%
+  mutate(ARS = factor(ARS))
+
+tic <- Sys.time()
+n2b.re <- bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 62, bs = 'cr') +
+                ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
+                s(ARS, bs = 're', k = 401) + offset(log(cases)),
+              data = dat_inc_fromCases, family = 'nb', method = 'fREML', nthreads = 7, discrete = TRUE)
+toc <- Sys.time()
+print(toc - tic)
+
+par(mfrow = c(2, 2))
+# gam.check(n2a)
+gam.check(n2b, rep = 100)
+
+# plot(n2a, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 plot(n2b, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n2b.alt, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n2b.alt2, pages = 1, scheme = 2, shade = TRUE, scale = 0)
+plot(n2b.re, pages = 1, scheme = 2, shade = TRUE, scale = 0)
 
 # summary(n2a)
 summary(n2b)
 
-n2a.pred <- ggpredict(n2a)
+# n2a.pred <- ggpredict(n2a)
 n2b.pred <- ggpredict(n2b)
 
-plot(n2a.pred$lat)
+# plot(n2a.pred$lat)
 plot(n2b.pred$lat)
 
-plot(n2a.pred$long)
+# plot(n2a.pred$long)
 plot(n2b.pred$long)
 
-plot(n2a.pred$Week)
+# plot(n2a.pred$Week)
 plot(n2b.pred$Week)
 
-plot(n2a.pred$bundesland)
+# plot(n2a.pred$bundesland)
 plot(n2b.pred$bundesland)
 
 # ---------------------------------------------------------------------------------------------------------------------
