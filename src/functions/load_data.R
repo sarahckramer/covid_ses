@@ -7,11 +7,26 @@
 # Load cumulative data:
 dat_cumulative <- read_csv('data/formatted/cumulative_cases_and_deaths.csv')
 
+# Check no zeros in case data:
+expect_true(dat_cumulative %>%
+              filter(val == 0) %>%
+              filter(str_detect(outcome, 'cases')) %>%
+              nrow() == 0)
+
+# # Where do zeroes occur?:
+# dat_cumulative %>%
+#   filter(val == 0) %>%
+#   pull(outcome) %>%
+#   table()
+# # No 0s in cumulative case counts; only from deaths and IFR in wave 1
+
 # Format:
 dat_cumulative <- dat_cumulative %>%
   mutate(ags2 = factor(ags2),
          bundesland = factor(bundesland),
-         lk = factor(lk))
+         lk = factor(lk)) %>%
+  pivot_wider(names_from = outcome,
+              values_from = val)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -45,23 +60,6 @@ dat_cumulative <- dat_cumulative %>%
             by = c('lk' = 'ARS')) %>%
   select(-geometry)
 rm(map_base)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# For mortality analyses, only want where cases > 0
-
-# Check no zeros in case data:
-expect_true(dat_cumulative %>%
-              filter(val == 0) %>%
-              filter(str_detect(outcome, 'cases')) %>%
-              nrow() == 0)
-
-# # Where do zeroes occur?:
-# dat_cumulative %>%
-#   filter(val == 0) %>%
-#   pull(outcome) %>%
-#   table()
-# # No 0s in cumulative case counts; only from deaths and IFR in wave 1
 
 # ---------------------------------------------------------------------------------------------------------------------
 
