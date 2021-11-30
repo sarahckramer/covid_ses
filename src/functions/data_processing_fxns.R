@@ -3,26 +3,51 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-check_for_missing_dates <- function(dat) {
+check_for_missing_dates <- function(dat, dat_source) {
   # Function to see whether data exist for all possible dates
   # param dat: Data frame or tibble containing data
+  # param dat_source: String specifying the source of the raw data
   # returns: Vector of dates with no data
   
-  count_missing <- length(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
-                              as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
-                              by = 1)) -
-    dim(dat)[1]
-  if (count_missing > 0) {
-    print('At least one date has no associated data.')
+  if (dat_source == 'crowdsource') {
+    
+    count_missing <- length(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
+                                as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
+                                by = 1)) -
+      dim(dat)[1]
+    if (count_missing > 0) {
+      print('At least one date has no associated data.')
+    }
+    
+    which_missing <- as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
+                                      as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
+                                      by = 1))[
+                                        which(!(as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
+                                                                 as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
+                                                                 by = 1)) %in%
+                                                  as.character(unique(format(dat$time_iso8601, '%Y-%m-%d')))))]
+    
+  } else if (dat_source == 'cdp') {
+    
+    all_dates <- dat %>%
+      select(starts_with('d20')) %>%
+      pivot_longer(cols = everything(), names_to = 'date') %>%
+      mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d')) %>%
+      pull(date) %>%
+      unique()
+    
+    count_missing <- length(min(all_dates):max(all_dates)) - length(all_dates)
+    if (count_missing > 0) {
+      print('At least one date has no associated data.')
+    }
+    
+    which_missing <- c(min(all_dates):max(all_dates))[which(!(c(min(all_dates):max(all_dates)) %in% all_dates))]
+    
+  } else {
+    
+    stop('Unrecognized data source.')
+    
   }
-  
-  which_missing <- as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
-                                    as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
-                                    by = 1))[
-                                      which(!(as.character(seq(as.Date(format(min(dat$time_iso8601), '%Y-%m-%d')),
-                                                               as.Date(format(max(dat$time_iso8601), '%Y-%m-%d')),
-                                                               by = 1)) %in%
-                                                as.character(unique(format(dat$time_iso8601, '%Y-%m-%d')))))]
   
   return(which_missing)
 }
