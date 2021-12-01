@@ -13,7 +13,6 @@ library(testthat)
 library(spdep)
 library(viridis)
 library(gridExtra)
-library(pomp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -25,171 +24,270 @@ source('src/functions/load_data.R')
 # Formulate and fit models
 
 # Without predictors:
-n1a <- bake(file = 'results/fitted_models/n1a_monthly.rds',
-            expr = {
-              bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                    ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                    s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-                  data = dat_mo[[3]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-            }
-)
-n1b <- bake(file = 'results/fitted_models/n1b_monthly.rds',
-            expr = {
-              bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                    ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                    s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                  data = dat_mo[[2]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-            }
-)
-n1b_cdp <- bake(file = 'results/fitted_models/n1b_cdp_monthly.rds',
-                expr = {
-                  bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                        ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                        s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                      data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                }
-)
+n1a <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1c <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
 
-# Monthly:
-n1b_cdp_1 <- bake(file = 'results/fitted_models/n1b_cdp_1.rds',
-                  expr = {
-                    bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                          s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                        data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                  }
-)
-n1b_cdp_2 <- bake(file = 'results/fitted_models/n1b_cdp_2.rds',
-                  expr = {
-                    bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                          ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                          ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                          s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                        data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                  }
-)
+n2a <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2c <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+             offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
 
-n1a_cdp_1 <- bake(file = 'results/fitted_models/n1a_cdp_1.rds',
-                  expr = {
-                    bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) +
-                          s(pop_dens, k = 20) + s(living_area, k = 20) + s(perc_service, k = 20) + s(perc_production, k = 20) +
-                          s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-                        data = dat_mo[[3]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                  }
-)
-n1a_cdp_2 <- bake(file = 'results/fitted_models/n1a_cdp_2.rds',
-                  expr = {
-                    bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) +
-                          s(pop_dens, k = 20) + s(living_area, k = 20) + s(perc_service, k = 20) + s(perc_production, k = 20) +
-                          ti(perc_65plus, Month) + ti(perc_women, Month) + ti(care_home_beds, Month) +
-                          ti(GISD_Score, Month) + ti(pop_dens, Month) + ti(living_area, Month) +
-                          ti(perc_service, Month) + ti(perc_production, Month) +
-                          s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-                        data = dat_mo[[3]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                  }
-)
+par(mfrow = c(2, 2))
+gam.check(n1a, rep = 50)
+gam.check(n1b, rep = 50)
+gam.check(n1c, rep = 50)
+gam.check(n2a, rep = 50)
+gam.check(n2b, rep = 50)
+gam.check(n2c, rep = 50)
 
-# Alternative formulations:
-n1b_zip <- bake(file = 'results/fitted_models/n1b_cdp_zip.rds',
-                expr = {
-                  bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                        ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                        s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                        ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                        ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                        s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                      data = dat_mo[[4]], family = 'ziP', method = 'fREML', nthreads = 4, discrete = TRUE)
-                }
-)
+# Univariable models:
+n1a_hosp_beds <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1a_care_home_beds <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1a_GISD <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1a_pop_dens <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                      s(pop_dens) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n1a_living_area <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+#                          s(living_area, k = 15) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1a_perc_serv <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_service) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1a_perc_prod <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_production) + offset(log(pop)), data = dat_cumulative, family = 'nb')
 
-n1b_re <- bake(file = 'results/fitted_models/n1b_cdp_re.rds',
-               expr = {
-                 bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                       ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                       s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) + s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                       ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                       ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                       s(ARS, bs = 're', k = 401) + offset(log(cases)),
-                     data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-               }
-)
+n1b_hosp_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_care_home_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_GISD <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_pop_dens <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                      s(pop_dens) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n1b_living_area <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 200) + s(ags2, bs = 're', k = 16) +
+#                          s(living_area, k = 15) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_perc_serv <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_service) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_perc_prod <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_production) + offset(log(pop)), data = dat_cumulative, family = 'nb')
 
-# Weekly:
-n1a_cdp_wk <- bake(file = 'results/fitted_models/n1a_cdp_wk.rds',
-                   expr = {
-                     bam(cases ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                           ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                           s(bundesland, bs = 're', k = 16) + offset(log(pop)),
-                         data = dat_wk[[3]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                   }
-)
-n1b_cdp_wk <- bake(file = 'results/fitted_models/n1b_cdp_wk.rds',
-                   expr = {
-                     bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                           ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                           s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                         data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                   }
-)
-n1b_cdp_wk_full <- bake(file = 'results/fitted_models/n1b_cdp_wk_full.rds',
-                        expr = {
-                          bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                                ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                                s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-                                ti(perc_65plus, Week) + ti(perc_women, Week) + ti(hosp_beds, Week) + ti(care_home_beds, Week) +
-                                ti(GISD_Score, Week) + ti(pop_dens, Week) +
-                                s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                              data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                        }
-)
-n1b_cdp_wk_add <- bake(file = 'results/fitted_models/n1b_cdp_wk_fullplus.rds',
-                       expr = {
-                         bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                               ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                               s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-                               ti(perc_65plus, Week) + ti(perc_women, Week) + ti(hosp_beds, Week) + ti(care_home_beds, Week) +
-                               ti(GISD_Score, Week) + ti(pop_dens, Week) + s(stringency_index) +
-                               s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                             data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                       }
-)
+n1c_hosp_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
+n1c_care_home_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
+n1c_GISD <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
 
-dat_wk[[4]] <- dat_wk[[4]] %>%
-  mutate(masks_shopping = factor(masks_shopping),
-         school_closures2 = factor(school_closures2))
-n1b_cdp_wk_add_2 <- bake(file = 'results/fitted_models/n1b_cdp_wk_fullplus2.rds',
-                         expr = {
-                           bam(deaths ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Week, k = 44, bs = 'cr') +
-                                 ti(long, lat, Week, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(100, 20)) +
-                                 s(perc_65plus) + s(perc_women) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-                                 ti(perc_65plus, Week) + ti(perc_women, Week) + ti(hosp_beds, Week) + ti(care_home_beds, Week) +
-                                 ti(GISD_Score, Week) + ti(pop_dens, Week) + s(stringency_index) + masks_shopping + school_closures2 +
-                                 s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                               data = dat_wk[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                         }
-)
+n2a_hosp_beds <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2a_care_home_beds <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds, k = 15) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2a_GISD <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2a_pop_dens <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                      s(pop_dens) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n2a_living_area <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+#                          s(living_area) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2a_perc_serv <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_service) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2a_perc_prod <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_production) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+
+n2b_hosp_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_care_home_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_GISD <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_pop_dens <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                      s(pop_dens) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n2b_living_area <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+#                          s(living_area) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_perc_serv <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_service) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_perc_prod <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(perc_production) + s(deaths_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
+
+n2c_hosp_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                       s(hosp_beds) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+n2c_care_home_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                            s(care_home_beds) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+n2c_GISD <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(GISD_Score) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+
+mod_list <- list(n1a_hosp_beds, n1a_care_home_beds, n1a_GISD, n1a_pop_dens, n1a_perc_serv, n1a_perc_prod,
+                 n1b_hosp_beds, n1b_care_home_beds, n1b_GISD, n1b_pop_dens, n1b_perc_serv, n1b_perc_prod,
+                 n1c_hosp_beds, n1c_care_home_beds, n1c_GISD)
+mod_list <- list(n2a_hosp_beds, n2a_care_home_beds, n2a_GISD, n2a_pop_dens, n2a_perc_serv, n2a_perc_prod,
+                 n2b_hosp_beds, n2b_care_home_beds, n2b_GISD, n2b_pop_dens, n2b_perc_serv, n2b_perc_prod,
+                 n2c_hosp_beds, n2c_care_home_beds, n2c_GISD)
+
+par(mfrow = c(2, 2))
+for (mod in mod_list) {
+  gam.check(mod, rep = 50)
+}
+
+for (mod in mod_list) {
+  print(summary(mod))
+}
+
+plot(n1a_GISD, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+# plot(n1b_perc_prod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE) # p=0.0585
+plot(n1c_care_home_beds, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+
+plot(n2a_care_home_beds, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2a_GISD, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+# plot(n2a_pop_dens, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE) # p=0.0993
+plot(n2a_living_area, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+# plot(n2a_perc_serv, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE) # p=0.0592
+
+plot(n2b_care_home_beds, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2b_GISD, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2b_perc_prod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+
+plot(n2c_care_home_beds, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2c_GISD, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+
+# Multivariable models:
+n1a_full <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n1b_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+#                   s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                   offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1b_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb')
+n1c_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
+
+n2a_full <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(care_home_beds, k = 20) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb')
+# n2b_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+#                   s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                   offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production, k = 20) + s(deaths_pre_rate) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2c_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+
+par(mfrow = c(2, 2))
+gam.check(n1a_full, rep = 50)
+gam.check(n1b_full, rep = 50)
+gam.check(n1c_full, rep = 50)
+gam.check(n2a_full, rep = 50)
+gam.check(n2b_full, rep = 50)
+gam.check(n2c_full, rep = 50)
+
+plot(n1a_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n1b_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n1c_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2a_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2b_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+plot(n2c_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
+
+# Check whether k for lat and long can be further reduced:
+n2b_sparse50 <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
+                      s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                      s(living_area) + s(perc_service) + s(perc_production) + s(deaths_pre_rate) +
+                      offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_sparse30 <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                      s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                      s(living_area) + s(perc_service) + s(perc_production) + s(deaths_pre_rate) +
+                      offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_sparse10 <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 10) + s(ags2, bs = 're', k = 16) +
+                      s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                      s(living_area) + s(perc_service) + s(perc_production) + s(deaths_pre_rate) +
+                      offset(log(pop)), data = dat_cumulative, family = 'nb')
+AIC(n2b_full, n2b_sparse50, n2b_sparse30, n2b_sparse10)
+BIC(n2b_full, n2b_sparse50, n2b_sparse30, n2b_sparse10)
+
+# Try using MRF:
+n2a_mrf <- gam(cases_wave2 ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 100) + s(ags2, bs = 're', k = 16) +
+                 s(perc_65plus) + s(care_home_beds, k = 20) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                 s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                 offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2b_mrf <- gam(deaths_wave2 ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 100) + s(ags2, bs = 're', k = 16) +
+                 s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                 s(perc_service) + s(perc_production, k = 20) + s(deaths_pre_rate) +
+                 offset(log(pop)), data = dat_cumulative, family = 'nb')
+n2c_mrf <- gam(deaths_wave2 ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 100) + s(ags2, bs = 're', k = 16) +
+                 s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                 s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+
+# Compare with poisson/zero-inflated:
+n1a_pois <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production) +
+                  offset(log(pop)), data = dat_cumulative, family = 'poisson')
+n1b_pois <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(living_area) + s(perc_service) + s(perc_production) +
+                  offset(log(pop)), data = dat_cumulative, family = 'poisson')
+n1c_pois <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'poisson')
+
+n2a_pois <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  offset(log(pop)), data = dat_cumulative, family = 'poisson')
+n2b_pois <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(living_area) + s(perc_service) + s(perc_production) + s(deaths_pre_rate) +
+                  offset(log(pop)), data = dat_cumulative, family = 'poisson')
+n2c_pois <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                  s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(deaths_pre_rate) +
+                  offset(log(cases_wave2)), data = dat_cumulative, family = 'poisson')
+
+n1b_zip <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                 s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                 s(living_area) + s(perc_service) + s(perc_production) +
+                 offset(log(pop)), data = dat_cumulative, family = 'ziP')
+n1c_zip <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+                 s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                 offset(log(cases_wave1)), data = dat_cumulative, family = 'ziP')
+
+par(mfrow = c(2, 2))
+gam.check(n2a_pois, rep = 50)
+gam.check(n2b_pois, rep = 50)
+gam.check(n2c_pois, rep = 50)
+gam.check(n2a_zip, rep = 50)
+gam.check(n2b_zip, rep = 50)
+gam.check(n2c_zip, rep = 50)
+
+BIC(n1a_full, n1a_pois)
+BIC(n1b_full, n1b_pois, n1b_zip)
+BIC(n1c_full, n1c_pois, n1c_zip)
+
+BIC(n2a_full, n2a_pois)
+BIC(n2b_full, n2b_pois)
+BIC(n2c_full, n2c_pois)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Run model checks
 
 # List all models:
-models_cases <- list(n1a, n1a_cdp_1, n1a_cdp_2, n1a_cdp_wk)
-models_deaths_mo <- list(n1b, n1b_cdp, n1b_cdp_1, n1b_cdp_2)
-models_deaths_wk <- list(n1b_cdp_wk, n1b_cdp_wk_full, n1b_cdp_wk_add, n1b_cdp_wk_add_2)
-rm(n1a, n1a_cdp_1, n1a_cdp_2, n1a_cdp_wk, n1b, n1b_cdp, n1b_cdp_1, n1b_cdp_2,
-   n1b_cdp_wk, n1b_cdp_wk_full, n1b_cdp_wk_add, n1b_cdp_wk_add_2)
+models_list <- list(n1a_full, n1b_full, n1c_full, n2a_full, n2b_full, n2c_full)
 
 # Loop through models and check fit/residuals:
-for (i in 1:length(models_deaths_mo)) {
-  mod <- models_deaths_mo[[i]]
+for (i in 1:length(models_list)) {
+  mod <- models_list[[i]]
   rsd <- residuals(mod, type = 'deviance')
   
   par(mfrow = c(2, 2))
@@ -198,273 +296,228 @@ for (i in 1:length(models_deaths_mo)) {
   par(mfrow = c(1, 1))
   qqnorm(rsd)
   print(shapiro.test(rsd))
-  # print(shapiro.test(sample(rsd, 5000, replace = FALSE)))
   
   plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
   plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE, residuals = TRUE, pch = 19)
   
-  plot(fitted(mod), residuals(mod))
-  
-  try(plot(dat_mo[[4]]$time, rsd))
-}
-
-for (i in 1:length(models_cases)) {
-  mod <- models_cases[[i]]
-  rsd <- residuals(mod, type = 'deviance')
-  
-  par(mfrow = c(2, 2))
-  gam.check(mod, rep = 50)
-  
-  par(mfrow = c(1, 1))
-  qqnorm(rsd)
-  
-  if (length(rsd) > 5000) {
-    print(shapiro.test(sample(rsd, 5000, replace = FALSE)))
-  } else {
-    print(shapiro.test(rsd))
-  }
-  
-  plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
-  plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE, residuals = TRUE, pch = 19)
-  
-  plot(fitted(mod), residuals(mod))
-  
-  try(plot(dat_mo[[3]]$time, rsd))
-}
-
-for (i in 1:length(models_deaths_wk)) {
-  mod <- models_deaths_wk[[i]]
-  rsd <- residuals(mod, type = 'deviance')
-  
-  par(mfrow = c(2, 2))
-  gam.check(mod, rep = 50)
-  
-  par(mfrow = c(1, 1))
-  qqnorm(rsd)
-  print(shapiro.test(sample(rsd, 5000, replace = FALSE)))
-  
-  plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
-  plot(mod, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE, residuals = TRUE, pch = 19)
-  
-  plot(fitted(mod), residuals(mod))
-  
-  try(plot(dat_wk[[4]]$time, rsd))
+  plot(fitted(mod), residuals(mod), pch = 20)
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Detailed check of residuals
 
-# Focus here on monthly cases/deaths, as well as weekly deaths
-
 # Plot residuals vs. fitted values:
-par(mfrow = c(2, 2))
-plot(fitted(n1b_cdp_2), residuals(n1b_cdp_2, type = 'deviance'),
+par(mfrow = c(3, 2))
+plot(fitted(n1a_full), residuals(n1a_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-     main = 'Monthly Mortality')
-plot(fitted(n1a_cdp_2), residuals(n1a_cdp_2, type = 'deviance'),
+     main = 'Cases per Pop (Wave 1)')
+plot(fitted(n1b_full), residuals(n1b_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-     main = 'Monthly Incidence')
-plot(fitted(n1b_cdp_wk_full), residuals(n1b_cdp_wk_full, type = 'deviance'),
+     main = 'Deaths per Pop (Wave 1)')
+plot(fitted(n1c_full), residuals(n1c_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-     main = 'Weekly Mortality')
+     main = 'IFR (Wave 1)')
+plot(fitted(n2a_full), residuals(n2a_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Cases per Pop (Wave 2)')
+plot(fitted(n2b_full), residuals(n2b_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Deaths per Pop (Wave 2)')
+plot(fitted(n2c_full), residuals(n2c_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'IFR (Wave 2)')
 
 # Plot residuals vs. predictors:
-rsd <- residuals(n1b_cdp_2, type = 'deviance')
+rsd <- residuals(n1a_full, type = 'deviance')
 
 par(mfrow = c(3, 3))
-boxplot(rsd ~ Month, data = dat_mo[[4]])
-plot(dat_mo[[4]]$perc_65plus, rsd)
-plot(dat_mo[[4]]$perc_women, rsd)
-plot(dat_mo[[4]]$hosp_beds, rsd)
-plot(dat_mo[[4]]$care_home_beds, rsd)
-plot(dat_mo[[4]]$GISD_Score, rsd)
-plot(dat_mo[[4]]$pop_dens, rsd)
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
+plot(dat_cumulative$living_area, rsd, pch = 20)
+plot(dat_cumulative$perc_service, rsd, pch = 20)
+plot(dat_cumulative$perc_production, rsd, pch = 20)
 
-rsd <- residuals(n1a_cdp_2, type = 'deviance')
-
-par(mfrow = c(3, 3))
-boxplot(rsd ~ Month, data = dat_mo[[3]])
-plot(dat_mo[[3]]$perc_65plus, rsd)
-plot(dat_mo[[3]]$perc_women, rsd)
-plot(dat_mo[[3]]$care_home_beds, rsd)
-plot(dat_mo[[3]]$GISD_Score, rsd)
-plot(dat_mo[[3]]$pop_dens, rsd)
-plot(dat_mo[[3]]$living_area, rsd)
-plot(dat_mo[[3]]$perc_service, rsd)
-plot(dat_mo[[3]]$perc_production, rsd)
-
-rsd <- residuals(n1b_cdp_wk_full, type = 'deviance')
+rsd <- residuals(n1b_full, type = 'deviance')
 
 par(mfrow = c(3, 3))
-boxplot(rsd ~ Week, data = dat_wk[[4]])
-plot(dat_wk[[4]]$perc_65plus, rsd)
-plot(dat_wk[[4]]$perc_women, rsd)
-plot(dat_wk[[4]]$hosp_beds, rsd)
-plot(dat_wk[[4]]$care_home_beds, rsd)
-plot(dat_wk[[4]]$GISD_Score, rsd)
-plot(dat_wk[[4]]$pop_dens, rsd)
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$hosp_beds, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
+plot(dat_cumulative$living_area, rsd, pch = 20)
+plot(dat_cumulative$perc_service, rsd, pch = 20)
+plot(dat_cumulative$perc_production, rsd, pch = 20)
 
-# Fit model of residuals vs. covariates:
-dat_mo[[4]]$resid <- residuals(n1b_cdp_2, type = 'deviance')
+rsd <- residuals(n1c_full, type = 'deviance')
 
-gam_resid <- bake(file = 'results/fitted_models/n1b_cdp_2_RESID.rds',
-                  expr = {
-                    bam(resid ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                          ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                          s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
-                          s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                          ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                          ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                          s(bundesland, bs = 're', k = 16),
-                        data = dat_mo[[4]], family = 'scat', method = 'fREML', nthreads = 4, discrete = TRUE)
-                  }
-)
+par(mfrow = c(2, 3))
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$hosp_beds, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
 
-summary(gam_resid)
+rsd <- residuals(n2a_full, type = 'deviance')
 
-gam_resid_pred <- ggpredict(gam_resid, terms = 'Month')
-plot(gam_resid_pred)
+par(mfrow = c(3, 3))
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
+plot(dat_cumulative$living_area, rsd, pch = 20)
+plot(dat_cumulative$perc_service, rsd, pch = 20)
+plot(dat_cumulative$perc_production, rsd, pch = 20)
 
-par(mfrow = c(2, 2))
-gam.check(gam_resid)
+rsd <- residuals(n2b_full, type = 'deviance')
 
-# Fit fitted values using same model:
-dat_mo[[4]]$fitted <- rnbinom(n = nrow(dat_mo[[4]]),
-                              size = 8.423,
-                              mu = predict(n1b_cdp_2, type = 'response'))
+par(mfrow = c(3, 3))
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$hosp_beds, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
+plot(dat_cumulative$living_area, rsd, pch = 20)
+plot(dat_cumulative$perc_service, rsd, pch = 20)
+plot(dat_cumulative$perc_production, rsd, pch = 20)
 
-gam_fitted <- bake(file = 'results/fitted_models/n1b_cdp_2_FITTED.rds',
-                   expr = {
-                     bam(fitted ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                           ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                           s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
-                           s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                           ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                           ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                           s(bundesland, bs = 're', k = 16) + offset(log(cases)),
-                         data = dat_mo[[4]], family = 'nb', method = 'fREML', nthreads = 4, discrete = TRUE)
-                   }
-)
+rsd <- residuals(n2c_full, type = 'deviance')
 
-par(mfrow = c(2, 2))
-gam.check(gam_fitted)
+par(mfrow = c(2, 3))
+plot(dat_cumulative$perc_65plus, rsd, pch = 20)
+plot(dat_cumulative$hosp_beds, rsd, pch = 20)
+plot(dat_cumulative$care_home_beds, rsd, pch = 20)
+plot(dat_cumulative$GISD_Score, rsd, pch = 20)
+plot(dat_cumulative$pop_dens, rsd, pch = 20)
 
-dat_mo[[4]]$resid <- residuals(gam_fitted, type = 'deviance')
-gam_resid_fitted <- bake(file = 'results/fitted_models/n1b_cdp_2_RESID_FITTED.rds',
-                         expr = {
-                           bam(resid ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 401) + s(Month, k = 10, bs = 'cr') +
-                                 ti(long, lat, Month, d = c(2, 1), bs = c('ds', 'cr'), m = list(c(1.0, 0.5), NA), k = c(200, 10)) +
-                                 s(perc_65plus, k = 20) + s(perc_women, k = 20) + s(hosp_beds, k = 20) + s(care_home_beds, k = 20) +
-                                 s(GISD_Score, k = 20) + s(pop_dens, k = 20) +
-                                 ti(perc_65plus, Month) + ti(perc_women, Month) + ti(hosp_beds, Month) + ti(care_home_beds, Month) +
-                                 ti(GISD_Score, Month) + ti(pop_dens, Month) +
-                                 s(bundesland, bs = 're', k = 16),
-                               data = dat_mo[[4]], family = 'scat', method = 'fREML', nthreads = 4, discrete = TRUE)
-                         }
-)
-
-summary(gam_resid_fitted)
-
-gam_resid_pred <- ggpredict(gam_resid_fitted, terms = 'Month')
-plot(gam_resid_pred)
-
-par(mfrow = c(2, 2))
-gam.check(gam_resid_fitted)
+# # Fit model of residuals vs. covariates:
+# rsd <- residuals(n2b_full, type = 'deviance')
+# dat_cumulative$rsd <- rsd
+# gam_resid <- gam(rsd ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 300) + s(ags2, bs = 're', k = 16) +
+#                    # s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens),
+#                    s(perc_65plus) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                    s(living_area) + s(perc_service) + s(perc_production) + s(deaths_wave1_rate),
+#                  data = dat_cumulative)
+# summary(gam_resid)
+# par(mfrow = c(2, 2))
+# gam.check(gam_resid, rep = 50)
 
 # DHARMa workflow:
 # https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
+# https://aosmith.rbind.io/2017/12/21/using-dharma-for-residual-checks-of-unsupported-models/
 library(Rcpp)
 library(DHARMa)
 
 par(mfrow = c(1, 1))
 
-# monthly mortality:
-# https://aosmith.rbind.io/2017/12/21/using-dharma-for-residual-checks-of-unsupported-models/
-mus <- predict(n1b_cdp_2, type = 'response')
-sim_n1b_cdp <- replicate(1000, rnbinom(n = nrow(dat_mo[[4]]),
-                                       size = 8.423,
-                                       mu = mus))
-sim_res_n1b_cdp <- createDHARMa(simulatedResponse = sim_n1b_cdp,
-                                observedResponse = dat_mo[[4]]$deaths,
-                                fittedPredictedResponse = predict(n1b_cdp_2, type = 'response'),
-                                integerResponse = TRUE)
+mus <- predict(n1a_full, type = 'response')
+sim_n1a_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 8.489,
+                                        mu = mus))
+sim_res_n1a_full <- createDHARMa(simulatedResponse = sim_n1a_full,
+                                 observedResponse = dat_cumulative$cases_wave1,
+                                 fittedPredictedResponse = predict(n1a_full, type = 'response'),
+                                 integerResponse = TRUE)
 
-plot(sim_res_n1b_cdp)
-plotResiduals(sim_res_n1b_cdp, form = dat_mo[[4]]$Month)
+plot(sim_res_n1a_full)
+testOutliers(sim_res_n1a_full, type = 'bootstrap') # tests if there are more simulation outliers than expected
+testDispersion(sim_res_n1a_full) # tests if the simulated dispersion is equal to the observed dispersion
+testZeroInflation(sim_res_n1a_full)
+testUniformity(sim_res_n1a_full) # tests if the overall distribution conforms to expectations
+testSpatialAutocorrelation(sim_res_n1a_full, x = dat_cumulative$long, y = dat_cumulative$lat)
 
-testOutliers(sim_res_n1b_cdp, type = 'bootstrap')
-# tests if there are more simulation outliers than expected
+###
 
-testDispersion(sim_res_n1b_cdp)
-# tests if the simulated dispersion is equal to the observed dispersion
+mus <- predict(n1b_full, type = 'response')
+sim_n1b_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 1.996,
+                                        mu = mus))
+sim_res_n1b_full <- createDHARMa(simulatedResponse = sim_n1b_full,
+                                 observedResponse = dat_cumulative$deaths_wave1,
+                                 fittedPredictedResponse = predict(n1b_full, type = 'response'),
+                                 integerResponse = TRUE)
 
-testZeroInflation(sim_res_n1b_cdp)
+plot(sim_res_n1b_full)
+testOutliers(sim_res_n1b_full, type = 'bootstrap')
+testDispersion(sim_res_n1b_full)
+testZeroInflation(sim_res_n1b_full)
+testUniformity(sim_res_n1b_full)
+testSpatialAutocorrelation(sim_res_n1b_full, x = dat_cumulative$long, y = dat_cumulative$lat)
 
-# testQuantiles(sim_res_n1b_cdp)
-# # fits a quantile regression or residuals against a predictor (default predicted value), and tests if this conforms to the expected quantile
+###
 
-# testUniformity(sim_res_n1b_cdp)
-# # tests if the overall distribution conforms to expectations
+mus <- predict(n1c_full, type = 'response')
+sim_n1c_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 4.717,
+                                        mu = mus))
+sim_res_n1c_full <- createDHARMa(simulatedResponse = sim_n1c_full,
+                                 observedResponse = dat_cumulative$deaths_wave1,
+                                 fittedPredictedResponse = predict(n1c_full, type = 'response'),
+                                 integerResponse = TRUE)
 
-testTemporalAutocorrelation(recalculateResiduals(sim_res_n1b_cdp, group = dat_mo[[4]]$Month)$scaledResiduals,
-                            time = unique(dat_mo[[4]]$Month))
+plot(sim_res_n1c_full)
+testOutliers(sim_res_n1c_full, type = 'bootstrap')
+testDispersion(sim_res_n1c_full)
+testZeroInflation(sim_res_n1c_full)
+testUniformity(sim_res_n1c_full)
+testSpatialAutocorrelation(sim_res_n1c_full, x = dat_cumulative$long, y = dat_cumulative$lat)
 
-dat_ars <- dat_mo[[4]] %>%
-  group_by(ARS) %>%
-  summarise(lat = unique(lat),
-            long = unique(long))
-testSpatialAutocorrelation(recalculateResiduals(sim_res_n1b_cdp, group = dat_mo[[4]]$ARS)$scaledResiduals,
-                           x = dat_ars$long, y = dat_ars$lat)
+###
 
-# monthly incidence:
-mus <- predict(n1a_cdp_2, type = 'response')
-sim_n1a_cdp <- replicate(1000, rnbinom(n = nrow(dat_mo[[3]]),
-                                       size = 21.614,
-                                       mu = mus))
-sim_res_n1a_cdp <- createDHARMa(simulatedResponse = sim_n1a_cdp,
-                                observedResponse = dat_mo[[3]]$cases,
-                                fittedPredictedResponse = predict(n1a_cdp_2, type = 'response'),
-                                integerResponse = TRUE)
+mus <- predict(n2a_full, type = 'response')
+sim_n2a_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 35.308,
+                                        mu = mus))
+sim_res_n2a_full <- createDHARMa(simulatedResponse = sim_n2a_full,
+                                 observedResponse = dat_cumulative$cases_wave2,
+                                 fittedPredictedResponse = predict(n2a_full, type = 'response'),
+                                 integerResponse = TRUE)
 
-plot(sim_res_n1a_cdp)
-plotResiduals(sim_res_n1a_cdp, form = dat_mo[[3]]$Month)
-testOutliers(sim_res_n1a_cdp, type = 'bootstrap')
-testDispersion(sim_res_n1a_cdp)
-testZeroInflation(sim_res_n1a_cdp)
-# testUniformity(sim_res_n1a_cdp)
-testTemporalAutocorrelation(recalculateResiduals(sim_res_n1a_cdp, group = dat_mo[[3]]$Month)$scaledResiduals,
-                            time = unique(dat_mo[[3]]$Month))
-dat_ars <- dat_mo[[3]] %>%
-  group_by(ARS) %>%
-  summarise(lat = unique(lat),
-            long = unique(long))
-testSpatialAutocorrelation(recalculateResiduals(sim_res_n1a_cdp, group = dat_mo[[3]]$ARS)$scaledResiduals,
-                           x = dat_ars$long, y = dat_ars$lat)
+plot(sim_res_n2a_full)
+testOutliers(sim_res_n2a_full, type = 'bootstrap')
+testDispersion(sim_res_n2a_full)
+testZeroInflation(sim_res_n2a_full)
+testUniformity(sim_res_n2a_full)
+testSpatialAutocorrelation(sim_res_n2a_full, x = dat_cumulative$long, y = dat_cumulative$lat)
 
-# weekly mortality:
-mus <- predict(n1b_cdp_wk_full, type = 'response')
-sim_n1b_cdp_wk <- replicate(1000, rnbinom(n = nrow(dat_wk[[4]]),
-                                          size = 7.064,
-                                          mu = mus))
-sim_res_n1b_cdp_wk <- createDHARMa(simulatedResponse = sim_n1b_cdp_wk,
-                                   observedResponse = dat_wk[[4]]$deaths,
-                                   fittedPredictedResponse = predict(n1b_cdp_wk_full, type = 'response'),
-                                   integerResponse = TRUE)
+###
 
-plot(sim_res_n1b_cdp_wk)
-plotResiduals(sim_res_n1b_cdp_wk, form = dat_wk[[4]]$Week)
-testOutliers(sim_res_n1b_cdp_wk, type = 'bootstrap')
-testDispersion(sim_res_n1b_cdp_wk)
-testZeroInflation(sim_res_n1b_cdp_wk)
-# testUniformity(sim_res_n1b_cdp_wk)
-testTemporalAutocorrelation(recalculateResiduals(sim_res_n1b_cdp_wk, group = dat_wk[[4]]$Week)$scaledResiduals,
-                            time = unique(dat_wk[[4]]$Week))
-dat_ars <- dat_wk[[4]] %>%
-  group_by(ARS) %>%
-  summarise(lat = unique(lat),
-            long = unique(long))
-testSpatialAutocorrelation(recalculateResiduals(sim_res_n1b_cdp_wk, group = dat_wk[[4]]$ARS)$scaledResiduals,
-                           x = dat_ars$long, y = dat_ars$lat)
+mus <- predict(n2b_full, type = 'response')
+sim_n2b_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 8.562,
+                                        mu = mus))
+sim_res_n2b_full <- createDHARMa(simulatedResponse = sim_n2b_full,
+                                 observedResponse = dat_cumulative$deaths_wave2,
+                                 fittedPredictedResponse = predict(n2b_full, type = 'response'),
+                                 integerResponse = TRUE)
+
+plot(sim_res_n2b_full)
+testOutliers(sim_res_n2b_full, type = 'bootstrap')
+testDispersion(sim_res_n2b_full)
+testZeroInflation(sim_res_n2b_full)
+testUniformity(sim_res_n2b_full)
+testSpatialAutocorrelation(sim_res_n2b_full, x = dat_cumulative$long, y = dat_cumulative$lat)
+
+###
+
+mus <- predict(n2c_full, type = 'response')
+sim_n2c_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
+                                        size = 16.433,
+                                        mu = mus))
+sim_res_n2c_full <- createDHARMa(simulatedResponse = sim_n2c_full,
+                                 observedResponse = dat_cumulative$deaths_wave2,
+                                 fittedPredictedResponse = predict(n2c_full, type = 'response'),
+                                 integerResponse = TRUE)
+
+plot(sim_res_n2c_full)
+# plotResiduals(sim_res_n2c_full, form = dat_cumulative$GISD_Score)
+testOutliers(sim_res_n2c_full, type = 'bootstrap')
+testDispersion(sim_res_n2c_full)
+testZeroInflation(sim_res_n2c_full)
+testUniformity(sim_res_n2c_full)
+testSpatialAutocorrelation(sim_res_n2c_full, x = dat_cumulative$long, y = dat_cumulative$lat)
 
 # ---------------------------------------------------------------------------------------------------------------------
