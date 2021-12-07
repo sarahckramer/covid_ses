@@ -7,7 +7,7 @@ library(tidyverse)
 library(gridExtra)
 
 # Read in data:
-dat_inc_wk <- read_csv('data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
+dat_inc_wk <- read_csv('data/formatted/STAND_weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
 dat_inc_wk_i <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT_CDP.csv')
 
 # Add time column:
@@ -177,7 +177,7 @@ p10 <- ggplot(dat_plot %>%
 grid.arrange(p8, p9, p10, ncol = 1)
 
 # Write cumulative counts/rates to file:
-write_csv(dat_cumulative, file = 'data/formatted/cumulative_cases_and_deaths.csv')
+write_csv(dat_cumulative, file = 'data/formatted/STAND_cumulative_cases_and_deaths.csv')
 
 # Clean up:
 rm(list = ls())
