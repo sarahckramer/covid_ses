@@ -5,7 +5,7 @@
 # Read in and format data
 
 # Load cumulative data:
-dat_cumulative <- read_csv('data/formatted/cumulative_cases_and_deaths.csv')
+dat_cumulative <- read_csv('data/formatted/STAND_cumulative_cases_and_deaths.csv')
 
 # Check no zeros in case data:
 expect_true(dat_cumulative %>%
