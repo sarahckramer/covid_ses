@@ -24,49 +24,45 @@ source('src/functions/load_data.R')
 # Formulate and fit "univariable" models
 
 # Wave 1:
-n1a_hosp_beds <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
-                       s(hosp_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_care_home_beds <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_care_home_beds <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                             s(care_home_beds) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_GISD <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_GISD <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                   s(GISD_Score) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_pop_dens <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_pop_dens <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                       s(pop_dens) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_living_area <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_living_area <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                          s(living_area, k = 15) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_perc_serv <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_perc_serv <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                        s(perc_service) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1a_perc_prod <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_perc_prod <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                        s(perc_production) + offset(log(pop)), data = dat_cumulative, family = 'nb')
 
-n1b_hosp_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1b_hosp_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                        s(hosp_beds) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
-n1b_care_home_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1b_care_home_beds <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                             s(care_home_beds) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
-n1b_GISD <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1b_GISD <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                   s(GISD_Score) + offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
 
 # Wave 2:
-n2a_hosp_beds <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
-                       s(hosp_beds) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_care_home_beds <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_care_home_beds <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                             s(care_home_beds, k = 15) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_GISD <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_GISD <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                   s(GISD_Score) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_pop_dens <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_pop_dens <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                       s(pop_dens) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_living_area <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_living_area <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                          s(living_area) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_perc_serv <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_perc_serv <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                        s(perc_service) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2a_perc_prod <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_perc_prod <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                        s(perc_production) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb')
 
-n2b_hosp_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2b_hosp_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                        s(hosp_beds) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
-n2b_care_home_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2b_care_home_beds <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                             s(care_home_beds) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
-n2b_GISD <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2b_GISD <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                   s(GISD_Score) + s(deaths_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
 
 # Assess fit and plot significant variables:
