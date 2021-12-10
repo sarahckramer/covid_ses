@@ -21,32 +21,87 @@ source('src/functions/load_data.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# # Determine best range of values for k for lat/long
+# 
+# # Loop through values and fit models:
+# n1a_mods = n1c_mods = n2a_mods = n2c_mods = vector('list', length = length(seq(10, 150, by = 10)))
+# for (i in 1:length(seq(10, 150, by = 10))) {
+#   k_val <- seq(10, 150, by = 10)[i]
+#   n1a_temp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+#                     s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area, k = 25) +
+#                     s(perc_service) + s(perc_production) +
+#                     offset(log(pop)), data = dat_cumulative, family = 'nb')
+#   n1c_temp <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+#                     s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + #s(pop_dens) +
+#                     offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
+#   
+#   n2a_temp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+#                     s(perc_18to64) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+#                     s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+#                     offset(log(pop)), data = dat_cumulative, family = 'nb')
+#   n2c_temp <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+#                     s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + #s(pop_dens) +
+#                     s(cases_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
+#   
+#   n1a_mods[[i]] <- n1a_temp
+#   n1c_mods[[i]] <- n1c_temp
+#   n2a_mods[[i]] <- n2a_temp
+#   n2c_mods[[i]] <- n2c_temp
+# }
+# 
+# # Evaluate AICs and BICs:
+# n1a_aics <- lapply(n1a_mods, AIC) %>% unlist()
+# n1c_aics <- lapply(n1c_mods, AIC) %>% unlist()
+# n2a_aics <- lapply(n2a_mods, AIC) %>% unlist()
+# n2c_aics <- lapply(n2c_mods, AIC) %>% unlist()
+# 
+# n1a_bics <- lapply(n1a_mods, BIC) %>% unlist()
+# n1c_bics <- lapply(n1c_mods, BIC) %>% unlist()
+# n2a_bics <- lapply(n2a_mods, BIC) %>% unlist()
+# n2c_bics <- lapply(n2c_mods, BIC) %>% unlist()
+# 
+# # Plot:
+# par(mfrow = c(2, 1))
+# plot(seq(10, 150, by = 10), n1a_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+# plot(seq(10, 150, by = 10), n1a_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+# 
+# plot(seq(10, 150, by = 10), n1c_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+# plot(seq(10, 150, by = 10), n1c_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+# 
+# plot(seq(10, 150, by = 10), n2a_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+# plot(seq(10, 150, by = 10), n2a_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+# 
+# plot(seq(10, 150, by = 10), n2c_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+# plot(seq(10, 150, by = 10), n2c_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Fit models with chosen k values
 
 # Wave 1:
-n1a_full <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n1a_full <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                   s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area, k = 25) +
                   s(perc_service) + s(perc_production) +
                   offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1b_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
-                  s(perc_18to64) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
+n1b_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area, k = 25) +
                   s(perc_service) + s(perc_production) +
                   offset(log(pop)), data = dat_cumulative, family = 'nb')
-n1c_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
-                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + #s(pop_dens) +
+n1c_full <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                   offset(log(cases_wave1)), data = dat_cumulative, family = 'nb')
 
 # Wave 2:
-n2a_full <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2a_full <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                   s(perc_18to64) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) + s(living_area) +
                   s(perc_service) + s(perc_production) + s(cases_pre_rate) +
                   offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2b_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
+n2b_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                   s(perc_18to64) + s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area) +
                   s(perc_service) + s(perc_production) + s(cases_pre_rate) +
                   offset(log(pop)), data = dat_cumulative, family = 'nb')
-n2c_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 100) + s(ags2, bs = 're', k = 16) +
-                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + #s(pop_dens) +
+n2c_full <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                   s(cases_pre_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb')
 
 # Quick check of fits:
@@ -355,7 +410,7 @@ par(mfrow = c(1, 1))
 
 mus <- predict(n1a_full, type = 'response')
 sim_n1a_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 8.335,#8.489,
+                                        size = 7.533,
                                         mu = mus))
 sim_res_n1a_full <- createDHARMa(simulatedResponse = sim_n1a_full,
                                  observedResponse = dat_cumulative$cases_wave1,
@@ -373,7 +428,7 @@ testSpatialAutocorrelation(sim_res_n1a_full, x = dat_cumulative$long, y = dat_cu
 
 mus <- predict(n1b_full, type = 'response')
 sim_n1b_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 2.056,#1.996,
+                                        size = 1.933,
                                         mu = mus))
 sim_res_n1b_full <- createDHARMa(simulatedResponse = sim_n1b_full,
                                  observedResponse = dat_cumulative$deaths_wave1,
@@ -391,7 +446,7 @@ testSpatialAutocorrelation(sim_res_n1b_full, x = dat_cumulative$long, y = dat_cu
 
 mus <- predict(n1c_full, type = 'response')
 sim_n1c_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 4.865,#4.717,
+                                        size = 4.877,
                                         mu = mus))
 sim_res_n1c_full <- createDHARMa(simulatedResponse = sim_n1c_full,
                                  observedResponse = dat_cumulative$deaths_wave1,
@@ -409,7 +464,7 @@ testSpatialAutocorrelation(sim_res_n1c_full, x = dat_cumulative$long, y = dat_cu
 
 mus <- predict(n2a_full, type = 'response')
 sim_n2a_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 35.833,#35.308,
+                                        size = 32.791,
                                         mu = mus))
 sim_res_n2a_full <- createDHARMa(simulatedResponse = sim_n2a_full,
                                  observedResponse = dat_cumulative$cases_wave2,
@@ -427,7 +482,7 @@ testSpatialAutocorrelation(sim_res_n2a_full, x = dat_cumulative$long, y = dat_cu
 
 mus <- predict(n2b_full, type = 'response')
 sim_n2b_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 8.698,#8.562,
+                                        size = 8.319,
                                         mu = mus))
 sim_res_n2b_full <- createDHARMa(simulatedResponse = sim_n2b_full,
                                  observedResponse = dat_cumulative$deaths_wave2,
@@ -445,7 +500,7 @@ testSpatialAutocorrelation(sim_res_n2b_full, x = dat_cumulative$long, y = dat_cu
 
 mus <- predict(n2c_full, type = 'response')
 sim_n2c_full <- replicate(1000, rnbinom(n = nrow(dat_cumulative),
-                                        size = 16.734,#16.433,
+                                        size = 16.569,
                                         mu = mus))
 sim_res_n2c_full <- createDHARMa(simulatedResponse = sim_n2c_full,
                                  observedResponse = dat_cumulative$deaths_wave2,
