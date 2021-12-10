@@ -32,12 +32,14 @@ library(ISOweek)
 # Read in downloaded data:
 inkar_dat <- read_csv2('data/raw/independent_vars/inkar_data_2017.csv')
 inkar_dat2 <- read_csv2('data/raw/independent_vars/inkar_dat_2017_UPDATES.csv')
+inkar_dat_young <- read_csv2('data/raw/independent_vars/inkar_data_YOUNG.csv')
 # most data from 2017
 # 2016: Krankenhausbetten
 
 # Remove years:
 inkar_dat <- inkar_dat[-1, ]
 inkar_dat2 <- inkar_dat2[-1, ]
+inkar_dat_young <- inkar_dat_young[-1, ]
 
 # Keep only columns of interest:
 inkar_dat <- inkar_dat %>%
@@ -49,10 +51,17 @@ inkar_dat <- inkar_dat %>%
 inkar_dat2 <- inkar_dat2 %>%
   select(Kennziffer, Einpendler:Auspendler, `Beschäftigte in Produktionsberufen`)
 
+# Calculate total percentage of population 18-64:
+inkar_dat_young <- inkar_dat_young %>%
+  mutate(perc_18to64 = `Einwohner von 18 bis unter 25 Jahren` + `Einwohner von 25 bis unter 30 Jahren` +
+           `Einwohner von 30 bis unter 50 Jahren` + `Einwohner von 50 bis unter 65 Jahren`) %>%
+  select(Kennziffer, perc_18to64)
+
 # Join tibbles:
 inkar_dat <- inkar_dat %>%
+  inner_join(inkar_dat_young, by = 'Kennziffer') %>%
   inner_join(inkar_dat2, by = 'Kennziffer')
-rm(inkar_dat2)
+rm(inkar_dat2, inkar_dat_young)
 
 # Convert variables to percentages of full/sub-population as needed:
 # Beschäftigte in personenbezogenen Dienstleistungsberufen, in Produktionsberufen; Ein/Auspendler
@@ -82,7 +91,7 @@ inkar_dat <- inkar_dat %>%
 
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
-  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_65plus:perc_women, care_home_beds,
+  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_18to64, perc_65plus:perc_women, care_home_beds,
          perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service, perc_production,
          commuters_in:commuters_out)
 
