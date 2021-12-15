@@ -210,6 +210,108 @@ plot(n1b_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE
 plot(n2a_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
 plot(n2b_full, pages = 1, scheme = 2, shade = TRUE, scale = 0, seWithMean = TRUE)
 
+# Plot marginal effects of significant variables:
+n1a_pred_GISD <- ggpredict(n1a_full, 'GISD_Score')
+
+n1b_pred_hosp <- ggpredict(n1b_full, 'hosp_beds')
+n1b_pred_chb <- ggpredict(n1b_full, 'care_home_beds')
+
+n2a_pred_18to64 <- ggpredict(n2a_full, 'perc_18to64')
+n2a_pred_GISD <- ggpredict(n2a_full, 'GISD_Score')
+n2a_pred_popdens <- ggpredict(n2a_full, 'pop_dens')
+n2a_pred_living <- ggpredict(n2a_full, 'living_area')
+
+n2b_pred_chb <- ggpredict(n2b_full, 'care_home_beds')
+
+plot(n1a_pred_GISD)
+plot(n1b_pred_hosp)
+plot(n1b_pred_chb)
+plot(n2a_pred_18to64)
+plot(n2a_pred_GISD)
+plot(n2a_pred_popdens)
+plot(n2a_pred_living)
+plot(n2b_pred_chb)
+
+# Plot marginal effects of SES (even where not significant):
+n1a_pred_service <- ggpredict(n1a_full, 'perc_service')
+n1a_pred_production <- ggpredict(n1a_full, 'perc_production')
+
+n1b_pred_GISD <- ggpredict(n1b_full, 'GISD_Score')
+
+n2a_pred_service <- ggpredict(n2a_full, 'perc_service')
+n2a_pred_production <- ggpredict(n2a_full, 'perc_production')
+
+n2b_pred_GISD <- ggpredict(n2b_full, 'GISD_Score')
+
+plot(n1a_pred_service)
+plot(n1a_pred_production)
+plot(n1b_pred_GISD)
+plot(n2a_pred_service)
+plot(n2a_pred_production)
+plot(n2b_pred_GISD)
+
+# For second wave, plot impact of attack rate before wave 2:
+n2a_pred_wave1 <- ggpredict(n2a_full, 'cases_pre_rate')
+n2b_pred_wave1 <- ggpredict(n2b_full, 'cases_pre_rate')
+
+plot(n2a_pred_wave1)
+plot(n2b_pred_wave1)
+
+# Plot BL-level effect:
+n1a_pred_BL <- ggpredict(n1a_full, 'ags2') # sig
+n1b_pred_BL <- ggpredict(n1b_full, 'ags2') # not sig
+n2a_pred_BL <- ggpredict(n2a_full, 'ags2') # sig
+n2b_pred_BL <- ggpredict(n2b_full, 'ags2') # not sig
+
+plot(n1a_pred_BL)
+plot(n1b_pred_BL)
+plot(n2a_pred_BL)
+plot(n2b_pred_BL)
+
+# Plot spatial effect (after controlling for variables):
+pdata <- with(dat_cumulative,
+              expand.grid(pop = 100000,
+                          cases_wave1 = 1000,
+                          cases_wave2 = 1000,
+                          ags2 = '01',
+                          long = seq(min(long), max(long), length = 100),
+                          lat = seq(min(lat), max(lat), length = 100),
+                          perc_18to64 = median(perc_18to64),
+                          hosp_beds = median(hosp_beds),
+                          care_home_beds = median(care_home_beds),
+                          GISD_Score = median(GISD_Score),
+                          pop_dens = median(pop_dens),
+                          living_area = median(living_area),
+                          perc_service = median(perc_service),
+                          perc_production = median(perc_production),
+                          cases_pre_rate = median(cases_pre_rate)))
+
+n1a_fit <- predict(n1a_full, pdata)
+n1b_fit <- predict(n1b_full, pdata)
+n2a_fit <- predict(n2a_full, pdata)
+n2b_fit <- predict(n2b_full, pdata)
+
+ind <- exclude.too.far(pdata$long, pdata$lat, dat_cumulative$long, dat_cumulative$lat, dist = 0.1)
+n1a_fit[ind] <- NA
+n1b_fit[ind] <- NA
+n2a_fit[ind] <- NA
+n2b_fit[ind] <- NA
+
+n1a_pred <- cbind(pdata, fitted = n1a_fit)
+n1b_pred <- cbind(pdata, fitted = n1b_fit)
+n2a_pred <- cbind(pdata, fitted = n2a_fit)
+n2b_pred <- cbind(pdata, fitted = n2b_fit)
+
+p1a <- ggplot(n1a_pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  scale_fill_viridis(na.value = 'transparent') + coord_quickmap() + theme_void()
+p1b <- ggplot(n1b_pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  scale_fill_viridis(na.value = 'transparent') + coord_quickmap() + theme_void()
+p2a <- ggplot(n2a_pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  scale_fill_viridis(na.value = 'transparent') + coord_quickmap() + theme_void()
+p2b <- ggplot(n2b_pred, aes(x = long, y = lat)) + geom_raster(aes(fill = fitted)) +
+  scale_fill_viridis(na.value = 'transparent') + coord_quickmap() + theme_void()
+grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Run model checks
