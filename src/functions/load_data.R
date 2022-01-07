@@ -62,7 +62,7 @@ map_base[, c('long_ALT', 'lat_ALT')] <- st_point_on_surface(map_base) %>% st_tra
 map_base_new <- map_base %>%
   mutate(long = if_else(ARS %in% centroid_not_contained, long_ALT, long),
          lat = if_else(ARS %in% centroid_not_contained, lat_ALT, lat)) %>%
-  select(-c(long_ALT:lat_ALT))
+  dplyr::select(-c(long_ALT:lat_ALT))
 expect_true(length(which(map_base_new$long != map_base$long)) == length(centroid_not_contained))
 expect_true(length(which(map_base_new$lat != map_base$lat)) == length(centroid_not_contained))
 
@@ -74,7 +74,7 @@ map_base <- map_base %>%
   st_transform(., '+proj=longlat')
 map_base %>%
   as_tibble() %>%
-  select(long:lat) %>%
+  dplyr::select(long:lat) %>%
   st_as_sf(coords = c('long', 'lat'), crs = st_crs(map_base)) %>%
   mutate(check = map_base$ARS[as.integer(st_intersects(geometry, map_base %>%
                                                          st_transform(., '+proj=longlat')))]) %>%
@@ -93,7 +93,7 @@ map_base %>%
 dat_cumulative <- dat_cumulative %>%
   left_join(map_base[, c('ARS', 'long', 'lat')],
             by = c('lk' = 'ARS')) %>%
-  select(-geometry)
+  dplyr::select(-geometry)
 rm(map_base)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ inkar_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables
 # Join with case/death data:
 dat_cumulative <- dat_cumulative %>%
   left_join(inkar_dat, by = c('lk' = 'lk_code')) %>%
-  select(-c(lk_name, lk_type))
+  dplyr::select(-c(lk_name, lk_type))
 rm(inkar_dat)
 
 # ---------------------------------------------------------------------------------------------------------------------
