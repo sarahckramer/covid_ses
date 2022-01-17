@@ -3,12 +3,13 @@
 # Load libraries:
 library(tidyverse)
 # library(mgcv)
-# library(ggeffects)
+library(ggeffects)
 library(sf)
 library(spdep)
 library(testthat)
 library(gridExtra)
 library(viridis)
+library(psych)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -82,7 +83,7 @@ p2b <- ggplot(data = map_pan) + geom_sf(aes(fill = ifr_wave2), col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$ifr_wave1, map_pan$ifr_wave2))) +
   theme_void() + labs(title = 'Wave 2', fill = '% IFR') +
   theme(legend.position = 'bottom')
-
+# 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
 # Significant clustering by Moran's I?:
@@ -118,5 +119,132 @@ grid.arrange(p1b, p2b, ncol = 1)
 # How consistent are patterns from one wave to the next?:
 cor.test(dat_cumulative$cases_wave1_rate, dat_cumulative$cases_wave2_rate, method = 'kendall') # sig; tau = 0.132
 cor.test(dat_cumulative$ifr_wave1, dat_cumulative$ifr_wave2, method = 'kendall') # not sig; tau = -0.027
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+### Observed spatial patterns (from model with no predictors) ###
+# Note: since controlling for first wave's cases doesn't actually improve fit for models of second wave, just use n2a
+# and n2b, not n2a_adj and n2b_adj
+
+# Plot trends by lat and long:
+n1a_lat <- ggpredict(n1a, 'lat')
+n1a_long <- ggpredict(n1a, 'long')
+plot(n1a_lat); plot(n1a_long)
+
+n2a_lat <- ggpredict(n2a, 'lat')
+n2a_long <- ggpredict(n2a, 'long')
+plot(n2a_lat); plot(n2a_long)
+
+n1b_lat <- ggpredict(n1b, 'lat')
+n1b_long <- ggpredict(n1b, 'long')
+plot(n1b_lat); plot(n1b_long)
+
+n2b_lat <- ggpredict(n2b, 'lat')
+n2b_long <- ggpredict(n2b, 'long')
+plot(n2b_lat); plot(n2b_long)
+
+rm(n1a_lat, n1a_long, n2a_lat, n2a_long,
+   n1b_lat, n1b_long, n2b_lat, n2b_long)
+
+# Plot overall spatial pattern:
+spatial_trend_NULL <- dat_cumulative %>%
+  select(lk, long, lat) %>%
+  unique() %>%
+  mutate(pop = 10000,
+         cases_wave1 = 100,
+         cases_wave2 = 100,
+         ags2 = '01')
+
+spatial_trend_NULL <- spatial_trend_NULL %>%
+  mutate(fitted_n1a = predict(n1a, spatial_trend_NULL, type = 'response'),
+         fitted_n2a = predict(n2a, spatial_trend_NULL, type = 'response'),
+         fitted_n1b = predict(n1b, spatial_trend_NULL, type = 'response'),
+         fitted_n2b = predict(n2b, spatial_trend_NULL, type = 'response'))
+
+map_fitted_NULL <- map_pan %>%
+  left_join(spatial_trend_NULL %>%
+              select(lk, fitted_n1a:fitted_n2b),
+            by = c('ARS' = 'lk'))
+rm(spatial_trend_NULL)
+
+p1a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom')
+p2a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 2', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom')
+
+p1b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1b), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1', fill = 'IFR (%)') +
+  theme(legend.position = 'bottom')
+p2b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 2', fill = 'IFR (%)') +
+  theme(legend.position = 'bottom')
+
+grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
+
+# Check significance, % deviance explained:
+summary(n1a) # 72.9%
+summary(n2a) # 73.2%
+summary(n1b) # 14.2%; barely sig
+summary(n2b) # 28.5 %
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+### Plot relationships between SES variables (and show corr coefficients) ###
+
+dat_ses <- dat_cumulative %>%
+  select(perc_18to64, hosp_beds, care_home_beds, pop_dens, living_area,
+         GISD_Score, perc_service, perc_production)
+
+pairs.panels(dat_ses,
+             smooth = FALSE,
+             scale = FALSE,
+             density = TRUE,
+             ellipses = FALSE,
+             digits = 2,
+             method = 'kendall',
+             pch = 20,
+             cex = 1.15,
+             stars = TRUE,
+             hist.col = 'gray85',
+             rug = FALSE,
+             breaks = 20,
+             cex.cor = 0.6)
+rm(dat_ses)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+### Show correlations between predictors and cases/deaths (rates) ###
+# Note that of course this won't deal well with non-monotonic relationships
+
+# Plot:
+dat_corr <- dat_cumulative %>%
+  select(cases_wave1_rate, cases_wave2_rate, ifr_wave1, ifr_wave2,
+         perc_18to64, hosp_beds, care_home_beds, pop_dens, living_area,
+         GISD_Score, perc_service, perc_production) %>%
+  pivot_longer(perc_18to64:perc_production, names_to = 'var', values_to = 'val') %>%
+  pivot_longer(cases_wave1_rate:ifr_wave2, names_to = 'outcome', values_to = 'obs') %>%
+  mutate(var = factor(var, levels = c('perc_18to64', 'hosp_beds', 'care_home_beds',
+                                      'pop_dens', 'living_area', 'GISD_Score',
+                                      'perc_service', 'perc_production')),
+         outcome = factor(outcome, levels = c('cases_wave1_rate', 'cases_wave2_rate',
+                                              'ifr_wave1', 'ifr_wave2')))
+
+p_corr <- ggplot(data = dat_corr) + geom_point(aes(x = val, y = obs)) +
+  geom_smooth(aes(x = val, y = obs), method = 'gam') +
+  facet_grid(outcome ~ var, scales = 'free') + theme_classic() +
+  labs(x = 'Covariate Value', y = 'Outcome Value')
+print(p_corr)
+
+# No need to calculate correlation coefficients; b/c of spatial autocorrelation, p-values won't be reliable
 
 # ---------------------------------------------------------------------------------------------------------------------
