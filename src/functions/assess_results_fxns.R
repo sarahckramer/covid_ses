@@ -46,6 +46,7 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
   # param outcome_var: The name of the column holding information on the RATE of the outcome
   # param pred_var: The name of the predictor for which marginal predictions are wanted
   # param mod: The fitted GAM used to make the predictions
+  # returns: A tibble containing marginal predictions and 95% CIs
   
   # See code from Christensen et al. (2014) doi: 10.1098/rspb.2019.2269
   
@@ -106,4 +107,24 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
   
   # Return predictions:
   return(pred_data)
+}
+
+
+plot_marginal_prediction <- function(pred_dat, pred_var, outcome_lab) {
+  # Function to plot marginal predictions
+  # param pred_dat: Output from get_marginal_prediction
+  # param pred_var: The predictor of interest
+  # param outcome_lab: String for labeling the y-axis
+  # returns: A plot of the marginal prediction, with 95% CI
+  
+  dat_temp <- pred_dat %>%
+    rename('var' = pred_var)
+  
+  p_temp <- ggplot(data = dat_temp) + 
+    geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
+    geom_line(aes(x = var, y = fitted)) +
+    theme_classic() +
+    labs(x = pred_var, y = paste(outcome_lab, '(Predicted)', sep = ' '))
+  
+  return(p_temp)
 }
