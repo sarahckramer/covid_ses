@@ -3,26 +3,38 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-check_dharma <- function(dat, obs, mod, disp) {
+check_dharma <- function(dat, mod, depend) {
   # Function to check residuals from negative binomial GAM using various tests
   # param dat: Cumulative data (tibble)
-  # param obs: Observed values of the dependent variable
   # param mod: Fitted model (gam)
-  # param disp: Dispersion parameter from fitted model
+  # param depend: Is fitted model fit to cases or deaths?
   
-  mus <- predict(mod, type = 'response')
-  sim_resp <- replicate(1000, rnbinom(n = nrow(dat),
-                                      size = disp,
-                                      mu = mus))
-  sim_full <- createDHARMa(simulatedResponse = sim_resp,
-                           observedResponse = obs,
-                           fittedPredictedResponse = predict(mod, type = 'response'),
-                           integerResponse = TRUE)
+  sim_full <- simulateResiduals(mod)
   
-  plot(sim_full)
-  testOutliers(sim_full, type = 'bootstrap') %>% print()
+  # plot(sim_full)
+  testQuantiles(sim_full) %>% print()
+  # testOutliers(sim_full, type = 'bootstrap') %>% print()
   testDispersion(sim_full) %>% print()
-  testZeroInflation(sim_full) %>% print()
+  # testZeroInflation(sim_full) %>% print()
   testUniformity(sim_full) %>% print()
   testSpatialAutocorrelation(sim_full, x = dat$long, y = dat$lat) %>% print()
+  
+  plotResiduals(sim_full, dat$lat, main = 'lat')
+  plotResiduals(sim_full, dat$long, main = 'long')
+
+  if (depend == 'cases') {
+    plotResiduals(sim_full, dat$perc_18to64, main = 'perc_18to64')
+    plotResiduals(sim_full, dat$care_home_beds, main = 'care_home_beds')
+    plotResiduals(sim_full, dat$GISD_Score, main = 'GISD_Score')
+    plotResiduals(sim_full, dat$pop_dens, main = 'pop_dens')
+    plotResiduals(sim_full, dat$living_area, main = 'living_area')
+    plotResiduals(sim_full, dat$perc_service, main = 'perc_service')
+    plotResiduals(sim_full, dat$perc_production, main = 'perc_production')
+  } else if (depend == 'deaths') {
+    plotResiduals(sim_full, dat$care_home_beds, main = 'care_home_beds')
+    plotResiduals(sim_full, dat$hosp_beds, main = 'hosp_beds')
+    plotResiduals(sim_full, dat$GISD_Score, main = 'GISD_Score')
+    plotResiduals(sim_full, dat$pop_dens, main = 'pop_dens')
+  }
+  
 }
