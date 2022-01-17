@@ -4,6 +4,11 @@
 
 # Read in and format data
 
+# Should maps be removed from environment?:
+if (!exists('keep_map')) {
+  keep_map <- FALSE
+}
+
 # Load cumulative data:
 dat_cumulative <- read_csv('data/formatted/STAND_cumulative_cases_and_deaths.csv')
 
@@ -94,7 +99,9 @@ dat_cumulative <- dat_cumulative %>%
   left_join(map_base[, c('ARS', 'long', 'lat')],
             by = c('lk' = 'ARS')) %>%
   dplyr::select(-geometry)
-rm(map_base)
+if (!keep_map) {
+  rm(map_base)
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
