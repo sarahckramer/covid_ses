@@ -2,11 +2,10 @@
 
 # Load libraries:
 library(tidyverse)
-# library(mgcv)
-library(ggeffects)
 library(sf)
 library(spdep)
 library(testthat)
+library(ggeffects)
 library(gridExtra)
 library(viridis)
 library(psych)
@@ -89,7 +88,7 @@ p2b <- ggplot(data = map_pan) + geom_sf(aes(fill = ifr_wave2), col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$ifr_wave1, map_pan$ifr_wave2))) +
   theme_void() + labs(title = 'Wave 2', fill = '% IFR') +
   theme(legend.position = 'bottom')
-# 
+
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
 # Significant clustering by Moran's I?:
@@ -101,7 +100,6 @@ moran.mc(map_pan$ifr_wave1, lw, nsim = 999) # 0.11773
 moran.mc(map_pan$ifr_wave2, lw, nsim = 999) # 0.18589
 
 # Plot boxplot of case/death rates by wave and BL:
-
 p1a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave1_rate, group = ags2)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
   scale_y_continuous(trans = 'log', breaks = c(5, 10, 25, 50, 100, 150)) +
@@ -135,19 +133,19 @@ cor.test(dat_cumulative$ifr_wave1, dat_cumulative$ifr_wave2, method = 'kendall')
 # Plot trends by lat and long:
 n1a_lat <- ggpredict(n1a, 'lat')
 n1a_long <- ggpredict(n1a, 'long')
-plot(n1a_lat); plot(n1a_long)
+# plot(n1a_lat); plot(n1a_long)
 
 n2a_lat <- ggpredict(n2a, 'lat')
 n2a_long <- ggpredict(n2a, 'long')
-plot(n2a_lat); plot(n2a_long)
+# plot(n2a_lat); plot(n2a_long)
 
 n1b_lat <- ggpredict(n1b, 'lat')
 n1b_long <- ggpredict(n1b, 'long')
-plot(n1b_lat); plot(n1b_long)
+# plot(n1b_lat); plot(n1b_long)
 
 n2b_lat <- ggpredict(n2b, 'lat')
 n2b_long <- ggpredict(n2b, 'long')
-plot(n2b_lat); plot(n2b_long)
+# plot(n2b_lat); plot(n2b_long)
 
 rm(n1a_lat, n1a_long, n2a_lat, n2a_long,
    n1b_lat, n1b_long, n2b_lat, n2b_long)
@@ -200,7 +198,7 @@ grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 # Check significance, % deviance explained:
 summary(n1a) # 72.9%
 summary(n2a) # 73.2%
-summary(n1b) # 14.2%; barely sig
+summary(n1b) # 14.2%; barely sig (p = 0.0492)
 summary(n2b) # 28.5 %
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -250,7 +248,6 @@ p_corr <- ggplot(data = dat_corr) + geom_point(aes(x = val, y = obs)) +
   facet_grid(outcome ~ var, scales = 'free') + theme_classic() +
   labs(x = 'Covariate Value', y = 'Outcome Value')
 print(p_corr)
-
 # No need to calculate correlation coefficients; b/c of spatial autocorrelation, p-values won't be reliable
 
 # ---------------------------------------------------------------------------------------------------------------------
