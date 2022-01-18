@@ -67,6 +67,7 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
     mutate(pop = 10000,
            cases_wave1 = 100,
            cases_wave2 = 100,
+           cases_pre_rate = mean(dat_cumulative$cases_pre_rate),
            ags2 = '01',
            long = set_long,
            lat = set_lat,
