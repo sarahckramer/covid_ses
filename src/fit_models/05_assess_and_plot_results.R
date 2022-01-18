@@ -11,6 +11,9 @@ library(gridExtra)
 library(viridis)
 library(psych)
 
+# Load necessary functions:
+source('src/functions/assess_results_fxns.R')
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in and format data:
@@ -32,6 +35,9 @@ n1a <- read_rds('results/fitted_models/null_n1a.rds')
 n1b <- read_rds('results/fitted_models/null_n1b.rds')
 n2a <- read_rds('results/fitted_models/null_n2a.rds')
 n2b <- read_rds('results/fitted_models/null_n2b.rds')
+
+n2a_adj <- read_rds('results/fitted_models/null_n2a_adj.rds')
+n2b_adj <- read_rds('results/fitted_models/null_n2b_adj.rds')
 
 # "Univariate" models:
 
@@ -248,3 +254,169 @@ print(p_corr)
 # No need to calculate correlation coefficients; b/c of spatial autocorrelation, p-values won't be reliable
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+### 'Univariate' models ###
+
+# Determine significant predictors:
+
+
+
+
+# Plot relationships:
+
+
+
+
+# Compare deviance explained/model fit to full models:
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+### Full models ###
+
+# Determine significant predictors (and differences from "univariate" above):
+summary(n1a_full) # GISD_Score; spatial, BL
+summary(n1b_full) # hosp_beds, care_home_beds; spatial
+summary(n2a_full) # perc_18to64, GISD_Score, pop_dens, living_area; spatial, BL
+summary(n2b_full) # care_home_beds; spatial
+
+# Plot smooth relationships between significant predictors and outcomes:
+n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_full) # 1.838x
+p_n1a_GISD <- plot_marginal_prediction(n1a_pred_GISD, 'GISD_Score', 'Cases / 10000 Pop')
+
+plot(p_n1a_GISD)
+
+n1b_pred_hosp_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'hosp_beds', n1b_full) # 1.703
+p_n1b_hosp_beds <- plot_marginal_prediction(n1b_pred_hosp_beds, 'hosp_beds', 'CFR')
+n1b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'care_home_beds', n1b_full) # 1.749
+p_n1b_care_home_beds <- plot_marginal_prediction(n1b_pred_care_home_beds, 'care_home_beds', 'CFR')
+
+# plot(p_n1b_hosp_beds)
+# plot(p_n1b_care_home_beds)
+grid.arrange(p_n1b_hosp_beds, p_n1b_care_home_beds, ncol = 2)
+
+n2a_pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_18to64', n2a_full) # 1.508
+p_n2a_perc_18to64 <- plot_marginal_prediction(n2a_pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop')
+n2a_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'GISD_Score', n2a_full) # 1.614
+p_n2a_GISD_Score <- plot_marginal_prediction(n2a_pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop')
+n2a_pred_pop_dens <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'pop_dens', n2a_full) # 1.469
+p_n2a_pop_dens <- plot_marginal_prediction(n2a_pred_pop_dens, 'pop_dens', 'Cases / 10000 Pop')
+n2a_pred_living_area <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'living_area', n2a_full) # 1.400
+p_n2a_living_area <- plot_marginal_prediction(n2a_pred_living_area, 'living_area', 'Cases / 10000 Pop')
+
+# plot(p_n2a_perc_18to64)
+# plot(p_n2a_GISD_Score)
+# plot(p_n2a_pop_dens)
+# plot(p_n2a_living_area)
+grid.arrange(p_n2a_perc_18to64, p_n2a_GISD_Score, p_n2a_pop_dens, p_n2a_living_area, ncol = 2)
+
+n2b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'care_home_beds', n2b_full) # 1.508
+p_n2b_care_home_beds <- plot_marginal_prediction(n2b_pred_care_home_beds, 'care_home_beds', 'CFR')
+
+plot(p_n2b_care_home_beds)
+
+# Plot marginal effects of SES (even where not significant):
+n1b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'GISD_Score', n1b_full) # 1.247
+p_n1b_GISD_Score <- plot_marginal_prediction(n1b_pred_GISD_Score, 'GISD_Score', 'CFR')
+n2b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'GISD_Score', n2b_full) # 1.284
+p_n2b_GISD_Score <- plot_marginal_prediction(n2b_pred_GISD_Score, 'GISD_Score', 'CFR')
+
+grid.arrange(p_n1a_GISD, p_n1b_GISD_Score, p_n2a_GISD_Score, p_n2b_GISD_Score, ncol = 2)
+
+n1a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_service', n1a_full) # 1.198
+p_n1a_perc_service <- plot_marginal_prediction(n1a_pred_perc_service, 'perc_service', 'Cases / 10000 Pop')
+n1a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_production', n1a_full) # 1.519
+p_n1a_perc_production <- plot_marginal_prediction(n1a_pred_perc_production, 'perc_production', 'Cases / 10000 Pop')
+
+n2a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_service', n2a_full) # 1.021
+p_n2a_perc_service <- plot_marginal_prediction(n2a_pred_perc_service, 'perc_service', 'Cases / 10000 Pop')
+n2a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_production', n2a_full) # 1.199
+p_n2a_perc_production <- plot_marginal_prediction(n2a_pred_perc_production, 'perc_production', 'Cases / 10000 Pop')
+
+grid.arrange(p_n1a_perc_service, p_n1a_perc_production, p_n2a_perc_service, p_n2a_perc_production, ncol = 2)
+
+# How well do models explain the data?:
+summary(n1a_full) # 74.7%
+summary(n1a) # 72.9%
+# diff 1.8
+
+summary(n1b_full) # 16.1%
+summary(n1b) # 14.2%
+# diff 1.9
+
+summary(n2a_full) # 80.3%
+summary(n2a) # 73.2%
+# diff 7.1
+
+summary(n2b_full) # 32.8%
+summary(n2b) # 28.5%
+# diff 4.3
+
+AIC(n1a, n1a_full)
+AIC(n1b, n1b_full)
+AIC(n2a, n2a_adj, n2a_full)
+AIC(n2b, n2b_adj, n2b_full)
+
+BIC(n1a, n1a_full)
+BIC(n1b, n1b_full)
+BIC(n2a, n2a_adj, n2a_full)
+BIC(n2b, n2b_adj, n2b_full)
+
+# Plot spatial effect (after controlling for variables):
+spatial_trend_FULL <- dat_cumulative %>%
+  select(lk, long, lat) %>%
+  unique() %>%
+  mutate(pop = 10000,
+         cases_wave1 = 100,
+         cases_wave2 = 100,
+         ags2 = '01',
+         cases_pre_rate = mean(dat_cumulative$cases_pre_rate),
+         perc_18to64 = mean(dat_cumulative$perc_18to64),
+         hosp_beds = mean(dat_cumulative$hosp_beds),
+         care_home_beds = mean(dat_cumulative$care_home_beds),
+         GISD_Score = mean(dat_cumulative$GISD_Score),
+         pop_dens = mean(dat_cumulative$pop_dens),
+         living_area = mean(dat_cumulative$living_area),
+         perc_service = mean(dat_cumulative$perc_service),
+         perc_production = mean(dat_cumulative$perc_production))
+
+spatial_trend_FULL <- spatial_trend_FULL %>%
+  mutate(fitted_n1a = predict(n1a_full, spatial_trend_FULL, type = 'response'),
+         fitted_n2a = predict(n2a_full, spatial_trend_FULL, type = 'response'),
+         fitted_n1b = predict(n1b_full, spatial_trend_FULL, type = 'response'),
+         fitted_n2b = predict(n2b_full, spatial_trend_FULL, type = 'response'))
+
+map_fitted_FULL <- map_pan %>%
+  left_join(spatial_trend_FULL %>%
+              select(lk, fitted_n1a:fitted_n2b),
+            by = c('ARS' = 'lk'))
+rm(spatial_trend_FULL)
+
+p1a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom')
+p2a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 2', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom')
+
+p1b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1b), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1', fill = 'CFR (%)') +
+  theme(legend.position = 'bottom')
+p2b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 2', fill = 'CFR (%)') +
+  theme(legend.position = 'bottom')
+
+grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
