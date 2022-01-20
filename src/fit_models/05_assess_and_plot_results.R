@@ -103,26 +103,30 @@ p1a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave1_rate), col = 'bla
   scale_fill_viridis() +
   # scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate))) +
   theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave2_rate), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   # scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate))) +
   theme_void() + labs(title = 'Wave 2', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 p1b <- ggplot(data = map_pan) + geom_sf(aes(fill = ifr_wave1), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   # scale_fill_viridis() +
   scale_fill_viridis(limits = c(0, max(map_pan$ifr_wave1, map_pan$ifr_wave2))) +
   theme_void() + labs(title = 'Wave 1', fill = '% CFR') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2b <- ggplot(data = map_pan) + geom_sf(aes(fill = ifr_wave2), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   # scale_fill_viridis() +
   scale_fill_viridis(limits = c(0, max(map_pan$ifr_wave1, map_pan$ifr_wave2))) +
   theme_void() + labs(title = 'Wave 2', fill = '% CFR') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
@@ -137,20 +141,32 @@ moran.mc(map_pan$ifr_wave2, lw, nsim = 999) # 0.18589
 # Plot boxplot of case/death rates by wave and BL:
 p1a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave1_rate, group = ags2)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
+  # theme(plot.title = element_text(size = 20), axis.title = element_text(size = 16),
+  #       axis.text = element_text(size = 12)) +
+  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
+                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
   scale_y_continuous(trans = 'log', breaks = c(5, 10, 25, 50, 100, 150)) +
   labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 1')
 p2a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave2_rate, group = ags2)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
+  # theme(plot.title = element_text(size = 20), axis.title = element_text(size = 16),
+  #       axis.text = element_text(size = 12)) +
+  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
+                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
   scale_y_continuous(trans = 'log', breaks = c(100, 200, 300, 400, 500, 600)) +
   labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 2')
 grid.arrange(p1a, p2a, ncol = 1)
 
 p1b <- ggplot(data = dat_cumulative, aes(x = ags2, y = ifr_wave1, group = ags2)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
+  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
+                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
   # scale_y_continuous(trans = 'log', breaks = c(5, 10, 15)) +
   labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 1')
 p2b <- ggplot(data = dat_cumulative, aes(x = ags2, y = ifr_wave2, group = ags2)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
+  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
+                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
   # scale_y_continuous(trans = 'log', breaks = c(2, 4, 6)) +
   labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 2')
 grid.arrange(p1b, p2b, ncol = 1)
@@ -210,23 +226,27 @@ p1a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') 
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
-  scale_fill_viridis() +
+  scale_fill_viridis(breaks = c(250, 500)) +
   theme_void() + labs(title = 'Wave 2', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 p1b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 1', fill = 'CFR (%)') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 2', fill = 'CFR (%)') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
@@ -490,22 +510,31 @@ p1a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') 
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
-  scale_fill_viridis() +
+  scale_fill_viridis(breaks = c(100, 300, 500)) +
   theme_void() + labs(title = 'Wave 2', fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 p1b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 1', fill = 'CFR (%)') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
   theme_void() + labs(title = 'Wave 2', fill = 'CFR (%)') +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Clean up:
+rm(list = ls())
