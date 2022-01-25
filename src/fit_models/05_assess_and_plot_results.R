@@ -312,11 +312,11 @@ print(p_corr)
 # Determine significant predictors:
 for (mod in n1a_uni_list) {
   print(summary(mod))
-} # GISD_Score; perc_production almost (p = 0.0714)
+} # GISD_Score (p = 0.000295); perc_production almost (p = 0.0714)
 
 for (mod in n2a_uni_list) {
   print(summary(mod))
-} # perc_18to64, care_home_beds, GISD_Score, living_area, perc_service, perc_production
+} # perc_18to64 (0.0328), care_home_beds (0.0187), GISD_Score (<2e-16), living_area (0.00406), perc_service (0.0184), perc_production (0.0465)
 
 for (mod in n1b_uni_list) {
   print(summary(mod))
@@ -324,7 +324,7 @@ for (mod in n1b_uni_list) {
 
 for (mod in n2b_uni_list) {
   print(summary(mod))
-} # care_home_beds
+} # care_home_beds (0.000881)
 
 # Plot relationships:
 n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_uni_list[[3]]) # 1.836x
@@ -389,10 +389,10 @@ AIC(n2b, n2b_full, n2b_uni_list[[1]], n2b_uni_list[[2]], n2b_uni_list[[3]])
 ### Full models ###
 
 # Determine significant predictors (and differences from "univariate" above):
-summary(n1a_full) # GISD_Score; spatial, BL
-summary(n1b_full) # hosp_beds, care_home_beds; spatial
-summary(n2a_full) # perc_18to64, GISD_Score, pop_dens, living_area; spatial, BL
-summary(n2b_full) # care_home_beds; spatial
+summary(n1a_full) # GISD_Score (0.000676); spatial, BL
+summary(n1b_full) # hosp_beds (0.03303), care_home_beds (0.02799); spatial
+summary(n2a_full) # perc_18to64 (0.007380), GISD_Score (1.11e-06), pop_dens (0.003069), living_area (0.000355); spatial, BL
+summary(n2b_full) # care_home_beds (0.00106); spatial
 
 # Plot smooth relationships between significant predictors and outcomes:
 n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_full) # 1.838x
