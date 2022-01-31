@@ -25,15 +25,15 @@ source('src/functions/load_data.R')
 # Assess residuals
 
 # Load models:
-n1a_full <- read_rds('results/fitted_models/FULL_n1a.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b.rds')
-n2a_full <- read_rds('results/fitted_models/FULL_n2a.rds')
-n2b_full <- read_rds('results/fitted_models/FULL_n2b.rds')
+n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
+n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
+n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
+n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 
-n1a <- read_rds('results/fitted_models/null_n1a.rds')
-n1b <- read_rds('results/fitted_models/null_n1b.rds')
-n2a <- read_rds('results/fitted_models/null_n2a.rds')
-n2b <- read_rds('results/fitted_models/null_n2b.rds')
+n1a <- read_rds('results/fitted_models/null_n1a_ml.rds')
+n1b <- read_rds('results/fitted_models/null_n1b_ml.rds')
+n2a <- read_rds('results/fitted_models/null_n2a_ml.rds')
+n2b <- read_rds('results/fitted_models/null_n2b_ml.rds')
 
 # Add fitted values to data frame:
 dat_cumulative$fitted_n1a <- fitted(n1a_full)
@@ -97,28 +97,28 @@ check_dharma(dat_cumulative, n2a, depend = 'none')
 check_dharma(dat_cumulative, n2b, depend = 'none')
 
 # Compare model-generated data to observed data:
-n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.533, mu = predict(n1a_full, type = 'response'))) %>%
+n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.572, mu = predict(n1a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave1) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n1b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 5.089, mu = predict(n1b_full, type = 'response'))) %>%
+n1b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 4.985, mu = predict(n1b_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$deaths_wave1) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 32.791, mu = predict(n2a_full, type = 'response'))) %>%
+n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 32.906, mu = predict(n2a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave2) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n2b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 16.567, mu = predict(n2b_full, type = 'response'))) %>%
+n2b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 16.671, mu = predict(n2b_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$deaths_wave2) %>%
   bind_cols(pop = dat_cumulative$pop) %>%

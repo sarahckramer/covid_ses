@@ -24,57 +24,57 @@ source('src/functions/load_data.R')
 # Load models
 
 # Full models:
-n1a_full <- read_rds('results/fitted_models/FULL_n1a.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b.rds')
-n2a_full <- read_rds('results/fitted_models/FULL_n2a.rds')
-n2b_full <- read_rds('results/fitted_models/FULL_n2b.rds')
+n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
+n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
+n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
+n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 
 # Null models:
-n1a <- read_rds('results/fitted_models/null_n1a.rds')
-n1b <- read_rds('results/fitted_models/null_n1b.rds')
-n2a <- read_rds('results/fitted_models/null_n2a.rds')
-n2b <- read_rds('results/fitted_models/null_n2b.rds')
+n1a <- read_rds('results/fitted_models/null_n1a_ml.rds')
+n1b <- read_rds('results/fitted_models/null_n1b_ml.rds')
+n2a <- read_rds('results/fitted_models/null_n2a_ml.rds')
+n2b <- read_rds('results/fitted_models/null_n2b_ml.rds')
 
-n2a_adj <- read_rds('results/fitted_models/null_n2a_adj.rds')
-n2b_adj <- read_rds('results/fitted_models/null_n2b_adj.rds')
+n2a_adj <- read_rds('results/fitted_models/null_n2a_adj_ml.rds')
+n2b_adj <- read_rds('results/fitted_models/null_n2b_adj_ml.rds')
 
 # "Univariate" models:
-n1a_perc_18to64 <- read_rds('results/fitted_models/uni/n1a_perc_18to64.rds')
-n1a_care_home_beds <- read_rds('results/fitted_models/uni/n1a_care_home_beds.rds')
-n1a_GISD_Score <- read_rds('results/fitted_models/uni/n1a_GISD.rds')
-n1a_pop_dens <- read_rds('results/fitted_models/uni/n1a_pop_dens.rds')
-n1a_living_area <- read_rds('results/fitted_models/uni/n1a_living_area.rds')
-n1a_perc_service <- read_rds('results/fitted_models/uni/n1a_perc_serv.rds')
-n1a_perc_production <- read_rds('results/fitted_models/uni/n1a_perc_prod.rds')
+n1a_perc_18to64 <- read_rds('results/fitted_models/uni/n1a_perc_18to64_ml.rds')
+n1a_care_home_beds <- read_rds('results/fitted_models/uni/n1a_care_home_beds_ml.rds')
+n1a_GISD_Score <- read_rds('results/fitted_models/uni/n1a_GISD_ml.rds')
+n1a_pop_dens <- read_rds('results/fitted_models/uni/n1a_pop_dens_ml.rds')
+n1a_living_area <- read_rds('results/fitted_models/uni/n1a_living_area_ml.rds')
+n1a_perc_service <- read_rds('results/fitted_models/uni/n1a_perc_serv_ml.rds')
+n1a_perc_production <- read_rds('results/fitted_models/uni/n1a_perc_prod_ml.rds')
 
 n1a_uni_list <- list(n1a_perc_18to64, n1a_care_home_beds, n1a_GISD_Score, n1a_pop_dens,
                      n1a_living_area, n1a_perc_service, n1a_perc_production)
 names(n1a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens', 'living_area',
                          'perc_service', 'perc_production')
 
-n2a_perc_18to64 <- read_rds('results/fitted_models/uni/n2a_perc_18to64.rds')
-n2a_care_home_beds <- read_rds('results/fitted_models/uni/n2a_care_home_beds.rds')
-n2a_GISD_Score <- read_rds('results/fitted_models/uni/n2a_GISD.rds')
-n2a_pop_dens <- read_rds('results/fitted_models/uni/n2a_pop_dens.rds')
-n2a_living_area <- read_rds('results/fitted_models/uni/n2a_living_area.rds')
-n2a_perc_service <- read_rds('results/fitted_models/uni/n2a_perc_serv.rds')
-n2a_perc_production <- read_rds('results/fitted_models/uni/n2a_perc_prod.rds')
+n2a_perc_18to64 <- read_rds('results/fitted_models/uni/n2a_perc_18to64_ml.rds')
+n2a_care_home_beds <- read_rds('results/fitted_models/uni/n2a_care_home_beds_ml.rds')
+n2a_GISD_Score <- read_rds('results/fitted_models/uni/n2a_GISD_ml.rds')
+n2a_pop_dens <- read_rds('results/fitted_models/uni/n2a_pop_dens_ml.rds')
+n2a_living_area <- read_rds('results/fitted_models/uni/n2a_living_area_ml.rds')
+n2a_perc_service <- read_rds('results/fitted_models/uni/n2a_perc_serv_ml.rds')
+n2a_perc_production <- read_rds('results/fitted_models/uni/n2a_perc_prod_ml.rds')
 
 n2a_uni_list <- list(n2a_perc_18to64, n2a_care_home_beds, n2a_GISD_Score, n2a_pop_dens,
                      n2a_living_area, n2a_perc_service, n2a_perc_production)
 names(n2a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens', 'living_area',
                          'perc_service', 'perc_production')
 
-n1b_hosp_beds <- read_rds('results/fitted_models/uni/n1b_hosp_beds.rds')
-n1b_care_home_beds <- read_rds('results/fitted_models/uni/n1b_care_home_beds.rds')
-n1b_GISD_Score <- read_rds('results/fitted_models/uni/n1b_GISD.rds')
+n1b_hosp_beds <- read_rds('results/fitted_models/uni/n1b_hosp_beds_ml.rds')
+n1b_care_home_beds <- read_rds('results/fitted_models/uni/n1b_care_home_beds_ml.rds')
+n1b_GISD_Score <- read_rds('results/fitted_models/uni/n1b_GISD_ml.rds')
 
 n1b_uni_list <- list(n1b_hosp_beds, n1b_care_home_beds, n1b_GISD_Score)
 names(n1b_uni_list) <- c('hosp_beds', 'care_home_beds', 'GISD_Score')
 
-n2b_hosp_beds <- read_rds('results/fitted_models/uni/n2b_hosp_beds.rds')
-n2b_care_home_beds <- read_rds('results/fitted_models/uni/n2b_care_home_beds.rds')
-n2b_GISD_Score <- read_rds('results/fitted_models/uni/n2b_GISD.rds')
+n2b_hosp_beds <- read_rds('results/fitted_models/uni/n2b_hosp_beds_ml.rds')
+n2b_care_home_beds <- read_rds('results/fitted_models/uni/n2b_care_home_beds_ml.rds')
+n2b_GISD_Score <- read_rds('results/fitted_models/uni/n2b_GISD_ml.rds')
 
 n2b_uni_list <- list(n2b_hosp_beds, n2b_care_home_beds, n2b_GISD_Score)
 names(n2b_uni_list) <- c('hosp_beds', 'care_home_beds', 'GISD_Score')
@@ -251,10 +251,10 @@ p2b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
 # Check significance, % deviance explained:
-summary(n1a) # 72.9%
-summary(n2a) # 73.2%
-summary(n1b) # 14.2%; barely sig (p = 0.0492)
-summary(n2b) # 28.5 %
+summary(n1a) # 72.9% / 72.7%
+summary(n2a) # 73.2% / 73.1%
+summary(n1b) # 14.2%; barely sig (p = 0.0492) / 15.5% (highly)
+summary(n2b) # 28.5% / 28.6% 
 
 # ---------------------------------------------------------------------------------------------------------------------
 
