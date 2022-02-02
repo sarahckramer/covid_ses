@@ -199,6 +199,10 @@ n2b_long <- ggpredict(n2b, 'long')
 
 rm(n1a_lat, n1a_long, n2a_lat, n2a_long,
    n1b_lat, n1b_long, n2b_lat, n2b_long)
+# Check whether controlling for first wave's incidence improves model fit:
+anova(n2a, n2a_adj, test = 'Chisq')
+anova(n2b, n2b_adj, test = 'Chisq')
+# No; just use n2a and n2b, not n2a_adj and n2b_adj
 
 # Plot overall spatial pattern:
 spatial_trend_NULL <- dat_cumulative %>%
@@ -250,10 +254,10 @@ p2b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2b), col = 'black') 
 grid.arrange(p1a, p1b, p2a, p2b, ncol = 2)
 
 # Check significance, % deviance explained:
-summary(n1a) # 72.9% / 72.7%
-summary(n2a) # 73.2% / 73.1%
-summary(n1b) # 14.2%; barely sig (p = 0.0492) / 15.5% (highly)
-summary(n2b) # 28.5% / 28.6% 
+summary(n1a) # 73.5%
+summary(n2a) # 73.1%
+summary(n1b) # 15.5%
+summary(n2b) # 28.6% 
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -311,11 +315,11 @@ print(p_corr)
 # Determine significant predictors:
 for (mod in n1a_uni_list) {
   print(summary(mod))
-} # GISD_Score (p = 0.000295); perc_production almost (p = 0.0714)
+} # GISD_Score (p = 0.000281); perc_18to64 almost (p = 0.0812), perc_production almost (p = 0.09205)
 
 for (mod in n2a_uni_list) {
   print(summary(mod))
-} # perc_18to64 (0.0328), care_home_beds (0.0187), GISD_Score (<2e-16), living_area (0.00406), perc_service (0.0184), perc_production (0.0465)
+} # perc_18to64 (p = 0.0443), care_home_beds (p = 0.0215), GISD_Score (p < 2e-16), perc_service (p = 0.0213), perc_production (p = 0.0235)
 
 for (mod in n1b_uni_list) {
   print(summary(mod))
@@ -323,46 +327,46 @@ for (mod in n1b_uni_list) {
 
 for (mod in n2b_uni_list) {
   print(summary(mod))
-} # care_home_beds (0.000881)
+} # care_home_beds (p = 0.000732); GISD_Score (p = 0.0406)
 
 # Plot relationships:
-n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_uni_list[[3]]) # 1.836x
+n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_uni_list[[3]]) # 1.783x
 p_n1a_GISD <- plot_marginal_prediction(n1a_pred_GISD, 'GISD_Score', 'Cases / 10000 Pop')
 
 plot(p_n1a_GISD) # sig
 
-n1b_pred_hosp_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'hosp_beds', n1b_uni_list[[1]]) # 1.243x
+n1b_pred_hosp_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'hosp_beds', n1b_uni_list[[1]]) # 1.280x
 p_n1b_hosp_beds <- plot_marginal_prediction(n1b_pred_hosp_beds, 'hosp_beds', 'CFR')
-n1b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'care_home_beds', n1b_uni_list[[2]]) # 1.225x
+n1b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'care_home_beds', n1b_uni_list[[2]]) # 1.188x
 p_n1b_care_home_beds <- plot_marginal_prediction(n1b_pred_care_home_beds, 'care_home_beds', 'CFR')
 
 grid.arrange(p_n1b_hosp_beds, p_n1b_care_home_beds, ncol = 2) # not sig
 
-n2a_pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_18to64', n2a_uni_list[[1]]) # 1.340x
+n2a_pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_18to64', n2a_uni_list[[1]]) # 1.269x
 p_n2a_perc_18to64 <- plot_marginal_prediction(n2a_pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop')
-n2a_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'care_home_beds', n2a_uni_list[[2]]) # 1.479x
+n2a_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'care_home_beds', n2a_uni_list[[2]]) # 1.417x
 p_n2a_care_home_beds <- plot_marginal_prediction(n2a_pred_care_home_beds, 'care_home_beds', 'Cases / 10000 Pop')
-n2a_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'GISD_Score', n2a_uni_list[[3]]) # 1.900x
+n2a_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'GISD_Score', n2a_uni_list[[3]]) # 1.890x
 p_n2a_GISD_Score <- plot_marginal_prediction(n2a_pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop')
-n2a_pred_living_area <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'living_area', n2a_uni_list[[5]]) # 1.209x
-p_n2a_living_area <- plot_marginal_prediction(n2a_pred_living_area, 'living_area', 'Cases / 10000 Pop')
-n2a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_service', n2a_uni_list[[6]]) # 1.205x
+n2a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_service', n2a_uni_list[[5]]) # 1.230x
 p_n2a_perc_service <- plot_marginal_prediction(n2a_pred_perc_service, 'perc_service', 'Cases / 10000 Pop')
-n2a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_production', n2a_uni_list[[7]]) # 1.184x
+n2a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_production', n2a_uni_list[[6]]) # 1.179x
 p_n2a_perc_production <- plot_marginal_prediction(n2a_pred_perc_production, 'perc_production', 'Cases / 10000 Pop')
 
-grid.arrange(p_n2a_perc_18to64, p_n2a_care_home_beds, p_n2a_GISD_Score, p_n2a_living_area, p_n2a_perc_service, p_n2a_perc_production,
+grid.arrange(p_n2a_perc_18to64, p_n2a_care_home_beds, p_n2a_GISD_Score, p_n2a_perc_service, p_n2a_perc_production,
              ncol = 3) # sig
 
-n2a_pred_pop_dens <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'pop_dens', n2a_uni_list[[4]]) # 1.135x
+n2a_pred_pop_dens <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'pop_dens', n2a_uni_list[[4]]) # 1.110x
 p_n2a_pop_dens <- plot_marginal_prediction(n2a_pred_pop_dens, 'pop_dens', 'Cases / 10000 Pop')
 
 plot(p_n2a_pop_dens) # not sig
 
-n2b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'care_home_beds', n2b_uni_list[[2]]) # 1.435x
+n2b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'care_home_beds', n2b_uni_list[[2]]) # 1.441x
 p_n2b_care_home_beds <- plot_marginal_prediction(n2b_pred_care_home_beds, 'care_home_beds', 'CFR')
+n2b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'GISD_Score', n2b_uni_list[[3]]) # 1.252x
+p_n2b_GISD_Score <- plot_marginal_prediction(n2b_pred_GISD_Score, 'GISD_Score', 'CFR')
 
-plot(p_n2b_care_home_beds) # sig
+grid.arrange(p_n2b_care_home_beds, p_n2b_GISD_Score, ncol = 2)
 
 # Compare deviance explained/model fit to full models:
 anova(n1a, n1a_full, test = 'Chisq') # deviance explained: 73.5% vs. 74.7%
@@ -389,92 +393,75 @@ anova(n2b_full, n2b_uni_list[[2]], test = 'Chisq')
 ### Full models ###
 
 # Determine significant predictors (and differences from "univariate" above):
-summary(n1a_full) # GISD_Score (0.000676); spatial, BL
-summary(n1b_full) # hosp_beds (0.03303), care_home_beds (0.02799); spatial
-summary(n2a_full) # perc_18to64 (0.007380), GISD_Score (1.11e-06), pop_dens (0.003069), living_area (0.000355); spatial, BL
-summary(n2b_full) # care_home_beds (0.00106); spatial
+summary(n1a_full) # GISD_Score (0.000513); spatial, BL
+summary(n1b_full) # hosp_beds (0.0131), care_home_beds (0.0260); spatial
+summary(n2a_full) # care_home_beds (0.0206), GISD_Score (< 2e-16), pop_dens (3.80e-05); spatial, BL
+summary(n2b_full) # care_home_beds (0.00116); spatial
+# wave 1 rates not sig for n2a_full or n2b_full
 
 # Plot smooth relationships between significant predictors and outcomes:
-n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_full) # 1.838x
+n1a_pred_GISD <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'GISD_Score', n1a_full) # 1.767x
 p_n1a_GISD <- plot_marginal_prediction(n1a_pred_GISD, 'GISD_Score', 'Cases / 10000 Pop')
 
 plot(p_n1a_GISD)
 
-n1b_pred_hosp_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'hosp_beds', n1b_full) # 1.703
+n1b_pred_hosp_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'hosp_beds', n1b_full) # 1.981
 p_n1b_hosp_beds <- plot_marginal_prediction(n1b_pred_hosp_beds, 'hosp_beds', 'CFR')
-n1b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'care_home_beds', n1b_full) # 1.749
+n1b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'care_home_beds', n1b_full) # 1.754
 p_n1b_care_home_beds <- plot_marginal_prediction(n1b_pred_care_home_beds, 'care_home_beds', 'CFR')
 
 # plot(p_n1b_hosp_beds)
 # plot(p_n1b_care_home_beds)
 grid.arrange(p_n1b_hosp_beds, p_n1b_care_home_beds, ncol = 2)
 
-n2a_pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_18to64', n2a_full) # 1.508
-p_n2a_perc_18to64 <- plot_marginal_prediction(n2a_pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop')
-n2a_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'GISD_Score', n2a_full) # 1.614
+# n2a_pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_18to64', n2a_full) # 1.173
+# p_n2a_perc_18to64 <- plot_marginal_prediction(n2a_pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop')
+n2a_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'care_home_beds', n2a_full) # 1.452
+p_n2a_care_home_beds <- plot_marginal_prediction(n2a_pred_care_home_beds, 'care_home_beds', 'Cases / 10000 Pop')
+n2a_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'GISD_Score', n2a_full) # 1.889
 p_n2a_GISD_Score <- plot_marginal_prediction(n2a_pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop')
-n2a_pred_pop_dens <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'pop_dens', n2a_full) # 1.469
+n2a_pred_pop_dens <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'pop_dens', n2a_full) # 1.478
 p_n2a_pop_dens <- plot_marginal_prediction(n2a_pred_pop_dens, 'pop_dens', 'Cases / 10000 Pop')
-n2a_pred_living_area <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'living_area', n2a_full) # 1.400
-p_n2a_living_area <- plot_marginal_prediction(n2a_pred_living_area, 'living_area', 'Cases / 10000 Pop')
 
-# plot(p_n2a_perc_18to64)
-# plot(p_n2a_GISD_Score)
-# plot(p_n2a_pop_dens)
-# plot(p_n2a_living_area)
-grid.arrange(p_n2a_perc_18to64, p_n2a_GISD_Score, p_n2a_pop_dens, p_n2a_living_area, ncol = 2)
+grid.arrange(p_n2a_care_home_beds, p_n2a_GISD_Score, p_n2a_pop_dens, ncol = 2)
 
-n2b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'care_home_beds', n2b_full) # 1.508
+n2b_pred_care_home_beds <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'care_home_beds', n2b_full) # 1.499
 p_n2b_care_home_beds <- plot_marginal_prediction(n2b_pred_care_home_beds, 'care_home_beds', 'CFR')
 
 plot(p_n2b_care_home_beds)
 
 # Plot marginal effects of SES (even where not significant):
-n1b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'GISD_Score', n1b_full) # 1.247
+n1b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave1', 'GISD_Score', n1b_full) # 1.312
 p_n1b_GISD_Score <- plot_marginal_prediction(n1b_pred_GISD_Score, 'GISD_Score', 'CFR')
-n2b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'GISD_Score', n2b_full) # 1.284
+n2b_pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'ifr_wave2', 'GISD_Score', n2b_full) # 1.170
 p_n2b_GISD_Score <- plot_marginal_prediction(n2b_pred_GISD_Score, 'GISD_Score', 'CFR')
 
 grid.arrange(p_n1a_GISD, p_n1b_GISD_Score, p_n2a_GISD_Score, p_n2b_GISD_Score, ncol = 2)
 
-n1a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_service', n1a_full) # 1.198
+n1a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_service', n1a_full) # 1.115
 p_n1a_perc_service <- plot_marginal_prediction(n1a_pred_perc_service, 'perc_service', 'Cases / 10000 Pop')
-n1a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_production', n1a_full) # 1.519
+n1a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave1_rate', 'perc_production', n1a_full) # 1.435
 p_n1a_perc_production <- plot_marginal_prediction(n1a_pred_perc_production, 'perc_production', 'Cases / 10000 Pop')
 
-n2a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_service', n2a_full) # 1.021
+n2a_pred_perc_service <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_service', n2a_full) # 1.156
 p_n2a_perc_service <- plot_marginal_prediction(n2a_pred_perc_service, 'perc_service', 'Cases / 10000 Pop')
-n2a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_production', n2a_full) # 1.199
+n2a_pred_perc_production <- get_marginal_prediction(dat_cumulative, 'cases_wave2_rate', 'perc_production', n2a_full) # 1.201
 p_n2a_perc_production <- plot_marginal_prediction(n2a_pred_perc_production, 'perc_production', 'Cases / 10000 Pop')
 
 grid.arrange(p_n1a_perc_service, p_n1a_perc_production, p_n2a_perc_service, p_n2a_perc_production, ncol = 2)
 
 # How well do models explain the data?:
 summary(n1a_full) # 74.7%
-summary(n1a) # 72.9%
-# diff 1.8
+summary(n1a) # 73.5%
 
 summary(n1b_full) # 16.1%
-summary(n1b) # 14.2%
-# diff 1.9
+summary(n1b) # 15.5%
 
-summary(n2a_full) # 80.3%
-summary(n2a) # 73.2%
-# diff 7.1
+summary(n2a_full) # 78.4%
+summary(n2a) # 73.1%
 
-summary(n2b_full) # 32.8%
-summary(n2b) # 28.5%
-# diff 4.3
-
-AIC(n1a, n1a_full)
-AIC(n1b, n1b_full)
-AIC(n2a, n2a_adj, n2a_full)
-AIC(n2b, n2b_adj, n2b_full)
-
-BIC(n1a, n1a_full)
-BIC(n1b, n1b_full)
-BIC(n2a, n2a_adj, n2a_full)
-BIC(n2b, n2b_adj, n2b_full)
+summary(n2b_full) # 31.8%
+summary(n2b) # 28.6%
 
 # Plot spatial effect (after controlling for variables):
 spatial_trend_FULL <- dat_cumulative %>%
