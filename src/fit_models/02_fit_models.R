@@ -77,7 +77,7 @@ gam.check(n2b_adj, rep = 50)
 n1a_full <- bake(file = 'results/fitted_models/FULL_n1a_ml.rds',
                  expr = {
                    gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-                         s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(living_area, k = 25) +
+                         s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + #s(living_area, k = 25) +
                          s(perc_service) + s(perc_production) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
@@ -144,12 +144,12 @@ n1a_pop_dens <- bake(file = 'results/fitted_models/uni/n1a_pop_dens_ml.rds',
                              s(pop_dens) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                      }
 )
-n1a_living_area <- bake(file = 'results/fitted_models/uni/n1a_living_area_ml.rds',
-                        expr = {
-                          gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-                                s(living_area, k = 25) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-                        }
-)
+# n1a_living_area <- bake(file = 'results/fitted_models/uni/n1a_living_area_ml.rds',
+#                         expr = {
+#                           gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+#                                 s(living_area, k = 25) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+#                         }
+# )
 n1a_perc_serv <- bake(file = 'results/fitted_models/uni/n1a_perc_serv_ml.rds',
                       expr = {
                         gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
@@ -209,12 +209,12 @@ n2a_pop_dens <- bake(file = 'results/fitted_models/uni/n2a_pop_dens_ml.rds',
                              s(pop_dens) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                      }
 )
-n2a_living_area <- bake(file = 'results/fitted_models/uni/n2a_living_area_ml.rds',
-                        expr = {
-                          gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
-                                s(living_area) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-                        }
-)
+# n2a_living_area <- bake(file = 'results/fitted_models/uni/n2a_living_area_ml.rds',
+#                         expr = {
+#                           gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+#                                 s(living_area) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+#                         }
+# )
 n2a_perc_serv <- bake(file = 'results/fitted_models/uni/n2a_perc_serv_ml.rds',
                       expr = {
                         gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
