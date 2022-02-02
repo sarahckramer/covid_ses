@@ -27,7 +27,7 @@ check_dharma <- function(dat, mod, depend) {
     plotResiduals(sim_full, dat$care_home_beds, main = 'care_home_beds')
     plotResiduals(sim_full, dat$GISD_Score, main = 'GISD_Score')
     plotResiduals(sim_full, dat$pop_dens, main = 'pop_dens')
-    plotResiduals(sim_full, dat$living_area, main = 'living_area')
+    # plotResiduals(sim_full, dat$living_area, main = 'living_area')
     plotResiduals(sim_full, dat$perc_service, main = 'perc_service')
     plotResiduals(sim_full, dat$perc_production, main = 'perc_production')
   } else if (depend == 'deaths') {

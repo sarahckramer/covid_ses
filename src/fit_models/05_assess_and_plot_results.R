@@ -43,26 +43,26 @@ n1a_perc_18to64 <- read_rds('results/fitted_models/uni/n1a_perc_18to64_ml.rds')
 n1a_care_home_beds <- read_rds('results/fitted_models/uni/n1a_care_home_beds_ml.rds')
 n1a_GISD_Score <- read_rds('results/fitted_models/uni/n1a_GISD_ml.rds')
 n1a_pop_dens <- read_rds('results/fitted_models/uni/n1a_pop_dens_ml.rds')
-n1a_living_area <- read_rds('results/fitted_models/uni/n1a_living_area_ml.rds')
+# n1a_living_area <- read_rds('results/fitted_models/uni/n1a_living_area_ml.rds')
 n1a_perc_service <- read_rds('results/fitted_models/uni/n1a_perc_serv_ml.rds')
 n1a_perc_production <- read_rds('results/fitted_models/uni/n1a_perc_prod_ml.rds')
 
 n1a_uni_list <- list(n1a_perc_18to64, n1a_care_home_beds, n1a_GISD_Score, n1a_pop_dens,
-                     n1a_living_area, n1a_perc_service, n1a_perc_production)
-names(n1a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens', 'living_area',
+                     n1a_perc_service, n1a_perc_production)
+names(n1a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens',
                          'perc_service', 'perc_production')
 
 n2a_perc_18to64 <- read_rds('results/fitted_models/uni/n2a_perc_18to64_ml.rds')
 n2a_care_home_beds <- read_rds('results/fitted_models/uni/n2a_care_home_beds_ml.rds')
 n2a_GISD_Score <- read_rds('results/fitted_models/uni/n2a_GISD_ml.rds')
 n2a_pop_dens <- read_rds('results/fitted_models/uni/n2a_pop_dens_ml.rds')
-n2a_living_area <- read_rds('results/fitted_models/uni/n2a_living_area_ml.rds')
+# n2a_living_area <- read_rds('results/fitted_models/uni/n2a_living_area_ml.rds')
 n2a_perc_service <- read_rds('results/fitted_models/uni/n2a_perc_serv_ml.rds')
 n2a_perc_production <- read_rds('results/fitted_models/uni/n2a_perc_prod_ml.rds')
 
 n2a_uni_list <- list(n2a_perc_18to64, n2a_care_home_beds, n2a_GISD_Score, n2a_pop_dens,
-                     n2a_living_area, n2a_perc_service, n2a_perc_production)
-names(n2a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens', 'living_area',
+                     n2a_perc_service, n2a_perc_production)
+names(n2a_uni_list) <- c('perc_18to64', 'care_home_beds', 'GISD_Score', 'pop_dens',
                          'perc_service', 'perc_production')
 
 n1b_hosp_beds <- read_rds('results/fitted_models/uni/n1b_hosp_beds_ml.rds')
@@ -79,9 +79,8 @@ n2b_GISD_Score <- read_rds('results/fitted_models/uni/n2b_GISD_ml.rds')
 n2b_uni_list <- list(n2b_hosp_beds, n2b_care_home_beds, n2b_GISD_Score)
 names(n2b_uni_list) <- c('hosp_beds', 'care_home_beds', 'GISD_Score')
 
-rm(n1a_perc_18to64, n1a_care_home_beds, n1a_GISD_Score, n1a_pop_dens, n1a_living_area,
-   n1a_perc_service, n1a_perc_production, n2a_perc_18to64, n2a_care_home_beds,
-   n2a_GISD_Score, n2a_pop_dens, n2a_living_area, n2a_perc_service, n2a_perc_production,
+rm(n1a_perc_18to64, n1a_care_home_beds, n1a_GISD_Score, n1a_pop_dens, n1a_perc_service, n1a_perc_production,
+   n2a_perc_18to64, n2a_care_home_beds, n2a_GISD_Score, n2a_pop_dens, n2a_perc_service, n2a_perc_production,
    n1b_hosp_beds, n1b_care_home_beds, n1b_GISD_Score, n2b_hosp_beds, n2b_care_home_beds, n2b_GISD_Score)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -261,7 +260,7 @@ summary(n2b) # 28.5% / 28.6%
 ### Plot relationships between SES variables (and show corr coefficients) ###
 
 dat_ses <- dat_cumulative %>%
-  select(perc_18to64, hosp_beds, care_home_beds, pop_dens, living_area,
+  select(perc_18to64, hosp_beds, care_home_beds, pop_dens, #living_area,
          GISD_Score, perc_service, perc_production)
 
 pairs.panels(dat_ses,
@@ -288,13 +287,13 @@ rm(dat_ses)
 # Plot:
 dat_corr <- dat_cumulative %>%
   select(cases_wave1_rate, cases_wave2_rate, ifr_wave1, ifr_wave2,
-         perc_18to64, hosp_beds, care_home_beds, pop_dens, living_area,
+         perc_18to64, hosp_beds, care_home_beds, pop_dens, #living_area,
          GISD_Score, perc_service, perc_production) %>%
   pivot_longer(perc_18to64:perc_production, names_to = 'var', values_to = 'val') %>%
   pivot_longer(cases_wave1_rate:ifr_wave2, names_to = 'outcome', values_to = 'obs') %>%
   mutate(var = factor(var, levels = c('perc_18to64', 'hosp_beds', 'care_home_beds',
-                                      'pop_dens', 'living_area', 'GISD_Score',
-                                      'perc_service', 'perc_production')),
+                                      'pop_dens', 'GISD_Score', 'perc_service',
+                                      'perc_production')),
          outcome = factor(outcome, levels = c('cases_wave1_rate', 'cases_wave2_rate',
                                               'ifr_wave1', 'ifr_wave2')))
 

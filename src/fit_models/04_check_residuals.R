@@ -97,7 +97,7 @@ check_dharma(dat_cumulative, n2a, depend = 'none')
 check_dharma(dat_cumulative, n2b, depend = 'none')
 
 # Compare model-generated data to observed data:
-n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.572, mu = predict(n1a_full, type = 'response'))) %>%
+n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.652, mu = predict(n1a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave1) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
@@ -111,7 +111,7 @@ n1b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 4.985, mu = pr
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 32.906, mu = predict(n2a_full, type = 'response'))) %>%
+n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 31.063, mu = predict(n2a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave2) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
