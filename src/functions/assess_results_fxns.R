@@ -17,7 +17,7 @@ check_dharma <- function(dat, mod, depend) {
   testDispersion(sim_full) %>% print()
   # testZeroInflation(sim_full) %>% print()
   testUniformity(sim_full) %>% print()
-  testSpatialAutocorrelation(sim_full, x = dat$long, y = dat$lat) %>% print()
+  testSpatialAutocorrelation(sim_full, x = dat$long, y = dat$lat, plot = FALSE) %>% print()
   
   plotResiduals(sim_full, dat$lat, main = 'lat')
   plotResiduals(sim_full, dat$long, main = 'long')

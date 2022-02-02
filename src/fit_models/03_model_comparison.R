@@ -8,6 +8,7 @@
 library(tidyverse)
 library(mgcv)
 library(ggeffects)
+library(testthat)
 library(sf)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -84,6 +85,8 @@ BIC(n2a_full, n2a_mrf)
 AIC(n2b_full, n2b_mrf)
 BIC(n2b_full, n2b_mrf)
 
+rm(n1a_mrf, n1b_mrf, n2a_mrf, n2b_mrf)
+
 # Compare with poisson/zero-inflated:
 n1a_pois <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                   s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + #s(living_area, k = 25) +
@@ -110,6 +113,8 @@ BIC(n1b_full, n1b_pois, n1b_zip)
 
 BIC(n2a_full, n2a_pois)
 BIC(n2b_full, n2b_pois)
+
+rm(n1a_pois, n1b_pois, n2a_pois, n2b_pois, n1b_zip)
 
 # Change random effects:
 n1a_fixed <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) +
@@ -139,6 +144,8 @@ BIC(n2a_full, n2a_fixed)
 
 AIC(n2b_full, n2b_fixed)
 BIC(n2b_full, n2b_fixed)
+
+rm(n1a_fixed, n1b_fixed, n2a_fixed, n2b_fixed)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

@@ -85,16 +85,23 @@ lines(smooth.spline(log(fitted(n2b_full)), residuals(n2b_full, type = 'deviance'
 # Check using DHARMa package:
 # https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 # https://aosmith.rbind.io/2017/12/21/using-dharma-for-residual-checks-of-unsupported-models/
-par(mfrow = c(1, 1))
+par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n1a_full, depend = 'cases')
+par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n1b_full, depend = 'deaths')
+par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n2a_full, depend = 'cases')
+par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n2b_full, depend = 'deaths')
 
-check_dharma(dat_cumulative, n1a, depend = 'none')
-check_dharma(dat_cumulative, n1b, depend = 'none')
-check_dharma(dat_cumulative, n2a, depend = 'none')
-check_dharma(dat_cumulative, n2b, depend = 'none')
+# par(mfrow = c(2, 2))
+# check_dharma(dat_cumulative, n1a, depend = 'none')
+# par(mfrow = c(2, 2))
+# check_dharma(dat_cumulative, n1b, depend = 'none')
+# par(mfrow = c(2, 2))
+# check_dharma(dat_cumulative, n2a, depend = 'none')
+# par(mfrow = c(2, 2))
+# check_dharma(dat_cumulative, n2b, depend = 'none')
 
 # Compare model-generated data to observed data:
 n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.652, mu = predict(n1a_full, type = 'response'))) %>%

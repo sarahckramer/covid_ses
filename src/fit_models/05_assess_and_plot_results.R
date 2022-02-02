@@ -1,3 +1,7 @@
+# ---------------------------------------------------------------------------------------------------------------------
+# Assess and plot associations between predictors and outcomes
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Setup
 
 # Load libraries:
@@ -177,28 +181,7 @@ cor.test(dat_cumulative$ifr_wave1, dat_cumulative$ifr_wave2, method = 'kendall')
 # ---------------------------------------------------------------------------------------------------------------------
 
 ### Observed spatial patterns (from model with no predictors) ###
-# Note: since controlling for first wave's cases doesn't actually improve fit for models of second wave, just use n2a
-# and n2b, not n2a_adj and n2b_adj
 
-# Plot trends by lat and long:
-n1a_lat <- ggpredict(n1a, 'lat')
-n1a_long <- ggpredict(n1a, 'long')
-# plot(n1a_lat); plot(n1a_long)
-
-n2a_lat <- ggpredict(n2a, 'lat')
-n2a_long <- ggpredict(n2a, 'long')
-# plot(n2a_lat); plot(n2a_long)
-
-n1b_lat <- ggpredict(n1b, 'lat')
-n1b_long <- ggpredict(n1b, 'long')
-# plot(n1b_lat); plot(n1b_long)
-
-n2b_lat <- ggpredict(n2b, 'lat')
-n2b_long <- ggpredict(n2b, 'long')
-# plot(n2b_lat); plot(n2b_long)
-
-rm(n1a_lat, n1a_long, n2a_lat, n2a_long,
-   n1b_lat, n1b_long, n2b_lat, n2b_long)
 # Check whether controlling for first wave's incidence improves model fit:
 anova(n2a, n2a_adj, test = 'Chisq')
 anova(n2b, n2b_adj, test = 'Chisq')
