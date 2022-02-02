@@ -365,23 +365,24 @@ p_n2b_care_home_beds <- plot_marginal_prediction(n2b_pred_care_home_beds, 'care_
 plot(p_n2b_care_home_beds) # sig
 
 # Compare deviance explained/model fit to full models:
-AIC(n1a, n1a_full, n1a_uni_list[[1]], n1a_uni_list[[2]], n1a_uni_list[[3]],
-    n1a_uni_list[[4]], n1a_uni_list[[5]], n1a_uni_list[[6]], n1a_uni_list[[7]])
-# deviance explained: 72.9, 74.7, 72.9, 73.0, 73.6, 72.9, 72.8, 72.8, 73.5
-# (GISD_Score and perc_production add the most)
+anova(n1a, n1a_full, test = 'Chisq') # deviance explained: 73.5% vs. 74.7%
+anova(n1a_full, n1a_uni_list[[3]], test = 'Chisq')
+# full model improves on null and univariate
 
-AIC(n2a, n2a_full, n2a_uni_list[[1]], n2a_uni_list[[2]], n2a_uni_list[[3]],
-    n2a_uni_list[[4]], n2a_uni_list[[5]], n2a_uni_list[[6]], n2a_uni_list[[7]])
-# deviance explained: 73.2, 80.3, 74.2, 74.2, 77.4, 73.4, 74.0, 73.8, 73.9
-# (GISD_Score adds the most)
+anova(n2a, n2a_full, test = 'Chisq') # deviance explained: 73.1% vs. 78.4%
+anova(n2a_full, n2a_uni_list[[2]], test = 'Chisq')
+anova(n2a_full, n2a_uni_list[[3]], test = 'Chisq')
+anova(n2a_full, n2a_uni_list[[4]], test = 'Chisq')
+# full model improves on null and all univariate
 
-AIC(n1b, n1b_full, n1b_uni_list[[1]], n1b_uni_list[[2]], n1b_uni_list[[3]])
-# deviance explained: 14.2, 16.1, 14.6, 13.7, 14.6
-# (none add much individually)
+anova(n1b, n1b_full, test = 'Chisq') # deviance explained: 15.5% vs. 16.1%
+# anova(n1b_full, n1b_uni_list[[1]], test = 'Chisq')
+# anova(n1b_full, n1b_uni_list[[2]], test = 'Chisq')
+# full model does not improve on null model
 
-AIC(n2b, n2b_full, n2b_uni_list[[1]], n2b_uni_list[[2]], n2b_uni_list[[3]])
-# deviance explained: 28.5, 32.8, 28.8, 31.3, 30.2
-# (care_home_beds adds the most, followed by GISD_Score)
+anova(n2b, n2b_full, test = 'Chisq') # deviance explained: 28.6% vs. 31.8%
+anova(n2b_full, n2b_uni_list[[2]], test = 'Chisq')
+# full model improves on null but not univariate model
 
 # ---------------------------------------------------------------------------------------------------------------------
 
