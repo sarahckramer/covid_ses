@@ -117,3 +117,6 @@ dat_cumulative <- dat_cumulative %>%
 rm(inkar_dat)
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+# Confirm that data were loaded without issue:
+print('Done.')
