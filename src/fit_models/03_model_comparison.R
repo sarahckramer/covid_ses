@@ -27,7 +27,7 @@ n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 
 # Explore potential model improvements
 
-# Should living_area be included?:
+# Should both pop_dens AND living_area be included?:
 n1a_comp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                   s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                   s(perc_service) + s(perc_production) +
@@ -46,17 +46,13 @@ n2a_comp_alt <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 5
                       s(perc_service) + s(perc_production) + s(cases_pre_rate) +
                       offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 
-AIC(n1a_full, n1a_comp)
-BIC(n1a_full, n1a_comp)
+anova(n1a_full, n1a_comp, test = 'Chisq')
+anova(n1a_full, n1a_comp_alt, test = 'Chisq')
 
-AIC(n2a_full, n2a_comp)
-BIC(n2a_full, n2a_comp)
+anova(n2a_full, n2a_comp, test = 'Chisq')
+anova(n2a_full, n2a_comp_alt, test = 'Chisq')
 
-AIC(n1a_full, n1a_comp_alt)
-BIC(n1a_full, n1a_comp_alt)
-
-AIC(n2a_full, n2a_comp_alt)
-BIC(n2a_full, n2a_comp_alt)
+rm(n1a_comp, n2a_comp, n1a_comp_alt, n2a_comp_alt)
 
 # Try using MRF:
 dat_cumulative$ARS <- factor(dat_cumulative$lk)
