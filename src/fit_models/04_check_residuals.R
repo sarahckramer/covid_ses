@@ -104,28 +104,28 @@ check_dharma(dat_cumulative, n2b_full, depend = 'deaths')
 # check_dharma(dat_cumulative, n2b, depend = 'none')
 
 # Compare model-generated data to observed data:
-n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.652, mu = predict(n1a_full, type = 'response'))) %>%
+n1a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 7.905, mu = predict(n1a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave1) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n1b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 4.985, mu = predict(n1b_full, type = 'response'))) %>%
+n1b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 4.944, mu = predict(n1b_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$deaths_wave1) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 31.063, mu = predict(n2a_full, type = 'response'))) %>%
+n2a_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 34.826, mu = predict(n2a_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$cases_wave2) %>%
   bind_cols(pop = dat_cumulative$pop) %>%
   pivot_longer(V1:V5, names_to = 'id') %>%
   mutate(obs = obs / pop * 10000,
          value = value / pop * 10000)
-n2b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 16.671, mu = predict(n2b_full, type = 'response'))) %>%
+n2b_comp <- replicate(5, rnbinom(n = nrow(dat_cumulative), size = 16.756, mu = predict(n2b_full, type = 'response'))) %>%
   as_tibble() %>%
   bind_cols(obs = dat_cumulative$deaths_wave2) %>%
   bind_cols(pop = dat_cumulative$pop) %>%

@@ -77,7 +77,7 @@ gam.check(n2b_adj, rep = 50)
 n1a_full <- bake(file = 'results/fitted_models/FULL_n1a_ml.rds',
                  expr = {
                    gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-                         s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + #s(living_area, k = 25) +
+                         s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service) + s(perc_production) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
@@ -94,8 +94,9 @@ n1b_full <- bake(file = 'results/fitted_models/FULL_n1b_ml.rds',
 n2a_full <- bake(file = 'results/fitted_models/FULL_n2a_ml.rds',
                  expr = {
                    gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
-                         s(perc_18to64) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) + #s(living_area) +
+                         s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service) + s(perc_production) +
+                         ti(perc_18to64, pop_dens) + ti(perc_lessthan18, pop_dens) +
                          s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )
@@ -124,6 +125,12 @@ n1a_perc_18to64 <- bake(file = 'results/fitted_models/uni/n1a_perc_18to64_ml.rds
                         expr = {
                           gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
                                 s(perc_18to64) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+                        }
+)
+n1a_perc_lessthan18 <- bake(file = 'results/fitted_models/uni/n1a_perc_lessthan18_ml.rds',
+                        expr = {
+                          gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                                s(perc_lessthan18) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                         }
 )
 n1a_care_home_beds <- bake(file = 'results/fitted_models/uni/n1a_care_home_beds_ml.rds',
@@ -189,6 +196,12 @@ n2a_perc_18to64 <- bake(file = 'results/fitted_models/uni/n2a_perc_18to64_ml.rds
                         expr = {
                           gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
                                 s(perc_18to64) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+                        }
+)
+n2a_perc_lessthan18 <- bake(file = 'results/fitted_models/uni/n2a_perc_lessthan18_ml.rds',
+                        expr = {
+                          gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                                s(perc_lessthan18) + s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                         }
 )
 n2a_care_home_beds <- bake(file = 'results/fitted_models/uni/n2a_care_home_beds_ml.rds',
