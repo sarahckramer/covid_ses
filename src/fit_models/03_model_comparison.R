@@ -55,6 +55,21 @@ n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 # 
 # rm(n1a_comp, n2a_comp, n1a_comp_alt, n2a_comp_alt)
 
+# Try including alternative age group information:
+n1a_comp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+anova(n1a_full, n1a_comp, test = 'Chisq')
+anova(n2a_full, n2a_comp, test = 'Chisq')
+
+rm(n1a_comp, n2a_comp)
+
 # Try using MRF:
 dat_cumulative$ARS <- factor(dat_cumulative$lk)
 n1a_mrf <- gam(cases_wave1 ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 60) + s(ags2, bs = 're', k = 16) +
