@@ -70,6 +70,42 @@ anova(n2a_full, n2a_comp, test = 'Chisq')
 
 rm(n1a_comp, n2a_comp)
 
+# Consider interactions:
+n1a_comp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
+                  ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
+                  ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+par(mfrow = c(2, 2))
+gam.check(n1a_comp, rep = 50)
+gam.check(n2a_comp, rep = 50)
+
+anova(n1a_full, n1a_comp, test = 'Chisq')
+anova(n2a_full, n2a_comp, test = 'Chisq')
+
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
+                  ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
+
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+                  ti(perc_18to64, pop_dens) + ti(perc_lessthan18, pop_dens) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+anova(n2a_full, n2a_comp, test = 'Chisq')
+
 # Try using MRF:
 dat_cumulative$ARS <- factor(dat_cumulative$lk)
 n1a_mrf <- gam(cases_wave1 ~ s(ARS, bs = 'mrf', xt = list(nb = nb), k = 60) + s(ags2, bs = 're', k = 16) +
