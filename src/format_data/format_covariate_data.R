@@ -10,23 +10,6 @@ library(ISOweek)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Population data
-# 
-# # Read in population data by Landkreis:
-# pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
-# # Source: https://www-genesis.destatis.de/genesis/online
-# 
-# # Format:
-# pop_dat <- pop_dat %>%
-#   select(-X2) %>%
-#   rename(lk = X1, pop = X3) %>%
-#   mutate(pop = as.numeric(pop)) %>%
-#   filter(!is.na(pop))
-# 
-# # This is also handled in the case/death data formatting code
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 # INKAR data
 
 # Read in downloaded data:
@@ -97,78 +80,6 @@ inkar_dat <- inkar_dat %>%
 
 # Plot:
 plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# # Format GENESIS data
-# 
-# # Read in individual data files:
-# gen_dat_mig1 <- read_csv2('data/raw/independent_vars/AI-Z1-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
-# gen_dat_mig1 <- gen_dat_mig1[, c(2:3, 7)]
-# names(gen_dat_mig1) <- c('lk_code', 'lk_name', 'perc_MHG')
-# # 2011
-# 
-# gen_dat_mig2 <- read_csv2('data/raw/independent_vars/12111-07-01-4.csv', col_names = FALSE, skip = 11, n_max = 5380)
-# names(gen_dat_mig2) <- c('lk_code', 'lk_name', 'age', 'pop_private', 'all_german', 'german_wo_MHG', 'german_w_MHG', 'other_citizenship')
-# gen_dat_mig2 <- gen_dat_mig2 %>%
-#   filter(age == 'Insgesamt') %>%
-#   select(-c(lk_name, age, all_german))
-# # 2011
-# 
-# gen_dat_mig3 <- read_csv2('data/raw/independent_vars/12711-03-02-4-B.csv', col_names = FALSE, skip = 9, n_max = 1467)
-# gen_dat_mig3 <- gen_dat_mig3[, c(2, 4, 8)]
-# names(gen_dat_mig3) <- c('lk_code', 'citizenship', 'migration_from_outside_DE')
-# gen_dat_mig3 <- gen_dat_mig3 %>%
-#   filter(citizenship != 'Deutsche' & citizenship != 'Insgesamt') %>%
-#   select(-citizenship) %>%
-#   mutate(lk_code = if_else(lk_code %in% c('02000', '11000'), str_sub(lk_code, 1, 2), lk_code))
-# # 2019
-# 
-# gen_dat_household <- read_csv2('data/raw/independent_vars/AI-Z3-2011.csv', col_names = FALSE, skip = 5, n_max = 538)
-# gen_dat_household <- gen_dat_household[, c(2, 4:5)]
-# names(gen_dat_household) <- c('lk_code', 'avg_household_size', 'perc_1person_households')
-# # 2011
-# 
-# gen_dat_essential <- read_csv2('data/raw/independent_vars/13312-01-05-4.csv', col_names = FALSE, skip = 7, n_max = 1614)
-# gen_dat_essential <- gen_dat_essential[, c(1:2, 4, 11)]
-# names(gen_dat_essential) <- c('year', 'lk_code', 'total_workers', 'workers_publicservice_education_health')
-# gen_dat_essential <- gen_dat_essential %>%
-#   filter(year == 2019) %>%
-#   select(-year)
-# # 2019
-# 
-# # Join data into one tibble:
-# genesis_dat <- gen_dat_mig1 %>%
-#   full_join(gen_dat_mig2, by = 'lk_code') %>%
-#   full_join(gen_dat_mig3, by = 'lk_code') %>%
-#   full_join(gen_dat_household, by = 'lk_code') %>%
-#   full_join(gen_dat_essential, by = 'lk_code')
-# 
-# # Remove individual datasets:
-# rm(gen_dat_mig1, gen_dat_mig2, gen_dat_mig3, gen_dat_household, gen_dat_essential)
-# 
-# # Reduce to LKs:
-# genesis_dat <- genesis_dat %>%
-#   filter(str_length(lk_code) == 5 | lk_code %in% c('02', '11')) %>%
-#   mutate(lk_code = str_pad(lk_code, width = 5, side = 'right', pad = '0'))
-# 
-# # Join population data:
-# genesis_dat <- genesis_dat %>%
-#   right_join(pop_dat, by = c('lk_code' = 'lk'))
-# 
-# # Reformat data:
-# genesis_dat <- genesis_dat %>%
-#   mutate(across(c(perc_MHG, avg_household_size:workers_publicservice_education_health), ~ str_replace(.x, ',', '.'))) %>%
-#   mutate(across(perc_MHG:workers_publicservice_education_health, as.numeric)) %>%
-#   mutate(perc_wo_MHG = german_wo_MHG / pop_private * 100,
-#          perc_w_MHG_German = german_w_MHG / pop_private * 100,
-#          perc_other_cit = other_citizenship / pop_private * 100,
-#          migration_from_outside_DE = migration_from_outside_DE / pop * 1000,
-#          perc_workers_ServEduHealth = workers_publicservice_education_health / total_workers * 100) %>%
-#   select(lk_code:perc_MHG, perc_w_MHG_German:perc_other_cit, migration_from_outside_DE:perc_1person_households, perc_workers_ServEduHealth)
-# 
-# # Data from 2011 missing values for 7 LKs, 6 from Mecklenburg-Vorpommern and 1 from Niedersachsen - these appear
-# # to be newer Landkreise?
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -420,18 +331,6 @@ policy_dat <- policy_dat %>%
             masks_transport = max(masks_transport),
             masks_shopping = max(masks_shopping))
 # For each week, choose the highest value each measure takes during that week for that LK
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# # Behavior tracker data
-# 
-# behav_dat <- read_csv('data/raw/independent_vars/yougov_tracker_germany.csv')
-# 
-# behav_dat %>%
-#   select(RecordNo:qweek, gender:state, i12_health_1:i12_health_20, i12_health_21:i12_health_25, i12_health_26:i12_health_29, d1_health_1:d1_health_13, WCRV_4)
-# # i12_health are public health measures; d1_health are health conditions
-# 
-# # Only available at Bundesland level, but could be useful
 
 # ---------------------------------------------------------------------------------------------------------------------
 
