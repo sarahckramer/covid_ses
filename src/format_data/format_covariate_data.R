@@ -7,48 +7,45 @@
 # Load libraries:
 library(tidyverse)
 library(ISOweek)
+library(testthat)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # INKAR data
 
 # Read in downloaded data:
-inkar_dat <- read_csv2('data/raw/independent_vars/inkar_data_2017.csv')
-inkar_dat2 <- read_csv2('data/raw/independent_vars/inkar_dat_2017_UPDATES.csv')
-inkar_dat_young <- read_csv2('data/raw/independent_vars/inkar_data_YOUNG.csv')
-# most data from 2017
-# 2016: Krankenhausbetten
+inkar_dat <- read_csv2('data/raw/independent_vars/inkar_data_2019.csv')
+inkar_dat_old1 <- read_csv2('data/raw/independent_vars/inkar_data_2017.csv')
+inkar_dat_old2 <- read_csv2('data/raw/independent_vars/inkar_dat_2017_UPDATES.csv')
+# most data from 2019; percent in service and production jobs, distance to pharmacies from 2017
 
 # Remove years:
 inkar_dat <- inkar_dat[-1, ]
-inkar_dat2 <- inkar_dat2[-1, ]
-inkar_dat_young <- inkar_dat_young[-1, ]
+inkar_dat_old1 <- inkar_dat_old1[-1, ]
+inkar_dat_old2 <- inkar_dat_old2[-1, ]
 
 # Keep only columns of interest:
-inkar_dat <- inkar_dat %>%
-  select(Kennziffer:Aggregat, `Einwohner 65 Jahre und älter`:Frauenanteil, Siedlungsdichte,
-         Ausländeranteil, `Verhältnis der Beschäftigungsquote von Ausländern zu gesamt`,
-         Wohnfläche, `Anteil Wohnungen in Mehrfamilienhäusern`,
-         `Beschäftigte in personenbezogenen Dienstleistungsberufen`,
-         Pflegeheimplätze, Krankenhausbetten, `Nahversorgung Apotheken Durchschnittsdistanz`)
-inkar_dat2 <- inkar_dat2 %>%
-  select(Kennziffer, Einpendler:Auspendler, `Beschäftigte in Produktionsberufen`)
+inkar_dat_old1 <- inkar_dat_old1 %>%
+  select(Kennziffer, `Beschäftigte in personenbezogenen Dienstleistungsberufen`)
+inkar_dat_old2 <- inkar_dat_old2 %>%
+  select(Kennziffer, `Beschäftigte in Produktionsberufen`)
 
-# Calculate total percentage of population 18-64:
-inkar_dat_young <- inkar_dat_young %>%
-  mutate(perc_18to64 = `Einwohner von 18 bis unter 25 Jahren` + `Einwohner von 25 bis unter 30 Jahren` +
+# Calculate total percentage of population <18, 18-64:
+inkar_dat <- inkar_dat %>%
+  mutate(perc_lessthan18 = `Einwohner unter 6 Jahre` + `Einwohner von 6 bis unter 18 Jahren`,
+         perc_18to64 = `Einwohner von 18 bis unter 25 Jahren` + `Einwohner von 25 bis unter 30 Jahren` +
            `Einwohner von 30 bis unter 50 Jahren` + `Einwohner von 50 bis unter 65 Jahren`) %>%
-  select(Kennziffer, perc_18to64)
+  select(Kennziffer:Aggregat, `Einwohner 65 Jahre und älter`:perc_18to64)
 
 # Join tibbles:
 inkar_dat <- inkar_dat %>%
-  inner_join(inkar_dat_young, by = 'Kennziffer') %>%
-  inner_join(inkar_dat2, by = 'Kennziffer')
-rm(inkar_dat2, inkar_dat_young)
+  inner_join(inkar_dat_old1, by = 'Kennziffer') %>%
+  inner_join(inkar_dat_old2, by = 'Kennziffer')
+rm(inkar_dat_old1, inkar_dat_old2)
 
 # Convert variables to percentages of full/sub-population as needed:
-# Beschäftigte in personenbezogenen Dienstleistungsberufen, in Produktionsberufen; Ein/Auspendler
-# As far as I can tell, would only even be possible for Auspendler
+# Beschäftigte in personenbezogenen Dienstleistungsberufen, in Produktionsberufen
+# As far as I can tell, not possible with available data
 
 # Rename variables:
 inkar_dat <- inkar_dat %>%
@@ -57,26 +54,21 @@ inkar_dat <- inkar_dat %>%
          'lk_type' = 'Aggregat',
          'perc_65plus' = 'Einwohner 65 Jahre und älter',
          'perc_75plus' = 'Einwohner 75 Jahre und älter',
-         'perc_85plus' = 'Einwohner 85 Jahre und älter',
          'perc_women' = 'Frauenanteil',
-         'pop_dens' = 'Siedlungsdichte',
          'perc_imm' = 'Ausländeranteil',
-         'employ_rate_ratio' = 'Verhältnis der Beschäftigungsquote von Ausländern zu gesamt',
+         'pop_dens' = 'Siedlungsdichte in km²',
          'living_area' = 'Wohnfläche',
-         'perc_apt_multifamily' = 'Anteil Wohnungen in Mehrfamilienhäusern',
-         'perc_service' = 'Beschäftigte in personenbezogenen Dienstleistungsberufen',
+         'perc_apt_multifamily' = 'Wohnungen in Mehrfamilienhäusern',
          'care_home_beds' = 'Pflegeheimplätze',
          'hosp_beds' = 'Krankenhausbetten',
          'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz',
-         'commuters_in' = 'Einpendler',
-         'commuters_out' = 'Auspendler',
+         'perc_service' = 'Beschäftigte in personenbezogenen Dienstleistungsberufen',
          'perc_production' = 'Beschäftigte in Produktionsberufen')
 
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
-  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_18to64, perc_65plus:perc_women, care_home_beds,
-         perc_imm:employ_rate_ratio, pop_dens, living_area:perc_service, perc_production,
-         commuters_in:commuters_out)
+  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_lessthan18:perc_18to64, perc_65plus:perc_imm, care_home_beds,
+         pop_dens:perc_apt_multifamily, perc_service:perc_production)
 
 # Plot:
 plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
@@ -93,14 +85,11 @@ di_dat <- di_dat %>%
   mutate(Kreiskennziffer = str_pad(Kreiskennziffer, width = 5, side = 'left', pad = '0'))
 
 # Then, get individual variables (and similar variables):
-di_variables_dat <- read_csv2('data/raw/independent_vars/inkar_data_deprivationsindex_individual_variables.csv')
+di_variables_dat <- read_csv2('data/raw/independent_vars/inkar_data_deprivationsindex_individual_variables_NEW.csv')
 di_variables_dat <- di_variables_dat[-1, ]
 
 di_variables_dat <- di_variables_dat %>%
-  select(Kennziffer,
-         `Schulabgänger ohne Abschluss`, `Anteil Beschäftigte mit akademischem Berufsabschluss`, `Anteil Beschäftigte ohne Berufsabschluss`,
-         Schuldnerquote, Haushaltseinkommen, Steuerkraft,
-         Arbeitslosigkeit, Bruttoverdienst, Beschäftigtenquote)
+  select(!Raumeinheit:Aggregat)
 
 # Merge:
 di_dat <- di_dat %>%
@@ -111,12 +100,12 @@ rm(di_variables_dat)
 di_dat <- di_dat %>%
   rename('lk_code' = 'Kreiskennziffer',
          'perc_no_degree' = `Schulabgänger ohne Abschluss`,
-         'perc_workers_academic_degree' = `Anteil Beschäftigte mit akademischem Berufsabschluss`,
-         'perc_workers_no_voc_degree' = `Anteil Beschäftigte ohne Berufsabschluss`,
+         'perc_workers_academic_degree' = `Beschäftigte mit akademischem Berufsabschluss`,
+         'perc_workers_no_voc_degree' = `Beschäftigte ohne Berufsabschluss`,
          'perc_debt' = 'Schuldnerquote',
          'household_income' = 'Haushaltseinkommen',
          'tax_force' = 'Steuerkraft',
-         'unemployment' = 'Arbeitslosigkeit',
+         'unemployment' = 'Arbeitslosenquote',
          'gross_income' = 'Bruttoverdienst',
          'perc_SV_workers' = 'Beschäftigtenquote')
 
