@@ -17,8 +17,14 @@ library(magick)
 # Read in data
 
 # Load mortality data:
-mortality_c <- read_csv('data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE.csv')
-mortality_i <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT.csv')
+mortality_c <- read_csv('data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
+mortality_i <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT_CDP.csv')
+
+# Convert Week to numeric:
+mortality_c <- mortality_c %>%
+  mutate(Week = as.numeric(Week))
+mortality_i <- mortality_i %>%
+  mutate(Week = as.numeric(Week))
 
 # Load shapefiles:
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
@@ -34,31 +40,37 @@ print(p1)
 
 # Separate into first and second waves:
 wave1_dat <- mortality_c %>%
-  filter(Week <= 22 & Year == 2020)
+  filter(Week <= 20 & Year == 2020)
 wave2_dat <- mortality_c %>%
-  filter(Week >= 40 | Year == 2021) %>%
-  left_join(mortality_c[mortality_c$Week == 39, c('lk', 'deaths')],
+  filter((Week >= 40 & Year == 2020) | (Week <= 8 & Year == 2021)) %>%
+  left_join(mortality_c[mortality_c$Week == 39 & mortality_c$Year == 2020,
+                        c('lk', 'cases', 'deaths')],
             by = 'lk') %>%
-  mutate(deaths = deaths.x - deaths.y) %>%
-  select(date:lk, deaths, pop) %>%
+  mutate(cases = cases.x - cases.y,
+         deaths = deaths.x - deaths.y) %>%
+  select(ags2:Week, deaths, cases, pop) %>%
   mutate(death_rate = deaths / pop * 100000,
-         .after = deaths)
+         .after = deaths) %>%
+  mutate(ifr = deaths / cases * 100,
+         .after = death_rate) %>%
+  mutate(case_rate = cases / pop * 100000,
+         .after = cases)
 expect_true(all(wave2_dat$deaths >= 0))
 
 # Get average mortality rates up to each week and calculated 'expected' cumulative deaths:
 avg_rates1 <- wave1_dat %>%
-  group_by(Week) %>%
+  group_by(Year, Week) %>%
   summarise(rate = sum(deaths) / sum(pop))
 avg_rates2 <- wave2_dat %>%
-  group_by(Week) %>%
+  group_by(Year, Week) %>%
   summarise(rate = sum(deaths) / sum(pop))
 
 wave1_dat <- wave1_dat %>%
-  left_join(avg_rates1, by = 'Week') %>%
+  left_join(avg_rates1, by = c('Year', 'Week')) %>%
   mutate(expected = pop * rate,
          SMR = deaths / expected)
 wave2_dat <- wave2_dat %>%
-  left_join(avg_rates2, by = 'Week') %>%
+  left_join(avg_rates2, by = c('Year', 'Week')) %>%
   mutate(expected = pop * rate,
          SMR = deaths / expected)
 
@@ -73,8 +85,8 @@ expect_equal(nrow(wave2_dat) / length(unique(wave2_dat$lk)) * nrow(map_base), nr
 
 # Plot cumulative deaths at several timepoints:
 plots_wave1 = plots_wave2 = plots_smr1 = plots_smr2 = list()
-wks1 <- c(14, 18, 22)
-wks2 <- c(40, 43, 46, 49, 52, 2, 5, 8, 11, 14, 17, 20)
+wks1 <- c(12, 16, 20)
+wks2 <- c(40, 43, 46, 49, 52, 2, 5, 8)
 
 smr_lim1 <- max(max(log(map_df1$SMR)), abs(min(log(map_df1$SMR)[log(map_df1$SMR) != -Inf])))
 smr_lim2 <- max(max(log(map_df2$SMR)), abs(min(log(map_df2$SMR)[log(map_df2$SMR) != -Inf])))
@@ -115,7 +127,7 @@ for (i in 1:length(wks2)) {
 }
 
 # do.call('grid.arrange', c(plots_wave1, ncol = length(wks1)))
-# do.call('grid.arrange', c(plots_wave2, ncol = length(wks2) / 3))
+# do.call('grid.arrange', c(plots_wave2, ncol = length(wks2) / 2))
 # grid.arrange(plots_wave1[[length(plots_wave1)]], plots_wave2[[length(plots_wave2)]], ncol = 2)
 # 
 # do.call('grid.arrange', c(plots_smr1, ncol = length(wks1)))
@@ -125,11 +137,11 @@ for (i in 1:length(wks2)) {
 # pdf('results/plots/wave1.pdf', width = 12, height = 6.61)
 # do.call('grid.arrange', c(plots_wave1, ncol = length(wks1)))
 # dev.off()
-# 
+#
 # pdf('results/plots/wave2.pdf', width = 15, height = 8.26)
 # do.call('grid.arrange', c(plots_wave2, ncol = length(wks2) / 2))
 # dev.off()
-# 
+#
 # pdf('results/plots/wave_ends.pdf', width = 10, height = 5.5)
 # grid.arrange(plots_wave1[[length(plots_wave1)]], plots_wave2[[length(plots_wave2)]], ncol = 2)
 # dev.off()
