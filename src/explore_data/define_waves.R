@@ -62,9 +62,9 @@ grid.arrange(p1, p4, ncol = 1)
 # Clean up:
 rm(dat_inc_DE, dat_inc_wk_i)
 
-# Calculate total cases/deaths for each wave/partial wave:
+# Calculate total cases/deaths for each wave/partial waves:
 dat_cases_cumulative <- dat_inc_wk %>%
-  filter(time %in% c(14, 20, 39, 51, 61, 69, 74, 84, 93, 104, 110)) %>%
+  filter(time %in% c(14, 20, 36, 39, 51, 59, 61, 69, 74, 84, 93, 104, 110)) %>%
   select(time:lk, pop, cases) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = cases) %>%
@@ -81,12 +81,15 @@ dat_cases_cumulative <- dat_inc_wk %>%
          cases_wave3_2 = wk_74 - wk_69,
          cases_wave4_1 = wk_93 - wk_84,
          cases_wave4_2 = wk_104 - wk_93,
+         cases_pre2 = wk_39 - wk_14,
+         cases_pre3 = wk_61 - wk_36,
+         cases_pre4 = wk_84 - wk_59,
          cases_summer1 = wk_39 - wk_20,
          cases_summer2 = wk_84 - wk_74) %>%
   select(ags2:pop, cases_wave1:cases_summer2)
 
 dat_deaths_cumulative <- dat_inc_wk %>%
-  filter(time %in% c(14, 20, 39, 51, 61, 69, 74, 84, 93, 104, 110)) %>%
+  filter(time %in% c(14, 20, 36, 39, 51, 59, 61, 69, 74, 84, 93, 104, 110)) %>%
   select(time:lk, deaths) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = deaths) %>%
@@ -103,6 +106,9 @@ dat_deaths_cumulative <- dat_inc_wk %>%
          deaths_wave3_2 = wk_74 - wk_69,
          deaths_wave4_1 = wk_93 - wk_84,
          deaths_wave4_2 = wk_104 - wk_93,
+         deaths_pre2 = wk_39 - wk_14,
+         deaths_pre3 = wk_61 - wk_36,
+         deaths_pre4 = wk_84 - wk_59,
          deaths_summer1 = wk_39 - wk_20,
          deaths_summer2 = wk_84 - wk_74) %>%
   select(lk, deaths_wave1:deaths_summer2)
@@ -119,6 +125,9 @@ dat_cumulative <- dat_cases_cumulative %>%
          # cases_wave1_2_rate = cases_wave1_2 / pop * 10000,
          # cases_wave2_1_rate = cases_wave2_1 / pop * 10000,
          # cases_wave2_2_rate = cases_wave2_2 / pop * 10000,
+         cases_pre2_rate = cases_pre2 / pop * 10000,
+         cases_pre3_rate = cases_pre3 / pop * 10000,
+         cases_pre4_rate = cases_pre4 / pop * 10000,
          cases_summer1_rate = cases_summer1 / pop * 10000,
          cases_summer2_rate = cases_summer2 / pop * 10000,
          deaths_wave1_rate = deaths_wave1 / pop * 10000,
@@ -153,7 +162,7 @@ dat_cumulative %>%
   summarise(mean = mean(val),
             median = median(val),
             sd = sd(val)) %>%
-  print(n = 14)
+  print(n = nrow(dat_cumulative))
 
 dat_plot <- dat_cumulative %>%
   filter(str_detect(outcome, 'rate') |
