@@ -13,44 +13,15 @@ source('src/functions/data_processing_fxns.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Load and format daily, cumulative data (crowdsourced)
-
-# Read in data:
-mortality_dat <- read_csv('data/raw/deaths_rl_crowdsource_by_ags.csv')
-
-# Check that summed data are correct:
-expect_true(all(rowSums(mortality_dat[, 2:(dim(mortality_dat)[2] - 1)]) == mortality_dat[, dim(mortality_dat)[2]]))
-
-# Remove country total:
-mortality_dat <- mortality_dat %>%
-  select(1:(dim(mortality_dat)[2] - 1))
-
-# Are any dates missing?:
-missing_dates <- check_for_missing_dates(mortality_dat, dat_source = 'crowdsource')
-# One date is missing (2020-03-28)
-
-# Format data:
-mortality_dat <- mortality_dat %>%
-  rename(date = time_iso8601) %>%
-  mutate(date = as.Date(format(date, '%Y-%m-%d'))) %>%
-  # filter(date != '2021-03-01') %>%
-  pivot_longer(!date, names_to = 'lk', values_to = 'deaths') %>%
-  mutate(lk = str_pad(lk, width = 5, side = 'left', pad = '0'))
-
-# Check that all LKs have data for all available dates:
-expect_equal(dim(mortality_dat)[1], length(unique(mortality_dat$date)) * length(unique(mortality_dat$lk)))
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 # Load and format Corona Daten Plattform data
 
 # Read in data:
 cdp_dat <- read_csv('data/raw/cdp/todesfaelle.csv')
 
 # Check for missing dates:
-missing_dates <- check_for_missing_dates(cdp_dat, dat_source = 'cdp')
+missing_dates <- check_for_missing_dates(cdp_dat)
 
-# Format data:
+# Format data (incident):
 cdp_dat_inc <- cdp_dat %>%
   filter(variable == 'kr_tod_md') %>%
   select(-c(`_id`, ags2, bundesland, kreis, variable)) %>%
@@ -58,6 +29,7 @@ cdp_dat_inc <- cdp_dat %>%
   mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d')) %>%
   rename('lk' = 'ags5')
 
+# Format data (cumulative):
 cdp_dat <- cdp_dat %>%
   filter(variable == 'kr_tod_md_kum') %>%
   select(-c(`_id`, kreis, variable)) %>%
@@ -74,7 +46,7 @@ expect_equal(dim(cdp_dat)[1], length(unique(cdp_dat$date)) * length(unique(cdp_d
 # Incorporate population data
 
 # Get population data by Landkreis:
-pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015.csv', col_names = FALSE, skip = 6, n_max = 476)
+pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015_NEW2020.csv', col_names = FALSE, skip = 6, n_max = 476)
 # Source: https://www-genesis.destatis.de/genesis/online
 
 pop_dat <- pop_dat %>%
@@ -84,10 +56,6 @@ pop_dat <- pop_dat %>%
   filter(!is.na(pop))
 
 # Join with mortality data:
-mortality_dat_new <- mortality_dat %>%
-  left_join(pop_dat, by = 'lk')
-expect_identical(dim(mortality_dat)[1], dim(mortality_dat_new)[1])
-
 cdp_dat_new <- cdp_dat %>%
   left_join(pop_dat, by = 'lk')
 expect_identical(dim(cdp_dat)[1], dim(cdp_dat_new)[1])
@@ -96,21 +64,17 @@ cdp_dat_inc_new <- cdp_dat_inc %>%
   left_join(pop_dat, by = 'lk')
 expect_identical(dim(cdp_dat_inc)[1], dim(cdp_dat_inc_new)[1])
 
-mortality_dat <- mortality_dat_new
 cdp_dat <- cdp_dat_new
 cdp_dat_inc <- cdp_dat_inc_new
-rm(mortality_dat_new, cdp_dat_new, cdp_dat_inc_new, pop_dat)
+rm(cdp_dat_new, cdp_dat_inc_new, pop_dat)
 
 # Calculate rates per 100,000 population:
-mortality_dat <- mortality_dat %>%
-  mutate(death_rate = deaths / pop * 100000, .after = deaths)
 cdp_dat <- cdp_dat %>%
   mutate(death_rate = deaths / pop * 100000, .after = deaths)
 cdp_dat_inc <- cdp_dat_inc %>%
   mutate(death_rate = deaths / pop * 100000, .after = deaths)
 
 # Write data to file:
-write_csv(mortality_dat, file = 'data/formatted/daily_covid_deaths_by_lk_CUMULATIVE.csv')
 write_csv(cdp_dat, file = 'data/formatted/daily_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
 write_csv(cdp_dat_inc, file = 'data/formatted/daily_covid_deaths_by_lk_INCIDENT_CDP.csv')
 
@@ -124,25 +88,18 @@ week_ends <- unique(cdp_dat$date)[format(unique(cdp_dat$date), '%w') == '0']
 #   print('Some week end dates missing!')
 # }
 
-mortality_dat_wk <- mortality_dat %>%
-  filter(mortality_dat$date %in% week_ends)
 cdp_dat_wk <- cdp_dat %>%
   filter(cdp_dat$date %in% week_ends)
 
 # Add column for year and for week number:
-mortality_dat_wk <- mortality_dat_wk %>%
-  mutate(Year = format(date, '%Y'),
-         Week = format(date, '%V'),
-         .after = date) %>%
-  mutate(Year = if_else(Week == 53, '2020', Year))
 cdp_dat_wk <- cdp_dat_wk %>%
   mutate(Year = format(date, '%Y'),
          Week = format(date, '%V'),
          .after = date) %>%
-  mutate(Year = if_else(Week == 53, '2020', Year))
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year))
 
 # Write data to file:
-write_csv(mortality_dat_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE.csv')
 write_csv(cdp_dat_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -154,6 +111,7 @@ cdp_dat_inc_wk <- cdp_dat_inc %>%
   mutate(Week = format(date, '%V'),
          Year = format(date, '%Y'),
          Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year),
          year_week = paste(Year, Week, sep = '_'))
 
 # Remove incomplete weeks:
@@ -201,30 +159,37 @@ not_strictly_inc <- cdp_dat_wk %>%
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Compare two data sources
+# Compare new data to old data
+
+# Read in old data:
+cdp_dat_wk_OLD <- read_csv('data/formatted/OLD/weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv') %>%
+  mutate(Year = as.character(Year))
+cdp_dat_inc_wk_OLD <- read_csv('data/formatted/OLD/weekly_covid_deaths_by_lk_INCIDENT_CDP.csv') %>%
+  mutate(Year = as.character(Year))
 
 # Join data sets:
-mortality_all <- mortality_dat_wk %>%
-  left_join(cdp_dat_wk, by = c('lk', 'Year', 'Week'))
-expect_true(all.equal(mortality_all$pop.x, mortality_all$pop.y))
+cdp_dat_wk_ALL <- cdp_dat_wk %>%
+  inner_join(cdp_dat_wk_OLD, by = c('lk', 'Year', 'Week'))
+cdp_dat_inc_wk_ALL <- cdp_dat_inc_wk %>%
+  inner_join(cdp_dat_inc_wk_OLD, by = c('lk', 'Year', 'Week'))
 
-# Format:
-mortality_all <- mortality_all %>%
+all.equal(cdp_dat_wk_ALL$deaths.x, cdp_dat_wk_ALL$deaths.y) %>% print()
+all.equal(cdp_dat_inc_wk_ALL$deaths.x, cdp_dat_inc_wk_ALL$deaths.y) %>% print()
+
+# Format for plotting:
+cdp_dat_wk_ALL <- cdp_dat_wk_ALL %>%
   rename('date' = 'date.x',
-         'deaths_cs' = 'deaths.x',
-         'deaths_cdp' = 'deaths.y') %>%
-  select(date, lk, deaths_cs, deaths_cdp) %>%
-  pivot_longer(deaths_cs:deaths_cdp,
-               names_to = 'Source',
+         'deaths_new' = 'deaths.x',
+         'deaths_old' = 'deaths.y') %>%
+  select(date, lk, deaths_new, deaths_old) %>%
+  pivot_longer(deaths_new:deaths_old,
+               names_to = 'new_v_old',
                values_to = 'deaths')
 
 # Plot:
-p2 <- ggplot(data = mortality_all, aes(x = date, y = deaths, col = Source, lty = Source)) +
+p2 <- ggplot(data = cdp_dat_wk_ALL, aes(x = date, y = deaths, col = new_v_old, lty = new_v_old)) +
   geom_line() + facet_wrap(~ lk, scales = 'free_y') + theme_classic()
 # print(p2)
-# Less similar than case data, but still relatively close; however, it does seem like CDP data tend to rise/peak before
-# the crowdsourced data, as expected if the reporting dates are when the case was initially reported, and not when the
-# deaths itself was reported
 
 # ---------------------------------------------------------------------------------------------------------------------
 

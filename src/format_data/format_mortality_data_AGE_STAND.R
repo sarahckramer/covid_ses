@@ -19,7 +19,7 @@ source('src/functions/data_processing_fxns.R')
 cdp_dat <- read_csv('data/raw/cdp/todesfaelle.csv')
 
 # Check for missing dates:
-missing_dates <- check_for_missing_dates(cdp_dat, dat_source = 'cdp')
+missing_dates <- check_for_missing_dates(cdp_dat)
 
 # Limit to death data by age group:
 cdp_dat <- cdp_dat %>%
@@ -66,10 +66,10 @@ for (i in 1:401) {
         cdp_temp[j, names(x_temp)] <- reallocate_preserving_sum(x_temp, to_add)
         rm(x_temp, to_add)
         
-      }# else {
-      #   print(cdp_temp[j, 'kr_tod_99'])
-      #   # This happens very rarely - only 1 death total
-      # }
+      } else {
+        print(cdp_temp[j, 'kr_tod_99'])
+        # This happens very rarely - only 2 deaths total
+      }
       
     }
     
@@ -136,7 +136,7 @@ cdp_dat_check %>%
   mutate(diff = deaths.x - deaths.y) %>%
   pull(diff) %>%
   summary()
-# never more than 1; different in 247 / 231778 (0.11%) data points; only in lk 07111 (where there is a death w/ no age info on a day with no other deaths)
+# never more than 1; different in 461 / 283200 (0.16%) data points; only in 2 lks
 rm(cdp_dat_check, cdp_dat_sum_all_ages)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -204,7 +204,8 @@ cdp_dat_wk <- cdp_dat_wk %>%
   mutate(Year = format(date, '%Y'),
          Week = format(date, '%V'),
          .after = date) %>%
-  mutate(Year = if_else(Week == 53, '2020', Year))
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year))
 
 # Write data to file:
 write_csv(cdp_dat_wk, file = 'data/formatted/STAND_weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
