@@ -18,7 +18,8 @@ dat_inc_cdp <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT_CDP.c
 # Format:
 dat_inc_cdp <- dat_inc_cdp %>%
   mutate(Week = as.numeric(Week)) %>%
-  mutate(time = if_else(Year == 2020, Week, Week + 53))
+  mutate(time = if_else(Year == 2020, Week, Week + 53),
+         time = if_else(Year == 2022, time + 52, time))
 
 # ---------------------------------------------------------------------------------------------------------------------
 

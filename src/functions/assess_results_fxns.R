@@ -72,7 +72,9 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
       mutate(pop = 10000,
              cases_wave1 = 100,
              cases_wave2 = 100,
-             cases_pre_rate = mean(dat_cumulative$cases_pre_rate),
+             cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
+             cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
+             cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
              ags2 = '01',
              long = set_long,
              lat = set_lat,
@@ -103,7 +105,9 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
       mutate(pop = 10000,
              cases_wave1 = 100,
              cases_wave2 = 100,
-             cases_pre_rate = mean(dat_cumulative$cases_pre_rate),
+             cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
+             cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
+             cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
              ags2 = '01',
              long = set_long,
              lat = set_lat,
@@ -123,13 +127,6 @@ get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
     names(pred_data)[1] <- pred_var
     
   }
-  
-  
-  
-  
-  
-  
-  
   
   # Get predictions and standard errors (link scale):
   pred_data <- pred_data %>%

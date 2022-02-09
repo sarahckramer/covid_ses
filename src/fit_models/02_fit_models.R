@@ -97,7 +97,7 @@ n2a_full <- bake(file = 'results/fitted_models/FULL_n2a_ml.rds',
                          s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service) + s(perc_production) +
                          ti(perc_18to64, pop_dens) + ti(perc_lessthan18, pop_dens) +
-                         s(cases_pre_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+                         s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )
 n2b_full <- bake(file = 'results/fitted_models/FULL_n2b_ml.rds',
