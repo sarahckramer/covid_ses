@@ -40,179 +40,328 @@ check_dharma <- function(dat, mod, depend) {
 }
 
 
-get_marginal_prediction <- function(dat, outcome_var, pred_var, mod) {
+get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, standardize = FALSE) {
   # Function to get marginal predictions from a GAM
   # param dat: Data frame containing information on predictors and outcomes
+  # param pred_var: The name of the predictor(s) for which marginal predictions are wanted
   # param outcome_var: The name of the column holding information on the RATE of the outcome
-  # param pred_var: The name of the predictor for which marginal predictions are wanted
-  # param mod: The fitted GAM used to make the predictions
+  # param mod_list: A named list of fitted GAMs used to make the predictions
+  # param standardize: Boolean; should predictions be standardized to be on same scale for all waves?
   # returns: A tibble containing marginal predictions and 95% CIs
   
   # See code from Christensen et al. (2014) doi: 10.1098/rspb.2019.2269
   
-  # Get lat/long of LK with nearest to mean value of outcome rate:
-  set_long_lat <- dat %>%
-    rename('outcome' = all_of(outcome_var)) %>%
-    mutate(dist = abs(outcome - mean(outcome))) %>%
-    filter(dist == min(dist)) %>%
-    select(long, lat)
-  set_long <- set_long_lat$long
-  set_lat <- set_long_lat$lat
+  res_list <- vector('list', length(mod_list))
+  pred_var_orig <- pred_var
   
-  if (length(pred_var) > 1) {
+  # Loop through all waves and get predictions:
+  for (i in 1:length(mod_list)) {
     
-    # Prepare data frame for prediction:
-    pred_data <- with(dat,
-                      expand_grid(var1 = seq(min(dat_cumulative[, pred_var[1]]),
-                                             max(dat_cumulative[, pred_var[1]]),
-                                             length.out = 100),
-                                  var2 = seq(min(dat_cumulative[, pred_var[2]]),
-                                             max(dat_cumulative[, pred_var[2]]),
-                                             length.out = 100))) %>%
-      mutate(pop = 10000,
-             cases_wave1 = 100,
-             cases_wave2 = 100,
-             cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
-             cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
-             cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
-             ags2 = '01',
-             long = set_long,
-             lat = set_lat,
-             perc_18to64 = mean(dat_cumulative$perc_18to64),
-             perc_lessthan18 = mean(dat_cumulative$perc_lessthan18),
-             hosp_beds = mean(dat_cumulative$hosp_beds),
-             care_home_beds = mean(dat_cumulative$care_home_beds),
-             GISD_Score = mean(dat_cumulative$GISD_Score),
-             pop_dens = mean(dat_cumulative$pop_dens),
-             living_area = mean(dat_cumulative$living_area),
-             perc_service = mean(dat_cumulative$perc_service),
-             perc_production = mean(dat_cumulative$perc_production)) %>%
-      select(-all_of(pred_var))
+    # Get wave number:
+    wave <- as.numeric(names(mod_list)[i])
     
-    # Give correct name to pred_var column:
-    expect_true(names(pred_data)[1] == 'var1')
-    expect_true(names(pred_data)[2] == 'var2')
-    names(pred_data)[1] <- pred_var[1]
-    names(pred_data)[2] <- pred_var[2]
+    # If we are looking at effect of incidence, prior incidence, or vaccination, need to change pred_var with wave:
+    if (pred_var_orig == 'cases_pre') {
+      pred_var <- paste0(pred_var_orig, wave, '_rate')
+    } else if (pred_var_orig == 'vacc') {
+      pred_var <- paste0(pred_var_orig, '_w', wave)
+    } else if (pred_var_orig == 'cases_rate') {
+      pred_var <- paste0('cases_wave', wave, '_rate')
+    }
     
-  } else {
+    # Get outcome variable:
+    if (outcome_measure == 'incidence') {
+      outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
+    } else if (outcome_measure == 'cfr') {
+      outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+    } else {
+      stop('Unrecognized outcome measure.')
+    }
     
-    # Prepare data frame for prediction:
-    pred_data <- with(dat,
-                      expand_grid(var = seq(min(dat_cumulative[, pred_var]),
-                                            max(dat_cumulative[, pred_var]),
-                                            length.out = 1000))) %>%
-      mutate(pop = 10000,
-             cases_wave1 = 100,
-             cases_wave2 = 100,
-             cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
-             cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
-             cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
-             ags2 = '01',
-             long = set_long,
-             lat = set_lat,
-             perc_18to64 = mean(dat_cumulative$perc_18to64),
-             perc_lessthan18 = mean(dat_cumulative$perc_lessthan18),
-             hosp_beds = mean(dat_cumulative$hosp_beds),
-             care_home_beds = mean(dat_cumulative$care_home_beds),
-             GISD_Score = mean(dat_cumulative$GISD_Score),
-             pop_dens = mean(dat_cumulative$pop_dens),
-             living_area = mean(dat_cumulative$living_area),
-             perc_service = mean(dat_cumulative$perc_service),
-             perc_production = mean(dat_cumulative$perc_production)) %>%
-      select(-all_of(pred_var))
+    # Get lat/long of LK with nearest to mean value of outcome rate:
+    set_long_lat <- dat %>%
+      rename('outcome' = all_of(outcome_var)) %>%
+      mutate(dist = abs(outcome - mean(outcome))) %>%
+      filter(dist == min(dist)) %>%
+      select(long, lat)
+    set_long <- set_long_lat$long
+    set_lat <- set_long_lat$lat
     
-    # Give correct name to pred_var column:
-    expect_true(names(pred_data)[1] == 'var')
-    names(pred_data)[1] <- pred_var
+    # Get data frame to be used for prediction:
+    if (length(pred_var) > 1) {
+      
+      # Prepare data frame for prediction:
+      pred_data <- with(dat,
+                        expand_grid(var1 = seq(min(dat[, pred_var[1]]),
+                                               max(dat[, pred_var[1]]),
+                                               length.out = 100),
+                                    var2 = seq(min(dat[, pred_var[2]]),
+                                               max(dat[, pred_var[2]]),
+                                               length.out = 100))) %>%
+        mutate(pop = 10000,
+               cases_wave1 = 100,
+               cases_wave2 = 100,
+               cases_wave3 = 100,
+               cases_wave4 = 100,
+               cases_pre2_rate = mean(dat$cases_pre2_rate),
+               cases_pre3_rate = mean(dat$cases_pre3_rate),
+               cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_wave1_rate = mean(dat$cases_wave1_rate),
+               cases_wave2_rate = mean(dat$cases_wave2_rate),
+               cases_wave3_rate = mean(dat$cases_wave3_rate),
+               cases_wave4_rate = mean(dat$cases_wave4_rate),
+               ags2 = '01',
+               long = set_long,
+               lat = set_lat,
+               perc_18to64 = mean(dat$perc_18to64),
+               perc_lessthan18 = mean(dat$perc_lessthan18),
+               hosp_beds = mean(dat$hosp_beds),
+               care_home_beds = mean(dat$care_home_beds),
+               GISD_Score = mean(dat$GISD_Score),
+               pop_dens = mean(dat$pop_dens),
+               living_area = mean(dat$living_area),
+               perc_service = mean(dat$perc_service),
+               perc_production = mean(dat$perc_production),
+               vacc_w3 = mean(dat$vacc_w3),
+               vacc_w4 = mean(dat$vacc_w4)) %>%
+        select(-all_of(pred_var))
+      
+      # Give correct name to pred_var column:
+      expect_true(names(pred_data)[1] == 'var1')
+      expect_true(names(pred_data)[2] == 'var2')
+      names(pred_data)[1] <- pred_var[1]
+      names(pred_data)[2] <- pred_var[2]
+      
+    } else {
+      
+      # Prepare data frame for prediction:
+      pred_data <- with(dat,
+                        expand_grid(var = seq(min(dat[, pred_var]),
+                                              max(dat[, pred_var]),
+                                              length.out = 1000))) %>%
+        mutate(pop = 10000,
+               cases_wave1 = 100,
+               cases_wave2 = 100,
+               cases_wave3 = 100,
+               cases_wave4 = 100,
+               cases_pre2_rate = mean(dat$cases_pre2_rate),
+               cases_pre3_rate = mean(dat$cases_pre3_rate),
+               cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_wave1_rate = mean(dat$cases_wave1_rate),
+               cases_wave2_rate = mean(dat$cases_wave2_rate),
+               cases_wave3_rate = mean(dat$cases_wave3_rate),
+               cases_wave4_rate = mean(dat$cases_wave4_rate),
+               ags2 = '01',
+               long = set_long,
+               lat = set_lat,
+               perc_18to64 = mean(dat$perc_18to64),
+               perc_lessthan18 = mean(dat$perc_lessthan18),
+               hosp_beds = mean(dat$hosp_beds),
+               care_home_beds = mean(dat$care_home_beds),
+               GISD_Score = mean(dat$GISD_Score),
+               pop_dens = mean(dat$pop_dens),
+               living_area = mean(dat$living_area),
+               perc_service = mean(dat$perc_service),
+               perc_production = mean(dat$perc_production),
+               vacc_w3 = mean(dat$vacc_w3),
+               vacc_w4 = mean(dat$vacc_w4)) %>%
+        select(-all_of(pred_var))
+      
+      # Give correct name to pred_var column:
+      expect_true(names(pred_data)[1] == 'var')
+      names(pred_data)[1] <- pred_var
+      
+    }
+    
+    # Get predictions and standard errors (link scale):
+    pred_data <- pred_data %>%
+      bind_cols(as.data.frame(predict(mod_list[[i]], pred_data, type = 'link', se.fit = TRUE)))
+    
+    # Limit to columns of interest:
+    pred_data <- pred_data %>%
+      select(all_of(pred_var), fit:se.fit)
+    
+    # Get inverse of link function:
+    ilink <- family(mod_list[[i]])$linkinv
+    
+    # Transform predictions to get predicted counts and 95% CIs:
+    pred_data <- pred_data %>%
+      mutate(fitted = ilink(fit),
+             lower = ilink(fit - (2 * se.fit)),
+             upper = ilink(fit + (2 * se.fit))) %>%
+      select(-c(fit:se.fit))
+    
+    # How many x larger is largest predicted value than smallest?:
+    print(max(pred_data$fitted) / min(pred_data$fitted))
+    
+    # Add column with wave number:
+    pred_data <- pred_data %>%
+      mutate(wave = paste0('Wave ', wave))
+    
+    # Unify column names if looking at incidence, prior incidence, or vaccination:
+    if (pred_var_orig == 'cases_pre') {
+      names(pred_data)[1] <- 'cases_pre'
+    } else if (pred_var_orig == 'vacc') {
+      names(pred_data)[1] <- 'vacc'
+    } else if (pred_var_orig == 'cases_rate') {
+      names(pred_data)[1] <- 'cases_rate'
+    }
+    
+    # Store results in list:
+    res_list[[i]] <- pred_data
     
   }
   
-  # Get predictions and standard errors (link scale):
-  pred_data <- pred_data %>%
-    bind_cols(as.data.frame(predict(mod, pred_data, type = 'link', se.fit = TRUE)))
+  # Optional: Divide by mean so that plotting can occur on the same scale for all waves
+  if (standardize) {
+    res_list <- lapply(res_list, function(ix) {
+      ix <- ix %>%
+        mutate(lower = lower / mean(fitted),
+               upper = upper / mean(fitted),
+               fitted = fitted / mean(fitted))
+      ix
+    })
+  }
   
-  # Limit to columns of interest:
-  pred_data <- pred_data %>%
-    select(all_of(pred_var), fit:se.fit)
-  
-  # Get inverse of link function:
-  ilink <- family(mod)$linkinv
-  
-  # Transform predictions to get predicted counts and 95% CIs:
-  pred_data <- pred_data %>%
-    mutate(fitted = ilink(fit),
-           lower = ilink(fit - (2 * se.fit)),
-           upper = ilink(fit + (2 * se.fit))) %>%
-    select(-c(fit:se.fit))
-  
-  # How many x larger is largest predicted value than smallest?:
-  print(max(pred_data$fitted) / min(pred_data$fitted))
+  # Compile into single data frame:
+  pred_res <- bind_rows(res_list)
   
   # Return predictions:
-  return(pred_data)
+  return(pred_res)
 }
 
 
-plot_marginal_prediction <- function(pred_dat, pred_var, outcome_lab) {
+plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plot = TRUE, which_waves = NULL) {
   # Function to plot marginal predictions
-  # param pred_dat: Output from get_marginal_prediction
-  # param pred_var: The predictor of interest
+  # param pred_res: Output from get_marginal_prediction
+  # param pred_var: The predictor(s) of interest
   # param outcome_lab: String for labeling the y-axis
+  # param single_plot: Boolean; should all waves be plotted on the same plot, or should faceting be used?
+  # param which_waves: If only certain waves should be plotted, specify them here; otherwise, set to NULL
   # returns: A plot of the marginal prediction, with 95% CI
   
   if (length(pred_var) > 1) {
     
-    dat_temp <- pred_dat %>%
+    dat_temp <- pred_res %>%
       rename('var1' = pred_var[1],
              'var2' = pred_var[2])
     
     dat_temp1 <- dat_temp %>%
       mutate(diff_median = abs(var2 - median(var2))) %>%
       filter((var2 == min(var2)) | (var2 == max(var2)) |
-               (diff_median == min(diff_median) & var2 <= median(var2))) %>%
-      select(-diff_median) %>%
-      mutate(var2 = factor(var2, levels = c(min(var2), median(var2), max(var2))))
-    # levels(dat_temp1$var2) <- c('Min', 'Median', 'Max')
+               (diff_median == min(diff_median)))# & var2 <= median(var2))) %>%
+    if (length(unique(dat_temp1$var2)) > 3) {
+      dat_temp1 <- dat_temp1 %>%
+        filter(!(diff_median == min(diff_median) & var2 > median(var2))) %>%
+        select(-diff_median) %>%
+        mutate(var2 = factor(var2, levels = c(min(var2), median(var2), max(var2))))
+    } else {
+      dat_temp1 <- dat_temp1 %>%
+        select(-diff_median) %>%
+        mutate(var2 = factor(var2, levels = c(min(var2), median(var2), max(var2))))
+    }
     levels(dat_temp1$var2) <- levels(dat_temp1$var2) %>% as.numeric() %>% round(2)
     
     dat_temp2 <- dat_temp %>%
       mutate(diff_median = abs(var1 - median(var1))) %>%
       filter((var1 == min(var1)) | (var1 == max(var1)) |
-               (diff_median == min(diff_median) & var1 <= median(var1))) %>%
-      select(-diff_median) %>%
-      mutate(var1 = factor(var1, levels = c(min(var1), median(var1), max(var1))))
+               (diff_median == min(diff_median)))# & var1 <= median(var1))) %>%
+    if (length(unique(dat_temp2$var1)) > 3) {
+      dat_temp2 <- dat_temp2 %>%
+        filter(!(diff_median == min(diff_median) & var2 > median(var2))) %>%
+        select(-diff_median) %>%
+        mutate(var1 = factor(var1, levels = c(min(var1), median(var1), max(var1))))
+    } else {
+      dat_temp2 <- dat_temp2 %>%
+        select(-diff_median) %>%
+        mutate(var1 = factor(var1, levels = c(min(var1), median(var1), max(var1))))
+    }
     levels(dat_temp2$var1) <- levels(dat_temp2$var1) %>% as.numeric() %>% round(2)
     
     p_temp1 <- ggplot(data = dat_temp1, aes(group = var2)) +
       geom_ribbon(aes(x = var1, ymin = lower, ymax = upper, fill = var2), alpha = 0.1) +
       geom_line(aes(x = var1, y = fitted, col = var2)) +
+      facet_wrap(~ wave, nrow = 1) +
       theme_classic() +
-      scale_color_brewer(palette = 'Set1') +
-      scale_fill_brewer(palette = 'Set1') +
+      scale_color_brewer(palette = 'Set2') +
+      scale_fill_brewer(palette = 'Set2') +
       labs(x = pred_var[1], y = paste(outcome_lab, '(Predicted)', sep = ' '),
            col = pred_var[2], fill = pred_var[2])
     p_temp2 <- ggplot(data = dat_temp2, aes(group = var1)) +
       geom_ribbon(aes(x = var2, ymin = lower, ymax = upper, fill = var1), alpha = 0.1) +
       geom_line(aes(x = var2, y = fitted, col = var1)) +
+      facet_wrap(~ wave, nrow = 1) +
       theme_classic() +
-      scale_color_brewer(palette = 'Set1') +
-      scale_fill_brewer(palette = 'Set1') +
+      scale_color_brewer(palette = 'Set2') +
+      scale_fill_brewer(palette = 'Set2') +
       labs(x = pred_var[2], y = paste(outcome_lab, '(Predicted)', sep = ' '),
            col = pred_var[1], fill = pred_var[1])
+    
+    if (!is.null(which_waves)) {
+      
+      if (length(which_waves) > 1) {
+        p_temp1 = p_temp2 = vector('list', length(which_waves))
+      }
+      
+      for (w in which_waves) {
+        dat_temp1_w <- dat_temp1 %>%
+          filter(str_detect(wave, as.character(w)))
+        dat_temp2_w <- dat_temp2 %>%
+          filter(str_detect(wave, as.character(w)))
+        
+        p_temp1_w <- ggplot(data = dat_temp1_w, aes(group = var2)) +
+          geom_ribbon(aes(x = var1, ymin = lower, ymax = upper, fill = var2), alpha = 0.1) +
+          geom_line(aes(x = var1, y = fitted, col = var2)) +
+          theme_classic() +
+          scale_color_brewer(palette = 'Set2') +
+          scale_fill_brewer(palette = 'Set2') +
+          labs(x = pred_var[1], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+               col = pred_var[2], fill = pred_var[2])
+        p_temp2_w <- ggplot(data = dat_temp2_w, aes(group = var1)) +
+          geom_ribbon(aes(x = var2, ymin = lower, ymax = upper, fill = var1), alpha = 0.1) +
+          geom_line(aes(x = var2, y = fitted, col = var1)) +
+          theme_classic() +
+          scale_color_brewer(palette = 'Set2') +
+          scale_fill_brewer(palette = 'Set2') +
+          labs(x = pred_var[2], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+               col = pred_var[1], fill = pred_var[1])
+        
+        if (length(which_waves) > 1) {
+          p_temp1[[which(which_waves == w)]] <- p_temp1_w
+          p_temp2[[which(which_waves == w)]] <- p_temp2_w
+        } else {
+          p_temp1 <- p_temp1_w
+          p_temp2 <- p_temp2_w
+        }
+        
+      }
+      
+    }
     
     return(list(p_temp1, p_temp2))
     
   } else {
-   
-    dat_temp <- pred_dat %>%
+    
+    dat_temp <- pred_res %>%
       rename('var' = pred_var)
     
-    p_temp <- ggplot(data = dat_temp) + 
-      geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
-      geom_line(aes(x = var, y = fitted)) +
-      theme_classic() +
-      labs(x = pred_var, y = paste(outcome_lab, '(Predicted)', sep = ' ')) 
+    if (single_plot) {
+      p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
+        geom_ribbon(aes(x = var, ymin = lower, ymax = upper, fill = wave), alpha = 0.1) +
+        geom_line(aes(x = var, y = fitted, col = wave)) +
+        theme_classic() +
+        scale_color_brewer(palette = 'Set1') +
+        scale_fill_brewer(palette = 'Set1') +
+        labs(x = pred_var, y = paste(outcome_lab, '(Predicted)', sep = ' '), fill = '', col = '')
+    } else {
+      p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
+        geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
+        geom_line(aes(x = var, y = fitted)) +
+        facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
+        theme_classic() +
+        labs(x = pred_var, y = paste0('Predicted Change in ', outcome_lab), fill = '', col = '')
+      
+    }
     
     return(p_temp)
     
