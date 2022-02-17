@@ -14,10 +14,12 @@ dat_inc_wk_i <- read_csv('data/formatted/weekly_covid_deaths_by_lk_INCIDENT_CDP.
 dat_inc_wk <- dat_inc_wk %>%
   mutate(Week = as.numeric(Week)) %>%
   mutate(time = if_else(Year == 2020, Week, Week + 53),
+         time = if_else(Year == 2022, time + 52, time),
          .before = ags2)
 dat_inc_wk_i <- dat_inc_wk_i %>%
   mutate(Week = as.numeric(Week)) %>%
   mutate(time = if_else(Year == 2020, Week, Week + 53),
+         time = if_else(Year == 2022, time + 52, time),
          .before = Year)
 
 # Calculate cases in whole population:
@@ -28,119 +30,128 @@ dat_inc_DE <- dat_inc_wk_i %>%
             pop = sum(pop)) %>%
   mutate(case_rate = cases / pop * 100000,
          death_rate = deaths / pop * 100000,
-         ifr = deaths / cases)# %>%
-# left_join(dat_inc_wk %>% select(date, time), by = 'time')
+         cfr = deaths / cases)
 
 # Visualize data:
 p1 <- ggplot(data = dat_inc_wk_i, aes(x = time, y = case_rate, group = lk)) +
   geom_line(alpha = 0.5) + theme_classic() +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
+  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61, 69, 74, 85, 93, 104), lty = 2)
 p2 <- ggplot(data = dat_inc_wk_i, aes(x = time, y = death_rate, group = lk)) +
   geom_line(alpha = 0.5) + theme_classic() +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
-p3 <- ggplot(data = dat_inc_wk_i, aes(x = time, y = ifr, group = lk)) +
+  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61, 69, 74, 85, 93, 104), lty = 2)
+p3 <- ggplot(data = dat_inc_wk_i, aes(x = time, y = cfr, group = lk)) +
   geom_line(alpha = 0.5) + theme_classic() +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
+  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61, 69, 74, 85, 93, 104), lty = 2)
 grid.arrange(p1, p2, p3, ncol = 1)
 
 # p1 <- ggplot(data = dat_inc_wk, aes(x = time, y = case_rate, group = lk)) +
 #   geom_line(alpha = 0.5) + theme_classic()
 # p2 <- ggplot(data = dat_inc_wk, aes(x = time, y = death_rate, group = lk)) +
 #   geom_line(alpha = 0.5) + theme_classic()
-# p3 <- ggplot(data = dat_inc_wk, aes(x = time, y = ifr, group = lk)) +
+# p3 <- ggplot(data = dat_inc_wk, aes(x = time, y = cfr, group = lk)) +
 #   geom_line(alpha = 0.5) + theme_classic()
 # grid.arrange(p1, p2, p3, ncol = 1)
 
 # Determine cutoff points for various waves/partial waves:
 p4 <- ggplot(data = dat_inc_DE, aes(x = time, y = case_rate)) +
   geom_line() + theme_classic() +
-  scale_x_continuous(breaks = seq(9, 91, by = 2)) +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
+  scale_x_continuous(breaks = seq(9, 115, by = 2)) +
+  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61, 69, 74, 85, 93, 104), lty = 2) + geom_hline(yintercept = 50)
 grid.arrange(p1, p4, ncol = 1)
 
 # Clean up:
 rm(dat_inc_DE, dat_inc_wk_i)
 
-# Compare to vaccination rates in Bundeslaender:
-vacc_dat <- read_csv('data/raw/cdp/impfdaten.csv') %>%
-  select(ags2:datum, bl_erstimpf_quote, bl_zweitimpf_quote) %>%
-  mutate(Year = format(datum, '%Y'),
-         Week = format(datum, '%V'),
-         .after = datum) %>%
-  mutate(Year = as.numeric(Year),
-         Week = as.numeric(Week),
-         Year = if_else(Week == 53 & Year == 2021, 2020, Year),
-         time = if_else(Year == 2020, Week, Week + 53))
-
-p5 <- ggplot(data = vacc_dat, aes(x = time, y = bl_erstimpf_quote, group = bundesland)) +
-  geom_line() + theme_classic() +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
-p6 <- ggplot(data = vacc_dat, aes(x = time, y = bl_zweitimpf_quote, group = bundesland)) +
-  geom_line() + theme_classic() +
-  geom_vline(xintercept = c(9, 14, 20, 40, 51, 61), lty = 2)
-grid.arrange(p5, p6, ncol = 1)
-
-vacc_dat %>%
-  filter(time %in% c(61, 75)) %>%
-  group_by(bundesland, time) %>%
-  filter(datum == max(datum)) %>%
-  ungroup() %>%
-  print(n = 32)
-rm(vacc_dat)
-
-# Calculate total cases/deaths for each wave/partial wave:
+# Calculate total cases/deaths for each wave/partial waves:
 dat_cases_cumulative <- dat_inc_wk %>%
-  filter(time %in% c(14, 20, 39, 51, 61)) %>%
+  filter(time %in% c(14, 20, 36, 39, 51, 59, 61, 69, 74, 84, 93, 104, 110)) %>%
   select(time:lk, pop, cases) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = cases) %>%
   mutate(cases_wave1 = wk_20,
          cases_wave2 = wk_61 - wk_39,
+         cases_wave3 = wk_74 - wk_61,
+         cases_wave4 = wk_104 - wk_84,
+         cases_wave5 = wk_110 - wk_104,
          cases_wave1_1 = wk_14,
          cases_wave1_2 = wk_20 - wk_14,
          cases_wave2_1 = wk_51 - wk_39,
          cases_wave2_2 = wk_61 - wk_51,
-         cases_summer = wk_39 - wk_20) %>%
-  select(ags2:pop, cases_wave1:cases_summer)
+         cases_wave3_1 = wk_69 - wk_61,
+         cases_wave3_2 = wk_74 - wk_69,
+         cases_wave4_1 = wk_93 - wk_84,
+         cases_wave4_2 = wk_104 - wk_93,
+         cases_pre2 = wk_39 - wk_14,
+         cases_pre3 = wk_61 - wk_36,
+         cases_pre4 = wk_84 - wk_59,
+         cases_summer1 = wk_39 - wk_20,
+         cases_summer2 = wk_84 - wk_74) %>%
+  select(ags2:pop, cases_wave1:cases_summer2)
 
 dat_deaths_cumulative <- dat_inc_wk %>%
-  filter(time %in% c(14, 20, 39, 51, 61)) %>%
+  filter(time %in% c(14, 20, 36, 39, 51, 59, 61, 69, 74, 84, 93, 104, 110)) %>%
   select(time:lk, deaths) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = deaths) %>%
   mutate(deaths_wave1 = wk_20,
          deaths_wave2 = wk_61 - wk_39,
+         deaths_wave3 = wk_74 - wk_61,
+         deaths_wave4 = wk_104 - wk_84,
+         deaths_wave5 = wk_110 - wk_104,
          deaths_wave1_1 = wk_14,
          deaths_wave1_2 = wk_20 - wk_14,
          deaths_wave2_1 = wk_51 - wk_39,
          deaths_wave2_2 = wk_61 - wk_51,
-         deaths_summer = wk_39 - wk_20) %>%
-  select(lk, deaths_wave1:deaths_summer)
+         deaths_wave3_1 = wk_69 - wk_61,
+         deaths_wave3_2 = wk_74 - wk_69,
+         deaths_wave4_1 = wk_93 - wk_84,
+         deaths_wave4_2 = wk_104 - wk_93,
+         deaths_pre2 = wk_39 - wk_14,
+         deaths_pre3 = wk_61 - wk_36,
+         deaths_pre4 = wk_84 - wk_59,
+         deaths_summer1 = wk_39 - wk_20,
+         deaths_summer2 = wk_84 - wk_74) %>%
+  select(lk, deaths_wave1:deaths_summer2)
 
 # Combine and calculate rates:
 dat_cumulative <- dat_cases_cumulative %>%
   left_join(dat_deaths_cumulative, by = 'lk') %>%
   mutate(cases_wave1_rate = cases_wave1 / pop * 10000,
          cases_wave2_rate = cases_wave2 / pop * 10000,
-         cases_wave1_1_rate = cases_wave1_1 / pop * 10000,
-         cases_wave1_2_rate = cases_wave1_2 / pop * 10000,
-         cases_wave2_1_rate = cases_wave2_1 / pop * 10000,
-         cases_wave2_2_rate = cases_wave2_2 / pop * 10000,
-         cases_summer_rate = cases_summer / pop * 10000,
+         cases_wave3_rate = cases_wave3 / pop * 10000,
+         cases_wave4_rate = cases_wave4 / pop * 10000,
+         cases_wave5_rate = cases_wave5 / pop * 10000,
+         # cases_wave1_1_rate = cases_wave1_1 / pop * 10000,
+         # cases_wave1_2_rate = cases_wave1_2 / pop * 10000,
+         # cases_wave2_1_rate = cases_wave2_1 / pop * 10000,
+         # cases_wave2_2_rate = cases_wave2_2 / pop * 10000,
+         cases_pre2_rate = cases_pre2 / pop * 10000,
+         cases_pre3_rate = cases_pre3 / pop * 10000,
+         cases_pre4_rate = cases_pre4 / pop * 10000,
+         cases_summer1_rate = cases_summer1 / pop * 10000,
+         cases_summer2_rate = cases_summer2 / pop * 10000,
          deaths_wave1_rate = deaths_wave1 / pop * 10000,
          deaths_wave2_rate = deaths_wave2 / pop * 10000,
-         deaths_wave1_1_rate = deaths_wave1_1 / pop * 10000,
-         deaths_wave1_2_rate = deaths_wave1_2 / pop * 10000,
-         deaths_wave2_1_rate = deaths_wave2_1 / pop * 10000,
-         deaths_wave2_2_rate = deaths_wave2_2 / pop * 10000,
-         deaths_summer_rate = deaths_summer / pop * 10000,
-         ifr_wave1 = deaths_wave1 / cases_wave1 * 100,
-         ifr_wave2 = deaths_wave2 / cases_wave2 * 100,
-         ifr_wave1_1 = deaths_wave1_1 / cases_wave1_1 * 100,
-         ifr_wave1_2 = deaths_wave1_2 / cases_wave1_2 * 100,
-         ifr_wave2_1 = deaths_wave2_1 / cases_wave2_1 * 100,
-         ifr_wave2_2 = deaths_wave2_2 / cases_wave2_2 * 100,
-         ifr_summer = deaths_summer / cases_summer * 100) %>%
+         deaths_wave3_rate = deaths_wave3 / pop * 10000,
+         deaths_wave4_rate = deaths_wave4 / pop * 10000,
+         deaths_wave5_rate = deaths_wave5 / pop * 10000,
+         # deaths_wave1_1_rate = deaths_wave1_1 / pop * 10000,
+         # deaths_wave1_2_rate = deaths_wave1_2 / pop * 10000,
+         # deaths_wave2_1_rate = deaths_wave2_1 / pop * 10000,
+         # deaths_wave2_2_rate = deaths_wave2_2 / pop * 10000,
+         deaths_summer1_rate = deaths_summer1 / pop * 10000,
+         deaths_summer2_rate = deaths_summer2 / pop * 10000,
+         cfr_wave1 = deaths_wave1 / cases_wave1 * 100,
+         cfr_wave2 = deaths_wave2 / cases_wave2 * 100,
+         cfr_wave3 = deaths_wave3 / cases_wave2 * 100,
+         cfr_wave4 = deaths_wave4 / cases_wave2 * 100,
+         cfr_wave5 = deaths_wave5 / cases_wave2 * 100,
+         # cfr_wave1_1 = deaths_wave1_1 / cases_wave1_1 * 100,
+         # cfr_wave1_2 = deaths_wave1_2 / cases_wave1_2 * 100,
+         # cfr_wave2_1 = deaths_wave2_1 / cases_wave2_1 * 100,
+         # cfr_wave2_2 = deaths_wave2_2 / cases_wave2_2 * 100,
+         cfr_summer1 = deaths_summer1 / cases_summer1 * 100,
+         cfr_summer2 = deaths_summer2 / cases_summer2 * 100) %>%
   pivot_longer(-c(ags2:pop), names_to = 'outcome', values_to = 'val')
 rm(dat_cases_cumulative, dat_deaths_cumulative)
 
@@ -151,30 +162,30 @@ dat_cumulative %>%
   summarise(mean = mean(val),
             median = median(val),
             sd = sd(val)) %>%
-  print(n = 14)
+  print(n = nrow(dat_cumulative))
 
 dat_plot <- dat_cumulative %>%
   filter(str_detect(outcome, 'rate') |
-           str_detect(outcome, 'ifr'))
+           str_detect(outcome, 'cfr'))
 
-p7 <- ggplot(dat_plot, aes(x = bundesland, y = val, group = bundesland)) +
+p5 <- ggplot(dat_plot, aes(x = bundesland, y = val, group = bundesland)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
   facet_wrap(~ outcome, scales = 'free_y')
-print(p7)
+print(p5)
 
-p8 <- ggplot(dat_plot %>%
+p6 <- ggplot(dat_plot %>%
                filter(str_detect(outcome, 'cases')),
              aes(x = outcome, y = val, group = outcome)) +
   geom_violin(fill = 'steelblue2') + theme_classic()
-p9 <- ggplot(dat_plot %>%
+p7 <- ggplot(dat_plot %>%
                filter(str_detect(outcome, 'deaths')),
              aes(x = outcome, y = val, group = outcome)) +
   geom_violin(fill = 'steelblue2') + theme_classic()
-p10 <- ggplot(dat_plot %>%
-                filter(str_detect(outcome, 'ifr')),
-              aes(x = outcome, y = val, group = outcome)) +
+p8 <- ggplot(dat_plot %>%
+               filter(str_detect(outcome, 'cfr')),
+             aes(x = outcome, y = val, group = outcome)) +
   geom_violin(fill = 'steelblue2') + theme_classic()
-grid.arrange(p8, p9, p10, ncol = 1)
+grid.arrange(p6, p7, p8, ncol = 1)
 
 # Write cumulative counts/rates to file:
 write_csv(dat_cumulative, file = 'data/formatted/STAND_cumulative_cases_and_deaths.csv')

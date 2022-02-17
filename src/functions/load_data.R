@@ -33,11 +33,6 @@ dat_cumulative <- dat_cumulative %>%
   pivot_wider(names_from = outcome,
               values_from = val)
 
-# Get total cases/deaths in wave1+summer:
-dat_cumulative <- dat_cumulative %>%
-  mutate(cases_pre_rate = (cases_wave1 + cases_summer) / pop * 10000,
-         deaths_pre_rate = (deaths_wave1 + deaths_summer) / pop * 10000)
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get map data and relevant coordinates
@@ -102,6 +97,18 @@ dat_cumulative <- dat_cumulative %>%
 if (!keep_map) {
   rm(map_base)
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Read in and join vaccination data
+
+# Load vaccination data:
+vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
+
+# Join with case/death data:
+dat_cumulative <- dat_cumulative %>%
+  left_join(vacc_dat, by = c('lk' = 'ID_County'))
+rm(vacc_dat)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
