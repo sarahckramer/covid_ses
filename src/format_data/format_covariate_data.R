@@ -116,6 +116,8 @@ plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # COVID-19 vaccination rates
+# https://github.com/DLR-SC/memilio/tree/main/pycode/memilio-epidata
+# https://www.medrxiv.org/content/10.1101/2021.07.09.21260257v3
 
 # Read in data:
 vacc_dat <- fromJSON('data/raw/independent_vars/vacc/all_county_vacc_all_dates.json')
