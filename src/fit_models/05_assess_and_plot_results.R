@@ -274,6 +274,10 @@ spatial_trend_NULL <- dat_cumulative %>%
          cases_wave2 = 100,
          cases_wave3 = 100,
          cases_wave4 = 100,
+         cases_wave1_rate = mean(dat_cumulative$cases_wave1_rate),
+         cases_wave2_rate = mean(dat_cumulative$cases_wave2_rate),
+         cases_wave3_rate = mean(dat_cumulative$cases_wave3_rate),
+         cases_wave4_rate = mean(dat_cumulative$cases_wave4_rate),
          cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
          cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
          cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
@@ -460,8 +464,8 @@ plot_a_pop_dens <- plot_marginal_prediction(pred_pop_dens, 'pop_dens', 'Cases / 
 plot_a_service <- plot_marginal_prediction(pred_perc_service, 'perc_service', 'Cases / 10000 Pop', single_plot = TRUE)
 plot_a_production <- plot_marginal_prediction(pred_perc_production, 'perc_production', 'Cases / 10000 Pop', single_plot = TRUE)
 
-grid.arrange(plot_a_18to64, plot_a_lessthan18, plot_a_pop_dens, plot_a_care_home_beds,
-             plot_a_GISD_Score, plot_a_service, plot_a_production, nrow = 2)
+grid.arrange(plot_a_GISD_Score, plot_a_service, plot_a_production,
+             plot_a_18to64, plot_a_lessthan18, plot_a_pop_dens, plot_a_care_home_beds, nrow = 2)
 
 # plot_a_18to64 <- plot_marginal_prediction(pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop', single_plot = FALSE)
 # plot_a_lessthan18 <- plot_marginal_prediction(pred_perc_lessthan18, 'perc_lessthan18', 'Cases / 10000 Pop', single_plot = FALSE)
@@ -514,7 +518,7 @@ plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CF
 plot_b_hosp_beds <- plot_marginal_prediction(pred_hosp_beds, 'hosp_beds', 'CFR', single_plot = TRUE)
 plot_b_care_home_beds <- plot_marginal_prediction(pred_care_home_beds, 'care_home_beds', 'CFR', single_plot = TRUE)
 
-grid.arrange(plot_b_hosp_beds, plot_b_care_home_beds, plot_b_GISD_Score, nrow = 1)
+grid.arrange(plot_b_GISD_Score, plot_b_hosp_beds, plot_b_care_home_beds, nrow = 1)
 
 # plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = FALSE)
 # plot_b_hosp_beds <- plot_marginal_prediction(pred_hosp_beds, 'hosp_beds', 'CFR', single_plot = FALSE)

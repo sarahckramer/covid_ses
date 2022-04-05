@@ -74,6 +74,13 @@ n4b <- bake(file = 'results/fitted_models/null_n4b_ml.rds',
             }
 )
 
+n1b_adj <- bake(file = 'results/fitted_models/null_n1b_adj_ml.rds',
+                expr = {
+                  gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                        s(cases_wave1_rate) +
+                        offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
+                }
+)
 n2a_adj <- bake(file = 'results/fitted_models/null_n2a_adj_ml.rds',
                 expr = {
                   gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
@@ -83,7 +90,8 @@ n2a_adj <- bake(file = 'results/fitted_models/null_n2a_adj_ml.rds',
 n2b_adj <- bake(file = 'results/fitted_models/null_n2b_adj_ml.rds',
                 expr = {
                   gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
+                        s(cases_pre2_rate) + s(cases_wave2_rate, k = 25) + offset(log(cases_wave2)),
+                      data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
 
@@ -97,7 +105,7 @@ n3a_adj <- bake(file = 'results/fitted_models/null_n3a_adj_ml.rds',
 n3b_adj <- bake(file = 'results/fitted_models/null_n3b_adj_ml.rds',
                 expr = {
                   gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre3_rate) + s(vacc_w3) +
+                        s(cases_pre3_rate) + s(vacc_w3) + s(cases_wave3_rate) +
                         offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
@@ -112,7 +120,7 @@ n4a_adj <- bake(file = 'results/fitted_models/null_n4a_adj_ml.rds',
 n4b_adj <- bake(file = 'results/fitted_models/null_n4b_adj_ml.rds',
                 expr = {
                   gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre4_rate) + s(vacc_w4) +
+                        s(cases_pre4_rate) + s(vacc_w4) + s(cases_wave4_rate) +
                         offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
