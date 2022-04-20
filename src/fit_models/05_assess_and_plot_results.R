@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Assess and plot associations between predictors and outcomes
+# Models labeled "a" are models of incidence; models labeled "b" are models of CFR
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup

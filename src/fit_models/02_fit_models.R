@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Fit GAMs with no, single, or all SES predictors and store results
+# Models labeled "a" are models of incidence; models labeled "b" are models of CFR
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup

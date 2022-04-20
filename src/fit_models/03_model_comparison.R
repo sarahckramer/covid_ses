@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Compare full models against other model specifications to see if improvements are possible
+# Models labeled "a" are models of incidence; models labeled "b" are models of CFR
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
