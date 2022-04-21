@@ -33,15 +33,16 @@ dat_cumulative <- dat_cumulative %>%
   pivot_wider(names_from = outcome,
               values_from = val)
 
+# Remove LK(s) that were later merged:
+dat_cumulative <- dat_cumulative %>%
+  filter(!(lk %in% c('16056', '16063'))) # Eisenach and Wartburgkreis
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get map data and relevant coordinates
 
 # Read in map data:
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
-
-expect_true(all(unique(map_base$ARS) %in% unique(dat_cumulative$lk)))
-expect_true(all(unique(dat_cumulative$lk) %in% unique(map_base$ARS)))
 
 # Get neighborhood info:
 nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)
