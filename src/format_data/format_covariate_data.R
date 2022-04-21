@@ -95,7 +95,7 @@ plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 # https://www.medrxiv.org/content/10.1101/2021.07.09.21260257v3
 
 # Read in data:
-vacc_dat <- fromJSON('data/raw/independent_vars/vacc/all_county_vacc_all_dates.json')
+vacc_dat <- fromJSON('data/raw/independent_vars/vacc/3_all_county_vacc_all_dates.json')
 
 # Format:
 vacc_dat <- vacc_dat %>%
@@ -105,11 +105,10 @@ vacc_dat <- vacc_dat %>%
          ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
 
 # Add population data and calculate vaccination rates:
-pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015_NEW2020.csv', col_names = FALSE, skip = 6, n_max = 476) %>%
-  select(-X2) %>%
-  rename(lk = X1, pop = X3) %>%
-  mutate(pop = as.numeric(pop)) %>%
-  filter(!is.na(pop))
+pop_dat <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
+  select(ags5, kr_ew_20) %>%
+  rename('lk' = 'ags5',
+         'pop' = 'kr_ew_20')
 
 vacc_dat <- vacc_dat %>%
   left_join(pop_dat, by = c('ID_County' = 'lk')) %>%
