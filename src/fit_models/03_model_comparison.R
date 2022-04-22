@@ -228,7 +228,7 @@ n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 dat_cumulative$ARS <- factor(dat_cumulative$lk)
 
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp') %>%
-  filter(GEN != 'Eisenach')
+  filter(GEN != 'Eisenach', GEN != 'Wartburgkreis')
 
 nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)
 attr(nb, 'region.id') <- map_base$ARS
