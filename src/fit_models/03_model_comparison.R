@@ -224,6 +224,194 @@ n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 # anova(n3b_full, n3b_comp, test = 'Chisq')
 # anova(n4b_full, n4b_comp, test = 'Chisq')
 
+# Try Tweedie distribution:
+n1a_comp <-  gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                   s(perc_service) + s(perc_production) +
+                   offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
+n1b_comp <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'tw', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
+                  s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
+n2b_comp <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) + s(cases_wave2_rate, k = 25) +
+                  s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'tw', method = 'ML')
+
+n3a_comp <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
+n3b_comp <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(cases_wave3)), data = dat_cumulative, family = 'tw', method = 'ML')
+n4a_comp <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
+n4b_comp <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(cases_wave4)), data = dat_cumulative, family = 'tw', method = 'ML')
+
+AIC(n1a_full, n1a_comp)
+AIC(n1b_full, n1b_comp)
+AIC(n2a_full, n2a_comp)
+AIC(n2b_full, n2b_comp)
+AIC(n3a_full, n3a_comp)
+AIC(n3b_full, n3b_comp)
+AIC(n4a_full, n4a_comp)
+AIC(n4b_full, n4b_comp)
+
+# Try different spatial smooth types (s, sos, gp):
+n1a_comp <-  gam(cases_wave1 ~ s(long, lat, k = 60) + s(ags2, bs = 're', k = 16) +
+                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                   s(perc_service) + s(perc_production) +
+                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1b_comp <- gam(deaths_wave1 ~ s(long, lat, k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
+                  s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2b_comp <- gam(deaths_wave2 ~ s(long, lat, k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) + s(cases_wave2_rate, k = 25) +
+                  s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+n3a_comp <- gam(cases_wave3 ~ s(long, lat, k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n3b_comp <- gam(deaths_wave3 ~ s(long, lat, k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4a_comp <- gam(cases_wave4 ~ s(long, lat, k = 35) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4b_comp <- gam(deaths_wave4 ~ s(long, lat, k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+AIC(n1a_full, n1a_comp)
+AIC(n1b_full, n1b_comp)
+AIC(n2a_full, n2a_comp)
+AIC(n2b_full, n2b_comp)
+AIC(n3a_full, n3a_comp)
+AIC(n3b_full, n3b_comp)
+AIC(n4a_full, n4a_comp)
+AIC(n4b_full, n4b_comp)
+
+n1a_comp <-  gam(cases_wave1 ~ s(long, lat, bs = 'sos', k = 60) + s(ags2, bs = 're', k = 16) +
+                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                   s(perc_service) + s(perc_production) +
+                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1b_comp <- gam(deaths_wave1 ~ s(long, lat, bs = 'sos', k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'sos', k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
+                  s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2b_comp <- gam(deaths_wave2 ~ s(long, lat, bs = 'sos', k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) + s(cases_wave2_rate, k = 25) +
+                  s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+n3a_comp <- gam(cases_wave3 ~ s(long, lat, bs = 'sos', k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n3b_comp <- gam(deaths_wave3 ~ s(long, lat, bs = 'sos', k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4a_comp <- gam(cases_wave4 ~ s(long, lat, bs = 'sos', k = 35) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4b_comp <- gam(deaths_wave4 ~ s(long, lat, bs = 'sos', k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+AIC(n1a_full, n1a_comp)
+AIC(n1b_full, n1b_comp)
+AIC(n2a_full, n2a_comp)
+AIC(n2b_full, n2b_comp)
+AIC(n3a_full, n3a_comp)
+AIC(n3b_full, n3b_comp)
+AIC(n4a_full, n4a_comp)
+AIC(n4b_full, n4b_comp)
+
+n1a_comp <-  gam(cases_wave1 ~ s(long, lat, bs = 'gp', k = 60) + s(ags2, bs = 're', k = 16) +
+                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                   s(perc_service) + s(perc_production) +
+                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1b_comp <- gam(deaths_wave1 ~ s(long, lat, bs = 'gp', k = 70) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
+                  offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'gp', k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
+                  s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2b_comp <- gam(deaths_wave2 ~ s(long, lat, bs = 'gp', k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) + s(cases_wave2_rate, k = 25) +
+                  s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+n3a_comp <- gam(cases_wave3 ~ s(long, lat, bs = 'gp', k = 65) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n3b_comp <- gam(deaths_wave3 ~ s(long, lat, bs = 'gp', k = 50) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
+                  s(cases_pre3_rate) + s(vacc_w3) +
+                  offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4a_comp <- gam(cases_wave4 ~ s(long, lat, bs = 'gp', k = 35) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_lessthan18, GISD_Score) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4b_comp <- gam(deaths_wave4 ~ s(long, lat, bs = 'gp', k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
+                  s(cases_pre4_rate) + s(vacc_w4) +
+                  offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+AIC(n1a_full, n1a_comp)
+AIC(n1b_full, n1b_comp)
+AIC(n2a_full, n2a_comp)
+AIC(n2b_full, n2b_comp)
+AIC(n3a_full, n3a_comp)
+AIC(n3b_full, n3b_comp)
+AIC(n4a_full, n4a_comp)
+AIC(n4b_full, n4b_comp)
+
+rm(n1a_comp, n1b_comp, n2a_comp, n2b_comp, n3a_comp, n3b_comp, n4a_comp, n4b_comp)
+
 # Try using MRF:
 dat_cumulative$ARS <- factor(dat_cumulative$lk)
 
