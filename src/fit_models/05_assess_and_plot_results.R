@@ -287,20 +287,20 @@ spatial_trend_NULL <- dat_cumulative %>%
          ags2 = '01')
 
 spatial_trend_NULL <- spatial_trend_NULL %>%
-  mutate(fitted_n1a = predict(n1a, spatial_trend_NULL, type = 'response'),
-         fitted_n2a = predict(n2a, spatial_trend_NULL, type = 'response'),
-         fitted_n3a = predict(n3a, spatial_trend_NULL, type = 'response'),
-         fitted_n4a = predict(n4a, spatial_trend_NULL, type = 'response'),
-         fitted_n1b = predict(n1b, spatial_trend_NULL, type = 'response'),
-         fitted_n2b = predict(n2b, spatial_trend_NULL, type = 'response'),
-         fitted_n3b = predict(n3b, spatial_trend_NULL, type = 'response'),
-         fitted_n4b = predict(n4b, spatial_trend_NULL, type = 'response'),
-         fitted_n2a_adj = predict(n2a_adj, spatial_trend_NULL, type = 'response'),
-         fitted_n2b_adj = predict(n2b_adj, spatial_trend_NULL, type = 'response'),
-         fitted_n3a_adj = predict(n3a_adj, spatial_trend_NULL, type = 'response'),
-         fitted_n3b_adj = predict(n3b_adj, spatial_trend_NULL, type = 'response'),
-         fitted_n4a_adj = predict(n4a_adj, spatial_trend_NULL, type = 'response'),
-         fitted_n4b_adj = predict(n4b_adj, spatial_trend_NULL, type = 'response'))
+  mutate(fitted_n1a = predict(n1a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2a = predict(n2a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3a = predict(n3a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4a = predict(n4a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n1b = predict(n1b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2b = predict(n2b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3b = predict(n3b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4b = predict(n4b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2a_adj = predict(n2a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2b_adj = predict(n2b_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3a_adj = predict(n3a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3b_adj = predict(n3b_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4a_adj = predict(n4a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4b_adj = predict(n4b_adj, spatial_trend_NULL, type = 'response'))#, exclude = 's(ags2)'))
 
 map_fitted_NULL <- map_pan %>%
   left_join(spatial_trend_NULL %>%
@@ -397,7 +397,6 @@ rm(dat_ses)
 # ---------------------------------------------------------------------------------------------------------------------
 
 ### Show correlations between predictors and cases/deaths (rates) ###
-# Note that of course this won't deal well with non-monotonic relationships
 
 # Plot:
 dat_corr <- dat_cumulative %>%
@@ -467,17 +466,6 @@ plot_a_production <- plot_marginal_prediction(pred_perc_production, 'perc_produc
 
 grid.arrange(plot_a_GISD_Score, plot_a_service, plot_a_production,
              plot_a_18to64, plot_a_lessthan18, plot_a_pop_dens, plot_a_care_home_beds, nrow = 2)
-
-# plot_a_18to64 <- plot_marginal_prediction(pred_perc_18to64, 'perc_18to64', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_lessthan18 <- plot_marginal_prediction(pred_perc_lessthan18, 'perc_lessthan18', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_care_home_beds <- plot_marginal_prediction(pred_care_home_beds, 'care_home_beds', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_pop_dens <- plot_marginal_prediction(pred_pop_dens, 'pop_dens', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_service <- plot_marginal_prediction(pred_perc_service, 'perc_service', 'Cases / 10000 Pop', single_plot = FALSE)
-# plot_a_production <- plot_marginal_prediction(pred_perc_production, 'perc_production', 'Cases / 10000 Pop', single_plot = FALSE)
-# 
-# grid.arrange(plot_a_18to64, plot_a_lessthan18, plot_a_pop_dens, plot_a_care_home_beds,
-#              plot_a_GISD_Score, plot_a_service, plot_a_production, ncol = 1)
 
 pred_18to64_popdens <- get_marginal_prediction(dat_cumulative, c('perc_18to64', 'pop_dens'), 'incidence', mod_list, standardize = TRUE)
 pred_lessthan18_popdens <- get_marginal_prediction(dat_cumulative, c('perc_lessthan18', 'pop_dens'), 'incidence', mod_list, standardize = TRUE)
@@ -578,14 +566,14 @@ spatial_trend_FULL <- dat_cumulative %>%
          vacc_w4 = mean(dat_cumulative$vacc_w4))
 
 spatial_trend_FULL <- spatial_trend_FULL %>%
-  mutate(fitted_n1a = predict(n1a_full, spatial_trend_FULL, type = 'response'),
-         fitted_n2a = predict(n2a_full, spatial_trend_FULL, type = 'response'),
-         fitted_n3a = predict(n3a_full, spatial_trend_FULL, type = 'response'),
-         fitted_n4a = predict(n4a_full, spatial_trend_FULL, type = 'response'),
-         fitted_n1b = predict(n1b_full, spatial_trend_FULL, type = 'response'),
-         fitted_n2b = predict(n2b_full, spatial_trend_FULL, type = 'response'),
-         fitted_n3b = predict(n3b_full, spatial_trend_FULL, type = 'response'),
-         fitted_n4b = predict(n4b_full, spatial_trend_FULL, type = 'response'))
+  mutate(fitted_n1a = predict(n1a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2a = predict(n2a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3a = predict(n3a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4a = predict(n4a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n1b = predict(n1b_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n2b = predict(n2b_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n3b = predict(n3b_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n4b = predict(n4b_full, spatial_trend_FULL, type = 'response'))#, exclude = 's(ags2)'))
 
 map_fitted_FULL <- map_pan %>%
   left_join(spatial_trend_FULL %>%
