@@ -7,6 +7,7 @@
 
 # Load libraries:
 library(tidyverse)
+library(mgcv)
 library(sf)
 library(spdep)
 library(testthat)

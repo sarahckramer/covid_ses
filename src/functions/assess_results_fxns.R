@@ -39,7 +39,6 @@ check_dharma <- function(dat, mod, depend) {
   
 }
 
-
 get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, standardize = FALSE) {
   # Function to get marginal predictions from a GAM
   # param dat: Data frame containing information on predictors and outcomes
@@ -174,41 +173,79 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     }
     
     # Get predictions and standard errors (link scale):
-    pred_data <- pred_data %>%
-      bind_cols(as.data.frame(predict(mod_list[[i]], pred_data, type = 'link', se.fit = TRUE)))
-    
-    # Limit to columns of interest:
-    pred_data <- pred_data %>%
-      select(all_of(pred_var), fit:se.fit)
+    pred_data_new <- pred_data %>%
+      bind_cols(as.data.frame(predict(mod_list[[i]], pred_data, type = 'link',
+                                      se.fit = TRUE)))#, exclude = 's(ags2)')))
     
     # Get inverse of link function:
     ilink <- family(mod_list[[i]])$linkinv
     
-    # Transform predictions to get predicted counts and 95% CIs:
-    pred_data <- pred_data %>%
+    # Get covariance matrix:
+    Vb <- vcov(mod_list[[i]])
+    
+    # Get standard errors:
+    se.fit <- pred_data_new$se.fit
+    
+    # Determine how to scale standard errors for simultaneous intervals:
+    BUdiff <- rmvn(10000, mu = rep(0, nrow(Vb)), V = Vb)
+    Cg <- predict(mod_list[[i]], pred_data_new, type = "lpmatrix")#, exclude = 's(ags2)')
+    simDev <- Cg %*% t(BUdiff)
+    absDev <- abs(sweep(simDev, 1, se.fit, FUN = "/"))
+    masd <- apply(absDev, 2L, max)
+    crit <- quantile(masd, prob = 0.95, type = 8)
+    
+    # Limit to columns of interest:
+    pred_data_new <- pred_data_new %>%
+      select(all_of(pred_var), fit:se.fit)
+    
+    # Calculate simultaneous confidence intervals and transform predictions:
+    pred_data_new <- pred_data_new %>%
       mutate(fitted = ilink(fit),
              lower = ilink(fit - (2 * se.fit)),
-             upper = ilink(fit + (2 * se.fit))) %>%
+             upper = ilink(fit + (2 * se.fit)),
+             lower_sim = ilink(fit - (crit * se.fit)),
+             upper_sim = ilink(fit + (crit * se.fit))) %>%
       select(-c(fit:se.fit))
     
+    # Check that ~95% of draws from posterior fall within interval:
+    sims <- rmvn(10000, mu = coef(mod_list[[i]]), V = Vb)
+    posterior_draws <- Cg %*% t(sims) %>%
+      ilink()
+    if (outcome_measure == 'incidence') {
+      posterior_draws <- posterior_draws * 10000
+    } else if (outcome_measure == 'cfr') {
+      posterior_draws <- posterior_draws * 100
+    }
+    
+    inCI <- function(x, upr, lwr) {
+      all(x >= lwr & x <= upr)
+    }
+    
+    fitsInSCI <- apply(posterior_draws, 2L, inCI, upr = pred_data_new$upper, lwr = pred_data_new$lower)
+    print(sum(fitsInSCI) / length(fitsInSCI))
+    # NOTE: Simultaneous confidence intervals are not yet working properly!
+    
     # How many x larger is largest predicted value than smallest?:
-    print(max(pred_data$fitted) / min(pred_data$fitted))
+    print(max(pred_data_new$fitted) / min(pred_data_new$fitted))
     
     # Add column with wave number:
-    pred_data <- pred_data %>%
+    pred_data_new <- pred_data_new %>%
       mutate(wave = paste0('Wave ', wave))
     
     # Unify column names if looking at incidence, prior incidence, or vaccination:
     if (pred_var_orig == 'cases_pre') {
-      names(pred_data)[1] <- 'cases_pre'
+      names(pred_data_new)[1] <- 'cases_pre'
     } else if (pred_var_orig == 'vacc') {
-      names(pred_data)[1] <- 'vacc'
+      names(pred_data_new)[1] <- 'vacc'
     } else if (pred_var_orig == 'cases_rate') {
-      names(pred_data)[1] <- 'cases_rate'
+      names(pred_data_new)[1] <- 'cases_rate'
     }
     
     # Store results in list:
-    res_list[[i]] <- pred_data
+    res_list[[i]] <- pred_data_new
+    
+    # Clean up:
+    rm(ilink, Vb, se.fit, BUdiff, Cg, simDev, absDev, masd, crit)
     
   }
   
@@ -218,6 +255,8 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       ix <- ix %>%
         mutate(lower = lower / mean(fitted),
                upper = upper / mean(fitted),
+               lower_sim = lower_sim / mean(fitted),
+               upper_sim = upper_sim / mean(fitted),
                fitted = fitted / mean(fitted))
       ix
     })
