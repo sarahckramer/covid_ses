@@ -151,7 +151,7 @@ grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
 map_pan <- map_pan %>%
   drop_na()
 map_temp <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp') %>%
-  filter(GEN != 'Eisenach')
+  filter(GEN != 'Eisenach', GEN != 'Wartburgkreis')
 
 nb <- spdep::poly2nb(map_temp, row.names = map_temp$ARS)
 attr(nb, 'region.id') <- map_temp$ARS
