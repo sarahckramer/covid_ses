@@ -350,6 +350,8 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
         geom_ribbon(aes(x = var, ymin = lower, ymax = upper, fill = wave), alpha = 0.1) +
         geom_line(aes(x = var, y = fitted, col = wave)) +
         theme_classic() +
+        # scale_color_viridis(discrete = TRUE) +
+        # scale_fill_viridis(discrete = TRUE) +
         scale_color_brewer(palette = 'Set1') +
         scale_fill_brewer(palette = 'Set1') +
         labs(x = pred_var, y = paste(outcome_lab, '(Predicted)', sep = ' '), fill = '', col = '')
