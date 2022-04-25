@@ -268,7 +268,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
                (diff_median == min(diff_median)))# & var1 <= median(var1))) %>%
     if (length(unique(dat_temp2$var1)) > 3) {
       dat_temp2 <- dat_temp2 %>%
-        filter(!(diff_median == min(diff_median) & var2 > median(var2))) %>%
+        filter(!(diff_median == min(diff_median) & var1 > median(var1))) %>%
         select(-diff_median) %>%
         mutate(var1 = factor(var1, levels = c(min(var1), median(var1), max(var1))))
     } else {
