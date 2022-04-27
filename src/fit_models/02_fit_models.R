@@ -31,7 +31,7 @@ n1a <- bake(file = 'results/fitted_models/null_n1a_ml.rds',
 )
 n1b <- bake(file = 'results/fitted_models/null_n1b_ml.rds',
             expr = {
-              gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+              gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                     offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
             }
 )
@@ -77,7 +77,7 @@ n4b <- bake(file = 'results/fitted_models/null_n4b_ml.rds',
 
 n1b_adj <- bake(file = 'results/fitted_models/null_n1b_adj_ml.rds',
                 expr = {
-                  gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                  gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                         s(cases_wave1_rate) +
                         offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
@@ -157,7 +157,7 @@ n1a_full <- bake(file = 'results/fitted_models/FULL_n1a_ml.rds',
 )
 n1b_full <- bake(file = 'results/fitted_models/FULL_n1b_ml.rds',
                  expr = {
-                   gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                   gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                          s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
                          offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
