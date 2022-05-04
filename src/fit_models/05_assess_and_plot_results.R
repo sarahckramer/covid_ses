@@ -609,7 +609,7 @@ p4a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n4a), col = 'black') 
 
 p1b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
-  scale_fill_viridis() +
+  scale_fill_viridis(breaks = c(5.590035, 5.59008)) +
   theme_void() + labs(title = 'Wave 1', fill = 'CFR (%)') +
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
@@ -627,7 +627,7 @@ p3b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n3b), col = 'black') 
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p4b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n4b), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
-  scale_fill_viridis() +
+  scale_fill_viridis(breaks = c(0.5, 0.75)) +
   theme_void() + labs(title = 'Wave 4', fill = 'CFR (%)') +
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))

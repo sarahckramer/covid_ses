@@ -270,14 +270,21 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
 }
 
 
-plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plot = TRUE, which_waves = NULL) {
+plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plot = TRUE, standardize = TRUE, which_waves = NULL) {
   # Function to plot marginal predictions
   # param pred_res: Output from get_marginal_prediction
   # param pred_var: The predictor(s) of interest
   # param outcome_lab: String for labeling the y-axis
   # param single_plot: Boolean; should all waves be plotted on the same plot, or should faceting be used?
+  # param standardize: Boolean; were predictions standardized to be on same scale for all waves?
   # param which_waves: If only certain waves should be plotted, specify them here; otherwise, set to NULL
   # returns: A plot of the marginal prediction, with 95% CI
+  
+  if (standardize) {
+    outcome_lab <- paste0('Predicted Change in ', outcome_lab)
+  } else {
+    outcome_lab <- paste(outcome_lab, '(Predicted)', sep = ' ')
+  }
   
   if (length(pred_var) > 1) {
     
@@ -324,7 +331,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
       theme_classic() +
       scale_color_brewer(palette = 'Set2') +
       scale_fill_brewer(palette = 'Set2') +
-      labs(x = pred_var[1], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+      labs(x = pred_var[1], y = outcome_lab,
            col = pred_var[2], fill = pred_var[2])
     p_temp2 <- ggplot(data = dat_temp2, aes(group = var1)) +
       geom_ribbon(aes(x = var2, ymin = lower, ymax = upper, fill = var1), alpha = 0.1) +
@@ -333,7 +340,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
       theme_classic() +
       scale_color_brewer(palette = 'Set2') +
       scale_fill_brewer(palette = 'Set2') +
-      labs(x = pred_var[2], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+      labs(x = pred_var[2], y = outcome_lab,
            col = pred_var[1], fill = pred_var[1])
     
     if (!is.null(which_waves)) {
@@ -354,7 +361,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
           theme_classic() +
           scale_color_brewer(palette = 'Set2') +
           scale_fill_brewer(palette = 'Set2') +
-          labs(x = pred_var[1], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+          labs(x = pred_var[1], y = outcome_lab,
                col = pred_var[2], fill = pred_var[2])
         p_temp2_w <- ggplot(data = dat_temp2_w, aes(group = var1)) +
           geom_ribbon(aes(x = var2, ymin = lower, ymax = upper, fill = var1), alpha = 0.1) +
@@ -362,7 +369,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
           theme_classic() +
           scale_color_brewer(palette = 'Set2') +
           scale_fill_brewer(palette = 'Set2') +
-          labs(x = pred_var[2], y = paste(outcome_lab, '(Predicted)', sep = ' '),
+          labs(x = pred_var[2], y = outcome_lab,
                col = pred_var[1], fill = pred_var[1])
         
         if (length(which_waves) > 1) {
@@ -393,14 +400,14 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
         # scale_fill_viridis(discrete = TRUE) +
         scale_color_brewer(palette = 'Set1') +
         scale_fill_brewer(palette = 'Set1') +
-        labs(x = pred_var, y = paste(outcome_lab, '(Predicted)', sep = ' '), fill = '', col = '')
+        labs(x = pred_var, y = outcome_lab, fill = '', col = '')
     } else {
       p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
         geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
         geom_line(aes(x = var, y = fitted)) +
         facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
         theme_classic() +
-        labs(x = pred_var, y = paste0('Predicted Change in ', outcome_lab), fill = '', col = '')
+        labs(x = pred_var, y = outcome_lab, fill = '', col = '')
       
     }
     
