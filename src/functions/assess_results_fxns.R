@@ -39,13 +39,16 @@ check_dharma <- function(dat, mod, depend) {
   
 }
 
-get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, standardize = FALSE) {
+get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, standardize = FALSE,
+                                    partial_waves = FALSE, between_waves = FALSE) {
   # Function to get marginal predictions from a GAM
   # param dat: Data frame containing information on predictors and outcomes
   # param pred_var: The name of the predictor(s) for which marginal predictions are wanted
   # param outcome_var: The name of the column holding information on the RATE of the outcome
   # param mod_list: A named list of fitted GAMs used to make the predictions
   # param standardize: Boolean; should predictions be standardized to be on same scale for all waves?
+  # param partial_waves: Boolean; are models fitted to partial (rather than full) waves?
+  # param between_waves: Boolean: are models fitted to data between waves (rather than data during waves)?
   # returns: A tibble containing marginal predictions and 95% CIs
   
   # See code from Christensen et al. (2014) doi: 10.1098/rspb.2019.2269
@@ -58,23 +61,68 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     
     # Get wave number:
     wave <- as.numeric(names(mod_list)[i])
+    if (is.na(wave)) {
+      wave <- names(mod_list)[i]
+    }
     
     # If we are looking at effect of incidence, prior incidence, or vaccination, need to change pred_var with wave:
-    if (pred_var_orig == 'cases_pre') {
-      pred_var <- paste0(pred_var_orig, wave, '_rate')
-    } else if (pred_var_orig == 'vacc') {
-      pred_var <- paste0(pred_var_orig, '_w', wave)
-    } else if (pred_var_orig == 'cases_rate') {
-      pred_var <- paste0('cases_wave', wave, '_rate')
+    if (length(pred_var_orig) > 1) {
+      
+      if (pred_var_orig[1] == 'cases_rate') {
+        pred_var[1] <- paste0('cases_summer', i, '_rate')
+      }
+      
+    } else {
+      
+      if (pred_var_orig == 'cases_pre') {
+        pred_var <- paste0(pred_var_orig, wave, '_rate')
+      } else if (pred_var_orig == 'vacc') {
+        pred_var <- paste0(pred_var_orig, '_w', wave)
+      } else if (pred_var_orig == 'vacc_reg') {
+        pred_var <- paste0('vacc_w', wave, '_reg')
+      }else if (pred_var_orig == 'cases_rate') {
+        if (between_waves) {
+          pred_var <- paste0('cases_summer', i, '_rate')
+        } else {
+          pred_var <- paste0('cases_wave', wave, '_rate')
+        }
+      }
+      
     }
     
     # Get outcome variable:
-    if (outcome_measure == 'incidence') {
-      outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
-    } else if (outcome_measure == 'cfr') {
-      outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+    if (partial_waves) {
+      
+      if (outcome_measure == 'incidence') {
+        outcome_var <- c('cases_wave1_1_rate', 'cases_wave1_2_rate', 'cases_wave2_1_rate', 'cases_wave2_2_rate',
+                         'cases_wave3_1_rate', 'cases_wave3_2_rate', 'cases_wave4_1_rate', 'cases_wave4_2_rate')[i]
+      } else if (outcome_measure == 'cfr') {
+        outcome_var <- c('cfr_wave1_1', 'cfr_wave1_2', 'cfr_wave2_1', 'cfr_wave2_2',
+                         'cfr_wave3_1', 'cfr_wave3_2', 'cfr_wave4_1', 'cfr_wave4_2')[i]
+      } else {
+        stop('Unrecognized outcome measure.')
+      }
+      
+    } else if (between_waves) {
+      
+      if (outcome_measure == 'incidence') {
+        outcome_var <- c('cases_summer1_rate', 'cases_summer2_rate')[i]
+      } else if (outcome_measure == 'cfr') {
+        outcome_var <- c('cfr_summer1', 'cfr_summer2')[i]
+      } else {
+        stop('Unrecognized outcome measure.')
+      }
+      
     } else {
-      stop('Unrecognized outcome measure.')
+      
+      if (outcome_measure == 'incidence') {
+        outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
+      } else if (outcome_measure == 'cfr') {
+        outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+      } else {
+        stop('Unrecognized outcome measure.')
+      }
+      
     }
     
     # Get lat/long of LK with nearest to mean value of outcome rate:
@@ -83,8 +131,14 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       mutate(dist = abs(outcome - mean(outcome))) %>%
       filter(dist == min(dist)) %>%
       select(long, lat)
-    set_long <- set_long_lat$long
-    set_lat <- set_long_lat$lat
+    
+    if (nrow(set_long_lat) > 1) {
+      set_long <- set_long_lat$long[1]
+      set_lat <- set_long_lat$lat[1]
+    } else {
+      set_long <- set_long_lat$long
+      set_lat <- set_long_lat$lat
+    }
     
     # Get data frame to be used for prediction:
     if (length(pred_var) > 1) {
@@ -102,13 +156,37 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave2 = 100,
                cases_wave3 = 100,
                cases_wave4 = 100,
+               cases_wave1_1 = 100,
+               cases_wave1_2 = 100,
+               cases_wave2_1 = 100,
+               cases_wave2_2 = 100,
+               cases_wave3_1 = 100,
+               cases_wave3_2 = 100,
+               cases_wave4_1 = 100,
+               cases_wave4_2 = 100,
+               cases_summer1 = 100,
+               cases_summer2 = 100,
                cases_pre2_rate = mean(dat$cases_pre2_rate),
                cases_pre3_rate = mean(dat$cases_pre3_rate),
                cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_pre2_2_rate = mean(dat$cases_pre2_2_rate),
+               cases_pre3_2_rate = mean(dat$cases_pre3_2_rate),
+               cases_pre4_2_rate = mean(dat$cases_pre4_2_rate),
+               cases_pre_summer2_rate = mean(dat$cases_pre_summer2_rate),
                cases_wave1_rate = mean(dat$cases_wave1_rate),
                cases_wave2_rate = mean(dat$cases_wave2_rate),
                cases_wave3_rate = mean(dat$cases_wave3_rate),
                cases_wave4_rate = mean(dat$cases_wave4_rate),
+               cases_wave1_1_rate = mean(dat$cases_wave1_1_rate),
+               cases_wave1_2_rate = mean(dat$cases_wave1_2_rate),
+               cases_wave2_1_rate = mean(dat$cases_wave2_1_rate),
+               cases_wave2_2_rate = mean(dat$cases_wave2_2_rate),
+               cases_wave3_1_rate = mean(dat$cases_wave3_1_rate),
+               cases_wave3_2_rate = mean(dat$cases_wave3_2_rate),
+               cases_wave4_1_rate = mean(dat$cases_wave4_1_rate),
+               cases_wave4_2_rate = mean(dat$cases_wave4_2_rate),
+               cases_summer1_rate = mean(dat$cases_summer1_rate),
+               cases_summer2_rate = mean(dat$cases_summer2_rate),
                ags2 = '01',
                long = set_long,
                lat = set_lat,
@@ -117,12 +195,22 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                hosp_beds = mean(dat$hosp_beds),
                care_home_beds = mean(dat$care_home_beds),
                GISD_Score = mean(dat$GISD_Score),
+               TS_Bildung_adj = mean(dat$TS_Bildung_adj),
+               TS_Einkommen_adj = mean(dat$TS_Einkommen_adj),
+               TS_Arbeitswelt_adj = mean(dat$TS_Arbeitswelt_adj),
                pop_dens = mean(dat$pop_dens),
                living_area = mean(dat$living_area),
                perc_service = mean(dat$perc_service),
                perc_production = mean(dat$perc_production),
                vacc_w3 = mean(dat$vacc_w3),
-               vacc_w4 = mean(dat$vacc_w4)) %>%
+               vacc_w4 = mean(dat$vacc_w4),
+               vacc_w3_1 = mean(dat$vacc_w3_1),
+               vacc_w3_2 = mean(dat$vacc_w3_2),
+               vacc_w4_1 = mean(dat$vacc_w4_1),
+               vacc_w4_2 = mean(dat$vacc_w4_2),
+               vacc_summer2 = mean(dat$vacc_summer2),
+               vacc_w3_reg = mean(dat$vacc_w3_reg),
+               vacc_w4_reg = mean(dat$vacc_w4_reg)) %>%
         select(-all_of(pred_var))
       
       # Give correct name to pred_var column:
@@ -143,13 +231,37 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave2 = 100,
                cases_wave3 = 100,
                cases_wave4 = 100,
+               cases_wave1_1 = 100,
+               cases_wave1_2 = 100,
+               cases_wave2_1 = 100,
+               cases_wave2_2 = 100,
+               cases_wave3_1 = 100,
+               cases_wave3_2 = 100,
+               cases_wave4_1 = 100,
+               cases_wave4_2 = 100,
+               cases_summer1 = 100,
+               cases_summer2 = 100,
                cases_pre2_rate = mean(dat$cases_pre2_rate),
                cases_pre3_rate = mean(dat$cases_pre3_rate),
                cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_pre2_2_rate = mean(dat$cases_pre2_2_rate),
+               cases_pre3_2_rate = mean(dat$cases_pre3_2_rate),
+               cases_pre4_2_rate = mean(dat$cases_pre4_2_rate),
+               cases_pre_summer2_rate = mean(dat$cases_pre_summer2_rate),
                cases_wave1_rate = mean(dat$cases_wave1_rate),
                cases_wave2_rate = mean(dat$cases_wave2_rate),
                cases_wave3_rate = mean(dat$cases_wave3_rate),
                cases_wave4_rate = mean(dat$cases_wave4_rate),
+               cases_wave1_1_rate = mean(dat$cases_wave1_1_rate),
+               cases_wave1_2_rate = mean(dat$cases_wave1_2_rate),
+               cases_wave2_1_rate = mean(dat$cases_wave2_1_rate),
+               cases_wave2_2_rate = mean(dat$cases_wave2_2_rate),
+               cases_wave3_1_rate = mean(dat$cases_wave3_1_rate),
+               cases_wave3_2_rate = mean(dat$cases_wave3_2_rate),
+               cases_wave4_1_rate = mean(dat$cases_wave4_1_rate),
+               cases_wave4_2_rate = mean(dat$cases_wave4_2_rate),
+               cases_summer1_rate = mean(dat$cases_summer1_rate),
+               cases_summer2_rate = mean(dat$cases_summer2_rate),
                ags2 = '01',
                long = set_long,
                lat = set_lat,
@@ -158,12 +270,22 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                hosp_beds = mean(dat$hosp_beds),
                care_home_beds = mean(dat$care_home_beds),
                GISD_Score = mean(dat$GISD_Score),
+               TS_Bildung_adj = mean(dat$TS_Bildung_adj),
+               TS_Einkommen_adj = mean(dat$TS_Einkommen_adj),
+               TS_Arbeitswelt_adj = mean(dat$TS_Arbeitswelt_adj),
                pop_dens = mean(dat$pop_dens),
                living_area = mean(dat$living_area),
                perc_service = mean(dat$perc_service),
                perc_production = mean(dat$perc_production),
                vacc_w3 = mean(dat$vacc_w3),
-               vacc_w4 = mean(dat$vacc_w4)) %>%
+               vacc_w4 = mean(dat$vacc_w4),
+               vacc_w3_1 = mean(dat$vacc_w3_1),
+               vacc_w3_2 = mean(dat$vacc_w3_2),
+               vacc_w4_1 = mean(dat$vacc_w4_1),
+               vacc_w4_2 = mean(dat$vacc_w4_2),
+               vacc_summer2 = mean(dat$vacc_summer2),
+               vacc_w3_reg = mean(dat$vacc_w3_reg),
+               vacc_w4_reg = mean(dat$vacc_w4_reg)) %>%
         select(-all_of(pred_var))
       
       # Give correct name to pred_var column:
@@ -199,12 +321,22 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       mutate(wave = paste0('Wave ', wave))
     
     # Unify column names if looking at incidence, prior incidence, or vaccination:
-    if (pred_var_orig == 'cases_pre') {
-      names(pred_data_new)[1] <- 'cases_pre'
-    } else if (pred_var_orig == 'vacc') {
-      names(pred_data_new)[1] <- 'vacc'
-    } else if (pred_var_orig == 'cases_rate') {
-      names(pred_data_new)[1] <- 'cases_rate'
+    if (length(pred_var_orig) > 1) {
+      
+      if (pred_var_orig[1] == 'cases_rate') {
+        names(pred_data_new)[1] <- 'cases_rate'
+      }
+      
+    } else {
+      
+      if (pred_var_orig == 'cases_pre') {
+        names(pred_data_new)[1] <- 'cases_pre'
+      } else if (pred_var_orig == 'vacc' | pred_var_orig == 'vacc_reg') {
+        names(pred_data_new)[1] <- 'vacc'
+      } else if (pred_var_orig == 'cases_rate') {
+        names(pred_data_new)[1] <- 'cases_rate'
+      }
+      
     }
     
     # Store results in list:
@@ -345,7 +477,11 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
       
     }
     
-    return(list(p_temp1, p_temp2))
+    if (pred_var[1] == 'cases_rate') {
+      return(p_temp1) # second plot not supported for variables whose values change each wave
+    } else {
+      return(list(p_temp1, p_temp2))
+    }
     
   } else {
     

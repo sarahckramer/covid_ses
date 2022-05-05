@@ -43,6 +43,7 @@ dat_cumulative <- dat_cumulative %>%
 
 # Read in map data:
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
+expect_true(all(unique(dat_cumulative$lk) %in% unique(map_base$ARS)))
 
 # Get neighborhood info:
 nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)
@@ -108,11 +109,25 @@ if (!keep_map) {
 vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
 # vacc_w3: Estimated rate of full vaccination 2 weeks before the midpoint of wave 3
 # vacc_w4: Estimated rate of full vaccination 2 weeks before the midpoint of wave 4
+# vacc_w3_1: Estimated rate of full vaccination 2 weeks before the midpoint of wave 3, part 1
+# vacc_w3_2: Estimated rate of full vaccination 2 weeks before the midpoint of wave 3, part 2
+# vacc_w4_1: Estimated rate of full vaccination 2 weeks before the midpoint of wave 4, part 1
+# vacc_w4_2: Estimated rate of full vaccination 2 weeks before the midpoint of wave 4, part 2
+# vacc_summer2: Estimated rate of full vaccination 2 weeks before the midpoint of summer 2021 (between waves 3 and 4)
+
+vacc_dat_regional <- read_csv('data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 
 # Join with case/death data:
 dat_cumulative <- dat_cumulative %>%
   left_join(vacc_dat, by = c('lk' = 'ID_County'))
 rm(vacc_dat)
+
+# Join regional vaccination data as well?:
+names(vacc_dat_regional) <- paste(names(vacc_dat_regional), 'reg', sep = '_')
+dat_cumulative <- dat_cumulative %>%
+  left_join(vacc_dat_regional, by = c('lk' = 'ID_County_reg'))
+
+rm(vacc_dat_regional)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

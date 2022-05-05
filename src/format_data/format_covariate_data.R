@@ -96,9 +96,15 @@ plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 
 # Read in data:
 vacc_dat <- fromJSON('data/raw/independent_vars/vacc/3_all_county_vacc_all_dates.json')
+vacc_dat_regional <- fromJSON('data/raw/independent_vars/vacc/2_all_county_vacc_all_dates.json')
 
 # Format:
 vacc_dat <- vacc_dat %>%
+  as_tibble() %>%
+  select(-ID_State) %>%
+  mutate(ID_County = as.character(ID_County),
+         ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
+vacc_dat_regional <- vacc_dat_regional %>%
   as_tibble() %>%
   select(-ID_State) %>%
   mutate(ID_County = as.character(ID_County),
@@ -115,6 +121,11 @@ vacc_dat <- vacc_dat %>%
   mutate(vacc1_rate = Vacc_partially / pop,
          vacc2_rate = Vacc_completed / pop,
          vacc3_rate = Vacc_refreshed / pop)
+vacc_dat_regional <- vacc_dat_regional %>%
+  left_join(pop_dat, by = c('ID_County' = 'lk')) %>%
+  mutate(vacc1_rate = Vacc_partially / pop,
+         vacc2_rate = Vacc_completed / pop,
+         vacc3_rate = Vacc_refreshed / pop)
 rm(pop_dat)
 
 # Limit to the end of weeks:
@@ -125,12 +136,29 @@ vacc_dat <- vacc_dat %>%
          Year = format(Date, '%Y'),
          Week = format(Date, '%V'),
          .after = Date)
+vacc_dat_regional <- vacc_dat_regional %>%
+  filter(Date %in% week_ends) %>%
+  mutate(Date = as.Date(Date),
+         Year = format(Date, '%Y'),
+         Week = format(Date, '%V'),
+         .after = Date)
 rm(week_ends)
 
 # Get vaccination rates at 2 weeks before the midpoint of each wave (weeks 66 and 92 / 13 and 39 of 2021):
+# (And partial waves (weeks 63 and 70 for wave 3 / weeks 87 and 97 for wave 4 - weeks 10 and 17 / 34 and 44 of 2021))
+# (And for summer 2 - week 77 / week 24 of 2021)
 vacc_dat <- vacc_dat %>%
   filter(Year == '2021' &
-           (Week %in% c('13', '39')))
+           (Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')))
+vacc_dat_regional <- vacc_dat_regional %>%
+  filter(Year == '2021' &
+           (Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')))
 
 # Convert to wide format:
 vacc_dat <- vacc_dat %>%
@@ -138,10 +166,21 @@ vacc_dat <- vacc_dat %>%
   select(year_week, ID_County, vacc2_rate) %>%
   pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)# %>%
   # rename_with(~ paste0('vacc_', .x), .cols = !ID_County)
-names(vacc_dat)[2:3] <- c('vacc_w3', 'vacc_w4')
+names(vacc_dat)[2:8] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2')
+vacc_dat <- vacc_dat %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_summer2)
+
+vacc_dat_regional <- vacc_dat_regional %>%
+  mutate(year_week = paste(Year, Week, sep = '_')) %>%
+  select(year_week, ID_County, vacc2_rate) %>%
+  pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)
+names(vacc_dat_regional)[2:8] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2')
+vacc_dat_regional <- vacc_dat_regional %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_summer2)
 
 # Plot:
 plot(vacc_dat$vacc_w3, vacc_dat$vacc_w4, pch = 20)
+plot(vacc_dat_regional$vacc_w3, vacc_dat_regional$vacc_w4, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -159,6 +198,7 @@ rm(inkar_dat, di_dat)
 
 write_csv(ses_dat, file = 'data/formatted/independent_vars/ses_independent_variables.csv')
 write_csv(vacc_dat, file = 'data/formatted/independent_vars/vacc_dat.csv')
+write_csv(vacc_dat_regional, file = 'data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
