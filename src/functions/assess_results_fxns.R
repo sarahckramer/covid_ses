@@ -180,50 +180,16 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     # Get inverse of link function:
     ilink <- family(mod_list[[i]])$linkinv
     
-    # Get covariance matrix:
-    Vb <- vcov(mod_list[[i]])
-    
-    # Get standard errors:
-    se.fit <- pred_data_new$se.fit
-    
-    # Determine how to scale standard errors for simultaneous intervals:
-    BUdiff <- rmvn(10000, mu = rep(0, nrow(Vb)), V = Vb)
-    Cg <- predict(mod_list[[i]], pred_data_new, type = "lpmatrix")#, exclude = 's(ags2)')
-    simDev <- Cg %*% t(BUdiff)
-    absDev <- abs(sweep(simDev, 1, se.fit, FUN = "/"))
-    masd <- apply(absDev, 2L, max)
-    crit <- quantile(masd, prob = 0.95, type = 8)
-    
     # Limit to columns of interest:
     pred_data_new <- pred_data_new %>%
       select(all_of(pred_var), fit:se.fit)
     
-    # Calculate simultaneous confidence intervals and transform predictions:
+    # Transform predictions to get predicted counts and 95% CIs:
     pred_data_new <- pred_data_new %>%
       mutate(fitted = ilink(fit),
              lower = ilink(fit - (2 * se.fit)),
-             upper = ilink(fit + (2 * se.fit)),
-             lower_sim = ilink(fit - (crit * se.fit)),
-             upper_sim = ilink(fit + (crit * se.fit))) %>%
+             upper = ilink(fit + (2 * se.fit))) %>%
       select(-c(fit:se.fit))
-    
-    # Check that ~95% of draws from posterior fall within interval:
-    sims <- rmvn(10000, mu = coef(mod_list[[i]]), V = Vb)
-    posterior_draws <- Cg %*% t(sims) %>%
-      ilink()
-    if (outcome_measure == 'incidence') {
-      posterior_draws <- posterior_draws * 10000
-    } else if (outcome_measure == 'cfr') {
-      posterior_draws <- posterior_draws * 100
-    }
-    
-    inCI <- function(x, upr, lwr) {
-      all(x >= lwr & x <= upr)
-    }
-    
-    fitsInSCI <- apply(posterior_draws, 2L, inCI, upr = pred_data_new$upper, lwr = pred_data_new$lower)
-    print(sum(fitsInSCI) / length(fitsInSCI))
-    # NOTE: Simultaneous confidence intervals are not yet working properly!
     
     # How many x larger is largest predicted value than smallest?:
     print(max(pred_data_new$fitted) / min(pred_data_new$fitted))
@@ -244,9 +210,6 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     # Store results in list:
     res_list[[i]] <- pred_data_new
     
-    # Clean up:
-    rm(ilink, Vb, se.fit, BUdiff, Cg, simDev, absDev, masd, crit)
-    
   }
   
   # Optional: Divide by mean so that plotting can occur on the same scale for all waves
@@ -255,8 +218,6 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       ix <- ix %>%
         mutate(lower = lower / mean(fitted),
                upper = upper / mean(fitted),
-               lower_sim = lower_sim / mean(fitted),
-               upper_sim = upper_sim / mean(fitted),
                fitted = fitted / mean(fitted))
       ix
     })
