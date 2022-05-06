@@ -167,6 +167,7 @@ cdp_dat_sum_all_ages <- cdp_dat %>%
   group_by(ags2, bundesland, lk, date) %>%
   summarise(cases = sum(cases))
 
+cdp_dat_cumulative <- cdp_dat_check
 cdp_dat_check <- cdp_dat_check %>%
   left_join(cdp_dat_sum_all_ages, by = c('ags2', 'bundesland', 'lk', 'date'))
 cdp_dat_check %>%
@@ -176,6 +177,9 @@ cdp_dat_check %>%
   summary()
 # 1-4, with median 1.0 and mean 1.422; only different in 30137 / 312000 (9.66%) of data points
 rm(cdp_dat_check, cdp_dat_sum_all_ages)
+
+# Store age-structured cumulative data, as well:
+cdp_dat_age <- cdp_dat
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -249,6 +253,10 @@ week_ends <- unique(cdp_dat$date)[format(unique(cdp_dat$date), '%w') == '0']
 
 cdp_dat_wk <- cdp_dat %>%
   filter(date %in% week_ends)
+cdp_dat_age_wk <- cdp_dat_age %>%
+  filter(date %in% week_ends)
+cdp_dat_cumulative <- cdp_dat_cumulative %>%
+  filter(date %in% week_ends)
 
 # Add column for year and for week number:
 cdp_dat_wk <- cdp_dat_wk %>%
@@ -257,9 +265,23 @@ cdp_dat_wk <- cdp_dat_wk %>%
          .after = date) %>%
   mutate(Year = if_else(Week == 53, '2020', Year),
          Year = if_else(Week == 52 & Year != '2020', '2021', Year))
+cdp_dat_age_wk <- cdp_dat_age_wk %>%
+  mutate(Year = format(date, '%Y'),
+         Week = format(date, '%V'),
+         .after = date) %>%
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year))
+cdp_dat_cumulative <- cdp_dat_cumulative %>%
+  mutate(Year = format(date, '%Y'),
+         Week = format(date, '%V'),
+         .after = date) %>%
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year))
 
 # Write data to file:
 write_csv(cdp_dat_wk, file = 'data/formatted/STAND_weekly_covid_cases_by_lk_CUMULATIVE_CDP.csv')
+write_csv(cdp_dat_age_wk, file = 'data/formatted/weekly_covid_cases_by_lk_by_age_CUMULATIVE_CDP.csv')
+write_csv(cdp_dat_cumulative, file = 'data/formatted/weekly_covid_cases_by_lk_CUMULATIVE_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
