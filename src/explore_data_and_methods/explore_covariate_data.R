@@ -24,7 +24,7 @@ pdf('results/plots/explore_covariate_data_NEW.pdf', width = 18, height = 12)
 ses_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables.csv')
 vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
 
-# Limit to LKs used in analysis:
+# Remove Landkreise (LK(s)) that were later merged:
 ses_dat <- ses_dat %>%
   filter(!(lk_code %in% c('16056', '16063')))
 vacc_dat <- vacc_dat %>%
@@ -77,7 +77,7 @@ corrplot(cor_mat_kendall, method = 'color', diag = FALSE, type = 'upper', p.mat 
 
 rm(cor_mat_spearman, cor_mat_kendall, p_mat_spearman, p_mat_kendall)
 
-# Remove variables with high colinearity:
+# Remove variables that are highly correlated:
 ses_dat <- ses_dat %>%
   select(-c(avg_dist_pharm, living_area))
 
@@ -232,7 +232,7 @@ for (var in vars_to_plot) {
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Any missing data?
-summary(ses_dat)
+summary(ses_dat) # no missing data
 
 # ---------------------------------------------------------------------------------------------------------------------
 

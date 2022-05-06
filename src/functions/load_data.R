@@ -33,7 +33,7 @@ dat_cumulative <- dat_cumulative %>%
   pivot_wider(names_from = outcome,
               values_from = val)
 
-# Remove LK(s) that were later merged:
+# Remove Landkreise (LK(s)) that were later merged:
 dat_cumulative <- dat_cumulative %>%
   filter(!(lk %in% c('16056', '16063'))) # Eisenach and Wartburgkreis
 

@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Code to create DAGs describing the possible relationships between outcomes and covariates
 # ---------------------------------------------------------------------------------------------------------------------
-
-# # Load libraries:
-# library(dagitty)
-# 
-# Hypothesized relationships:
+#
+# To view the DAG, uncomment and copy the code in lines 9-37, go to http://dagitty.net/dags.html, paste the
+# code in the box marked "Model Code," and click "Update DAG."
+#
+#  # Hypothesized relationships:
 # dag {
 #   bb="-6.844,-5.745,7.992,5.415"
 #   "% Aged 18-64" [exposure,pos="1.552,1.502"]
