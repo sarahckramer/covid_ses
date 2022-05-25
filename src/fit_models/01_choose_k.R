@@ -45,22 +45,22 @@ for (i in 1:length(seq(10, 150, by = 10))) {
                          s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens, k = 25) +
                          s(perc_service) + s(perc_production) +
                          ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
-                         s(cases_pre3_rate) + s(vacc_w3) +
+                         s(cases_pre3_rate) + s(vacc_w3_reg) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
   n3b_mods[[i]] <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
                          s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
-                         s(cases_pre3_rate) + s(vacc_w3) +
+                         s(cases_pre3_rate) + s(vacc_w3_reg) +
                          offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
   
   n4a_mods[[i]] <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
                          s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service, k = 25) + s(perc_production) +
                          ti(perc_lessthan18, GISD_Score) +
-                         s(cases_pre4_rate) + s(vacc_w4) +
+                         s(cases_pre4_rate) + s(vacc_w4_reg) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
   n4b_mods[[i]] <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
                          s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
-                         s(cases_pre4_rate) + s(vacc_w4) +
+                         s(cases_pre4_rate) + s(vacc_w4_reg) +
                          offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
 }
 

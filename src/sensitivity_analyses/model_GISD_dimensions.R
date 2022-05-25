@@ -142,7 +142,7 @@ n3a_full_bildung <- bake(file = 'results/fitted_models/SA/FULL_n3a_bildung_ml.rd
                            gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
                                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens, k = 25) +
                                  s(perc_service) + s(perc_production, k = 25) +
-                                 s(cases_pre3_rate) + s(vacc_w3) +
+                                 s(cases_pre3_rate) + s(vacc_w3_reg) +
                                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                          }
 )
@@ -152,7 +152,7 @@ n3a_full_einkommen <- bake(file = 'results/fitted_models/SA/FULL_n3a_einkommen_m
                                    s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj, k = 25) + s(pop_dens, k = 25) +
                                    s(perc_service) + s(perc_production, k = 25) +
                                    ti(perc_18to64, TS_Einkommen_adj) + ti(perc_lessthan18, TS_Einkommen_adj) +
-                                   s(cases_pre3_rate) + s(vacc_w3) +
+                                   s(cases_pre3_rate) + s(vacc_w3_reg) +
                                    offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                            }
 )
@@ -162,7 +162,7 @@ n3a_full_arbeitswelt <- bake(file = 'results/fitted_models/SA/FULL_n3a_arbeitswe
                                      s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens, k = 25) +
                                      s(perc_service) + s(perc_production, k = 25) +
                                      ti(pop_dens, TS_Arbeitswelt_adj) + ti(perc_lessthan18, TS_Arbeitswelt_adj) +
-                                     s(cases_pre3_rate) + s(vacc_w3) +
+                                     s(cases_pre3_rate) + s(vacc_w3_reg) +
                                      offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                              }
 )
@@ -171,7 +171,7 @@ n3b_full_bildung <- bake(file = 'results/fitted_models/SA/FULL_n3b_bildung_ml.rd
                          expr = {
                            gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                                  s(hosp_beds) + s(care_home_beds) + s(TS_Bildung_adj, k = 25) + s(pop_dens) + s(cases_wave3_rate) +
-                                 s(cases_pre3_rate) + s(vacc_w3, k = 25) +
+                                 s(cases_pre3_rate) + s(vacc_w3_reg, k = 25) +
                                  offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                          }
 )
@@ -179,7 +179,7 @@ n3b_full_einkommen <- bake(file = 'results/fitted_models/SA/FULL_n3b_einkommen_m
                            expr = {
                              gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                                    s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave3_rate) +
-                                   s(cases_pre3_rate) + s(vacc_w3, k = 25) +
+                                   s(cases_pre3_rate) + s(vacc_w3_reg, k = 25) +
                                    offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                            }
 )
@@ -187,7 +187,7 @@ n3b_full_arbeitswelt <- bake(file = 'results/fitted_models/SA/FULL_n3b_arbeitswe
                              expr = {
                                gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                                      s(hosp_beds) + s(care_home_beds) + s(TS_Arbeitswelt_adj, k = 25) + s(pop_dens) + s(cases_wave3_rate) +
-                                     s(cases_pre3_rate) + s(vacc_w3, k = 25) +
+                                     s(cases_pre3_rate) + s(vacc_w3_reg, k = 25) +
                                      offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                              }
 )
@@ -200,7 +200,7 @@ n4a_full_bildung <- bake(file = 'results/fitted_models/SA/FULL_n4a_bildung_ml.rd
                                  s(perc_service) + s(perc_production) +
                                  ti(perc_18to64, pop_dens) + ti(pop_dens, TS_Bildung_adj) +
                                  ti(perc_lessthan18, TS_Bildung_adj) +
-                                 s(cases_pre4_rate) + s(vacc_w4) +
+                                 s(cases_pre4_rate) + s(vacc_w4_reg) +
                                  offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                          }
 )
@@ -209,7 +209,7 @@ n4a_full_einkommen <- bake(file = 'results/fitted_models/SA/FULL_n4a_einkommen_m
                              gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                                    s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) +
                                    s(perc_service) + s(perc_production) +
-                                   s(cases_pre4_rate) + s(vacc_w4) +
+                                   s(cases_pre4_rate) + s(vacc_w4_reg) +
                                    offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                            }
 )
@@ -218,7 +218,7 @@ n4a_full_arbeitswelt <- bake(file = 'results/fitted_models/SA/FULL_n4a_arbeitswe
                                gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                                      s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) +
                                      s(perc_service) + s(perc_production) +
-                                     s(cases_pre4_rate) + s(vacc_w4) +
+                                     s(cases_pre4_rate) + s(vacc_w4_reg) +
                                      offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                              }
 )
@@ -227,7 +227,7 @@ n4b_full_bildung <- bake(file = 'results/fitted_models/SA/FULL_n4b_bildung_ml.rd
                          expr = {
                            gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                                  s(hosp_beds) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) + s(cases_wave4_rate) +
-                                 s(cases_pre4_rate) + s(vacc_w4) +
+                                 s(cases_pre4_rate) + s(vacc_w4_reg) +
                                  offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                          }
 )
@@ -235,7 +235,7 @@ n4b_full_einkommen <- bake(file = 'results/fitted_models/SA/FULL_n4b_einkommen_m
                            expr = {
                              gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                                    s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave4_rate) +
-                                   s(cases_pre4_rate) + s(vacc_w4) +
+                                   s(cases_pre4_rate) + s(vacc_w4_reg) +
                                    offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                            }
 )
@@ -243,7 +243,7 @@ n4b_full_arbeitswelt <- bake(file = 'results/fitted_models/SA/FULL_n4b_arbeitswe
                              expr = {
                                gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                                      s(hosp_beds) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) + s(cases_wave4_rate) +
-                                     s(cases_pre4_rate) + s(vacc_w4) +
+                                     s(cases_pre4_rate) + s(vacc_w4_reg) +
                                      offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                              }
 )
@@ -358,76 +358,76 @@ gam.check(n4b_full_arbeitswelt, rep = 50)
 #                           s(perc_service) + s(perc_production) +
 #                           ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Bildung_adj) + ti(pop_dens, TS_Bildung_adj) +
 #                           ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Bildung_adj) +
-#                           s(cases_pre3_rate) + s(vacc_w3) +
+#                           s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                           offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n3a_comp_einkommen <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
 #                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) +
 #                             s(perc_service) + s(perc_production) +
 #                             ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Einkommen_adj) + ti(pop_dens, TS_Einkommen_adj) +
 #                             ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Einkommen_adj) +
-#                             s(cases_pre3_rate) + s(vacc_w3) +
+#                             s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n3a_comp_arbeitswelt <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
 #                               s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) +
 #                               s(perc_service) + s(perc_production) +
 #                               ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Arbeitswelt_adj) + ti(pop_dens, TS_Arbeitswelt_adj) +
 #                               ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Arbeitswelt_adj) +
-#                               s(cases_pre3_rate) + s(vacc_w3) +
+#                               s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # 
 # n3b_comp_bildung <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                           s(hosp_beds) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                           ti(pop_dens, TS_Bildung_adj) + ti(cases_wave3_rate, hosp_beds) +
-#                           s(cases_pre3_rate) + s(vacc_w3) +
+#                           s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                           offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n3b_comp_einkommen <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                             s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                             ti(pop_dens, TS_Einkommen_adj) + ti(cases_wave3_rate, hosp_beds) +
-#                             s(cases_pre3_rate) + s(vacc_w3) +
+#                             s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                             offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n3b_comp_arbeitswelt <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                               s(hosp_beds) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                               ti(pop_dens, TS_Arbeitswelt_adj) + ti(cases_wave3_rate, hosp_beds) +
-#                               s(cases_pre3_rate) + s(vacc_w3) +
+#                               s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                               offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # 
 # # Wave 4:
-# n4a_comp_bildung <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_bildung <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                           s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) +
 #                           s(perc_service) + s(perc_production) +
 #                           ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Bildung_adj) + ti(pop_dens, TS_Bildung_adj) +
 #                           ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Bildung_adj) +
-#                           s(cases_pre4_rate) + s(vacc_w4) +
+#                           s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                           offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# n4a_comp_einkommen <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_einkommen <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) +
 #                             s(perc_service) + s(perc_production) +
 #                             ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Einkommen_adj) + ti(pop_dens, TS_Einkommen_adj) +
 #                             ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Einkommen_adj) +
-#                             s(cases_pre4_rate) + s(vacc_w4) +
+#                             s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# n4a_comp_arbeitswelt <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_arbeitswelt <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                               s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) +
 #                               s(perc_service) + s(perc_production) +
 #                               ti(perc_18to64, pop_dens) + ti(perc_18to64, TS_Arbeitswelt_adj) + ti(pop_dens, TS_Arbeitswelt_adj) +
 #                               ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Arbeitswelt_adj) +
-#                               s(cases_pre4_rate) + s(vacc_w4) +
+#                               s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # 
 # n4b_comp_bildung <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                           s(hosp_beds) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) + s(cases_wave4_rate) +
 #                           ti(pop_dens, TS_Bildung_adj) + ti(cases_wave4_rate, hosp_beds) +
-#                           s(cases_pre4_rate) + s(vacc_w4) +
+#                           s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                           offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n4b_comp_einkommen <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                             s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave4_rate) +
 #                             ti(pop_dens, TS_Einkommen_adj) + ti(cases_wave4_rate, hosp_beds) +
-#                             s(cases_pre4_rate) + s(vacc_w4) +
+#                             s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                             offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # n4b_comp_arbeitswelt <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                               s(hosp_beds) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) + s(cases_wave4_rate) +
 #                               ti(pop_dens, TS_Arbeitswelt_adj) + ti(cases_wave4_rate, hosp_beds) +
-#                               s(cases_pre4_rate) + s(vacc_w4) +
+#                               s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                               offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
 # 
 # # Confirm improved model fit:
@@ -480,62 +480,62 @@ gam.check(n4b_full_arbeitswelt, rep = 50)
 #                           s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) +
 #                           s(perc_service) + s(perc_production) +
 #                           ti(perc_lessthan18, TS_Bildung_adj) +
-#                           s(cases_pre3_rate) + s(vacc_w3) +
+#                           s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                           offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # n3a_comp_einkommen <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
 #                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) +
 #                             s(perc_service) + s(perc_production) +
 #                             ti(perc_18to64, TS_Einkommen_adj) + ti(perc_lessthan18, TS_Einkommen_adj) +
-#                             s(cases_pre3_rate) + s(vacc_w3) +
+#                             s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # n3a_comp_arbeitswelt <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
 #                               s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) +
 #                               s(perc_service) + s(perc_production) +
 #                               ti(pop_dens, TS_Arbeitswelt_adj) + ti(perc_lessthan18, TS_Arbeitswelt_adj) +
-#                               s(cases_pre3_rate) + s(vacc_w3) +
+#                               s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
 # n3b_comp_bildung <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                           s(hosp_beds) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                           ti(pop_dens, TS_Bildung_adj) +
-#                           s(cases_pre3_rate) + s(vacc_w3) +
+#                           s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                           offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
 # n3b_comp_einkommen <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                             s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                             ti(pop_dens, TS_Einkommen_adj) +
-#                             s(cases_pre3_rate) + s(vacc_w3) +
+#                             s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                             offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
 # n3b_comp_arbeitswelt <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
 #                               s(hosp_beds) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) + s(cases_wave3_rate) +
 #                               ti(pop_dens, TS_Arbeitswelt_adj) +
-#                               s(cases_pre3_rate) + s(vacc_w3) +
+#                               s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                               offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
-# n4a_comp_bildung <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_bildung <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                           s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Bildung_adj) + s(pop_dens) +
 #                           s(perc_service) + s(perc_production) +
 #                           ti(perc_18to64, pop_dens) + ti(pop_dens, TS_Bildung_adj) +
 #                           ti(perc_lessthan18, TS_Bildung_adj) +
-#                           s(cases_pre4_rate) + s(vacc_w4) +
+#                           s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                           offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# n4a_comp_einkommen <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_einkommen <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) +
 #                             s(perc_service) + s(perc_production) +
 #                             ti(perc_18to64, pop_dens) +
 #                             ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Einkommen_adj) +
-#                             s(cases_pre4_rate) + s(vacc_w4) +
+#                             s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# n4a_comp_arbeitswelt <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+# n4a_comp_arbeitswelt <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                               s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(TS_Arbeitswelt_adj) + s(pop_dens) +
 #                               s(perc_service) + s(perc_production) +
 #                               ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, TS_Arbeitswelt_adj) +
-#                               s(cases_pre4_rate) + s(vacc_w4) +
+#                               s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
 # n4b_comp_einkommen <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                             s(hosp_beds) + s(care_home_beds) + s(TS_Einkommen_adj) + s(pop_dens) + s(cases_wave4_rate) +
 #                             ti(pop_dens, TS_Einkommen_adj) +
-#                             s(cases_pre4_rate) + s(vacc_w4) +
+#                             s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                             offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
 # anova(n1a_full_bildung, n1a_comp_bildung, test = 'Chisq')
@@ -694,7 +694,7 @@ n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 # Plot relationships between 3 dimensions and other predictors:
 dat_ses <- dat_cumulative %>%
   select(perc_18to64, perc_lessthan18, hosp_beds, care_home_beds, pop_dens, TS_Bildung_adj,
-         TS_Einkommen_adj, TS_Arbeitswelt_adj, perc_service, perc_production, vacc_w3, vacc_w4)
+         TS_Einkommen_adj, TS_Arbeitswelt_adj, perc_service, perc_production, vacc_w3_reg, vacc_w4_reg)
 
 pairs.panels(dat_ses,
              smooth = FALSE,

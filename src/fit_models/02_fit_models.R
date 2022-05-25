@@ -64,7 +64,7 @@ n3b <- bake(file = 'results/fitted_models/null_n3b_ml.rds',
 
 n4a <- bake(file = 'results/fitted_models/null_n4a_ml.rds',
             expr = {
-              gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
+              gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                     offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
             }
 )
@@ -99,29 +99,29 @@ n2b_adj <- bake(file = 'results/fitted_models/null_n2b_adj_ml.rds',
 n3a_adj <- bake(file = 'results/fitted_models/null_n3a_adj_ml.rds',
                 expr = {
                   gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre3_rate) + s(vacc_w3) +
+                        s(cases_pre3_rate) + s(vacc_w3_reg) +
                         offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
 n3b_adj <- bake(file = 'results/fitted_models/null_n3b_adj_ml.rds',
                 expr = {
                   gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre3_rate) + s(vacc_w3) + s(cases_wave3_rate) +
+                        s(cases_pre3_rate) + s(vacc_w3_reg) + s(cases_wave3_rate) +
                         offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
 
 n4a_adj <- bake(file = 'results/fitted_models/null_n4a_adj_ml.rds',
                 expr = {
-                  gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre4_rate) + s(vacc_w4) +
+                  gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                        s(cases_pre4_rate) + s(vacc_w4_reg) +
                         offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
 n4b_adj <- bake(file = 'results/fitted_models/null_n4b_adj_ml.rds',
                 expr = {
                   gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-                        s(cases_pre4_rate) + s(vacc_w4) + s(cases_wave4_rate) +
+                        s(cases_pre4_rate) + s(vacc_w4_reg) + s(cases_wave4_rate) +
                         offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                 }
 )
@@ -188,7 +188,7 @@ n3a_full <- bake(file = 'results/fitted_models/FULL_n3a_ml.rds',
                          s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service) + s(perc_production) +
                          ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
-                         s(cases_pre3_rate) + s(vacc_w3) +
+                         s(cases_pre3_rate) + s(vacc_w3_reg) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )
@@ -196,7 +196,7 @@ n3b_full <- bake(file = 'results/fitted_models/FULL_n3b_ml.rds',
                  expr = {
                    gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
                          s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
-                         s(cases_pre3_rate) + s(vacc_w3) +
+                         s(cases_pre3_rate) + s(vacc_w3_reg) +
                          offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )
@@ -204,11 +204,11 @@ n3b_full <- bake(file = 'results/fitted_models/FULL_n3b_ml.rds',
 # Wave 4:
 n4a_full <- bake(file = 'results/fitted_models/FULL_n4a_ml.rds',
                  expr = {
-                   gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 35) + s(ags2, bs = 're', k = 16) +
-                         s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                   gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                         s(perc_18to64) + s(perc_lessthan18, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                          s(perc_service) + s(perc_production) +
                          ti(perc_lessthan18, GISD_Score) +
-                         s(cases_pre4_rate) + s(vacc_w4) +
+                         s(cases_pre4_rate) + s(vacc_w4_reg) +
                          offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )
@@ -216,7 +216,7 @@ n4b_full <- bake(file = 'results/fitted_models/FULL_n4b_ml.rds',
                  expr = {
                    gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
                          s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
-                         s(cases_pre4_rate) + s(vacc_w4) +
+                         s(cases_pre4_rate) + s(vacc_w4_reg) +
                          offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
                  }
 )

@@ -22,7 +22,7 @@ pdf('results/plots/explore_covariate_data_NEW.pdf', width = 18, height = 12)
 
 # Read in data:
 ses_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables.csv')
-vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
+vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 
 # Remove Landkreise (LK(s)) that were later merged:
 ses_dat <- ses_dat %>%

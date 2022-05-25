@@ -283,8 +283,8 @@ spatial_trend_NULL <- dat_cumulative %>%
          cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
          cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
          cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
-         vacc_w3 = mean(dat_cumulative$vacc_w3),
-         vacc_w4 = mean(dat_cumulative$vacc_w4),
+         vacc_w3_reg = mean(dat_cumulative$vacc_w3_reg),
+         vacc_w4_reg = mean(dat_cumulative$vacc_w4_reg),
          ags2 = '01')
 
 spatial_trend_NULL <- spatial_trend_NULL %>%
@@ -377,7 +377,7 @@ summary(n4b_adj)
 
 dat_ses <- dat_cumulative %>%
   select(perc_18to64, perc_lessthan18, hosp_beds, care_home_beds, pop_dens, #living_area,
-         GISD_Score, perc_service, perc_production, vacc_w3, vacc_w4)
+         GISD_Score, perc_service, perc_production, vacc_w3_reg, vacc_w4_reg)
 
 pairs.panels(dat_ses,
              smooth = FALSE,
@@ -488,7 +488,7 @@ pred_cases_pre <- get_marginal_prediction(dat_cumulative, 'cases_pre', 'incidenc
 
 mod_list <- list(n3a_full, n4a_full)
 names(mod_list) <- c('3', '4')
-pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc', 'incidence', mod_list, standardize = TRUE)
+pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc_reg', 'incidence', mod_list, standardize = TRUE)
 
 plot_a_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'Cases / 10000 Pop', single_plot = TRUE)
 plot_a_vacc <- plot_marginal_prediction(pred_vacc, 'vacc', 'Cases / 10000 Pop', single_plot = FALSE)
@@ -524,7 +524,7 @@ pred_cases_pre <- get_marginal_prediction(dat_cumulative, 'cases_pre', 'cfr', mo
 
 mod_list <- list(n3b_full, n4b_full)
 names(mod_list) <- c('3', '4')
-pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc', 'cfr', mod_list, standardize = TRUE)
+pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc_reg', 'cfr', mod_list, standardize = TRUE)
 
 plot_b_cases_rate <- plot_marginal_prediction(pred_cases_rate, 'cases_rate', 'CFR', single_plot = FALSE)
 plot_b_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'CFR', single_plot = TRUE)
@@ -563,8 +563,8 @@ spatial_trend_FULL <- dat_cumulative %>%
          living_area = mean(dat_cumulative$living_area),
          perc_service = mean(dat_cumulative$perc_service),
          perc_production = mean(dat_cumulative$perc_production),
-         vacc_w3 = mean(dat_cumulative$vacc_w3),
-         vacc_w4 = mean(dat_cumulative$vacc_w4))
+         vacc_w3_reg = mean(dat_cumulative$vacc_w3_reg),
+         vacc_w4_reg = mean(dat_cumulative$vacc_w4_reg))
 
 spatial_trend_FULL <- spatial_trend_FULL %>%
   mutate(fitted_n1a = predict(n1a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
