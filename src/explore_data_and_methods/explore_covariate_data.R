@@ -112,37 +112,6 @@ for (i in 1:length(vars_to_plot)) {
 }
 do.call('grid.arrange', c(plot_list, ncol = 4))
 
-
-
-
-
-
-
-# # Check whether centroids are within LK:
-# map_cent <- st_centroid(map_base)
-# centroid_not_contained <- map_cent %>%
-#   mutate(check = map_base$ARS[as.integer(st_intersects(geometry, map_base))]) %>%
-#   filter(ARS != check) %>%
-#   pull(ARS)
-# 
-# # If so, use centroids; otherwise, use "point_on_surface":
-# map_base[, c('long', 'lat')] <- st_centroid(map_base) %>% st_transform(., '+proj=longlat') %>% st_coordinates()
-# map_base[, c('long_ALT', 'lat_ALT')] <- st_point_on_surface(map_base) %>% st_transform(., '+proj=longlat') %>% st_coordinates()
-# # https://gis.stackexchange.com/questions/76498/how-is-st-pointonsurface-calculated
-# 
-# map_base_new <- map_base %>%
-#   mutate(long = if_else(ARS %in% centroid_not_contained, long_ALT, long),
-#          lat = if_else(ARS %in% centroid_not_contained, lat_ALT, lat)) %>%
-#   dplyr::select(-c(long_ALT:lat_ALT))
-# expect_true(length(which(map_base_new$long != map_base$long)) == length(centroid_not_contained))
-# expect_true(length(which(map_base_new$lat != map_base$lat)) == length(centroid_not_contained))
-# 
-# map_base <- map_base_new
-# rm(map_base_new, map_cent, centroid_not_contained)
-
-
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Calculate Moran's I for covariate data
