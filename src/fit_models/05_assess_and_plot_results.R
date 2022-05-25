@@ -174,61 +174,6 @@ moran.mc(map_pan$cfr_wave2, lw, nsim = 999)
 moran.mc(map_pan$cfr_wave3, lw, nsim = 999)
 moran.mc(map_pan$cfr_wave4, lw, nsim = 999)
 
-# Plot boxplot of case/death rates by wave and BL:
-p1a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave1_rate, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  # theme(plot.title = element_text(size = 20), axis.title = element_text(size = 16),
-  #       axis.text = element_text(size = 12)) +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  scale_y_continuous(trans = 'log', breaks = c(5, 10, 25, 50, 100, 150)) +
-  labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 1')
-p2a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave2_rate, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  # theme(plot.title = element_text(size = 20), axis.title = element_text(size = 16),
-  #       axis.text = element_text(size = 12)) +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  scale_y_continuous(trans = 'log', breaks = c(100, 200, 300, 400, 500, 600)) +
-  labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 2')
-p3a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave3_rate, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  scale_y_continuous(trans = 'log', breaks = c(50, 100, 200, 300, 400, 500)) +
-  labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 3')
-p4a <- ggplot(data = dat_cumulative, aes(x = ags2, y = cases_wave4_rate, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  scale_y_continuous(trans = 'log', breaks = c(100, 200, 300, 400, 500, 750, 1000, 1250)) +
-  labs(x = 'Bundesland', y = 'Cases / 10000 Pop', title = 'Wave 4')
-grid.arrange(p1a, p2a, p3a, p4a, ncol = 1)
-
-p1b <- ggplot(data = dat_cumulative, aes(x = ags2, y = cfr_wave1, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  # scale_y_continuous(trans = 'log', breaks = c(5, 10, 15)) +
-  labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 1')
-p2b <- ggplot(data = dat_cumulative, aes(x = ags2, y = cfr_wave2, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  # scale_y_continuous(trans = 'log', breaks = c(2, 4, 6)) +
-  labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 2')
-p3b <- ggplot(data = dat_cumulative, aes(x = ags2, y = cfr_wave3, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 3')
-p4b <- ggplot(data = dat_cumulative, aes(x = ags2, y = cfr_wave4, group = ags2)) +
-  geom_boxplot(fill = 'steelblue2') + theme_classic() +
-  scale_x_discrete(labels = c('SH', 'HH', 'NI', 'HB', 'NW', 'HE', 'RP', 'BW', 'BY', 'SL',
-                              'BE', 'BB', 'MV', 'SN', 'ST', 'TH')) +
-  labs(x = 'Bundesland', y = 'CFR (%)', title = 'Wave 4')
-grid.arrange(p1b, p2b, p3b, p4b, ncol = 1)
-
 # How consistent are patterns from one wave to the next?:
 pairs.panels(dat_cumulative %>%
                select(cases_wave1_rate, cases_wave1_1_rate, cases_wave1_2_rate,
@@ -414,31 +359,6 @@ pairs.panels(dat_ses,
              breaks = 20,
              cex.cor = 0.6)
 rm(dat_ses)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-### Show correlations between predictors and cases/deaths (rates) ###
-
-# Plot:
-dat_corr <- dat_cumulative %>%
-  select(cases_wave1_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate,
-         cfr_wave1, cfr_wave2, cfr_wave3, cfr_wave4,
-         perc_18to64, perc_lessthan18, hosp_beds, care_home_beds, pop_dens, #living_area,
-         GISD_Score, perc_service, perc_production) %>%
-  pivot_longer(perc_18to64:perc_production, names_to = 'var', values_to = 'val') %>%
-  pivot_longer(cases_wave1_rate:cfr_wave4, names_to = 'outcome', values_to = 'obs') %>%
-  mutate(var = factor(var, levels = c('perc_18to64', 'perc_lessthan18', 'hosp_beds', 'care_home_beds',
-                                      'pop_dens', 'GISD_Score', 'perc_service',
-                                      'perc_production')),
-         outcome = factor(outcome, levels = c('cases_wave1_rate', 'cases_wave2_rate',
-                                              'cases_wave3_rate', 'cases_wave4_rate',
-                                              'cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')))
-
-p_corr <- ggplot(data = dat_corr) + geom_point(aes(x = val, y = obs)) +
-  geom_smooth(aes(x = val, y = obs), method = 'gam') +
-  facet_grid(outcome ~ var, scales = 'free') + theme_classic() +
-  labs(x = 'Covariate Value', y = 'Outcome Value')
-print(p_corr)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
