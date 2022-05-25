@@ -30,7 +30,8 @@ source('src/functions/load_data.R')
 # Load models
 
 # Full models:
-n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
+n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
+n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
 n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
@@ -40,7 +41,8 @@ n4a_full <- read_rds('results/fitted_models/FULL_n4a_ml.rds')
 n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 
 # Null models:
-n1a <- read_rds('results/fitted_models/null_n1a_ml.rds')
+n1_1a <- read_rds('results/fitted_models/null_n1_1a_ml.rds')
+n1_2a <- read_rds('results/fitted_models/null_n1_2a_ml.rds')
 n1b <- read_rds('results/fitted_models/null_n1b_ml.rds')
 n2a <- read_rds('results/fitted_models/null_n2a_ml.rds')
 n2b <- read_rds('results/fitted_models/null_n2b_ml.rds')
@@ -49,6 +51,7 @@ n3b <- read_rds('results/fitted_models/null_n3b_ml.rds')
 n4a <- read_rds('results/fitted_models/null_n4a_ml.rds')
 n4b <- read_rds('results/fitted_models/null_n4b_ml.rds')
 
+n1_2a_adj <- read_rds('results/fitted_models/null_n1_2a_adj_ml.rds')
 n2a_adj <- read_rds('results/fitted_models/null_n2a_adj_ml.rds')
 n2b_adj <- read_rds('results/fitted_models/null_n2b_adj_ml.rds')
 n3a_adj <- read_rds('results/fitted_models/null_n3a_adj_ml.rds')
@@ -64,7 +67,8 @@ n4b_adj <- read_rds('results/fitted_models/null_n4b_adj_ml.rds')
 map_pan <- map_base %>%
   left_join(dat_cumulative %>%
               select(lk, cases_wave1_rate, cfr_wave1, cases_wave2_rate, cfr_wave2,
-                     cases_wave3_rate, cfr_wave3, cases_wave4_rate, cfr_wave4),
+                     cases_wave3_rate, cfr_wave3, cases_wave4_rate, cfr_wave4,
+                     cases_wave1_1_rate, cases_wave1_2_rate),
             by = c('ARS' = 'lk'))
 
 # Get map of Bundeslaender:
@@ -160,6 +164,8 @@ names(nb) <- attr(nb, 'region.id')
 
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
 moran.mc(map_pan$cases_wave1_rate, lw, nsim = 999)
+moran.mc(map_pan$cases_wave1_1_rate, lw, nsim = 999)
+moran.mc(map_pan$cases_wave1_2_rate, lw, nsim = 999)
 moran.mc(map_pan$cases_wave2_rate, lw, nsim = 999)
 moran.mc(map_pan$cases_wave3_rate, lw, nsim = 999)
 moran.mc(map_pan$cases_wave4_rate, lw, nsim = 999)
@@ -225,7 +231,8 @@ grid.arrange(p1b, p2b, p3b, p4b, ncol = 1)
 
 # How consistent are patterns from one wave to the next?:
 pairs.panels(dat_cumulative %>%
-               select(cases_wave1_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate),
+               select(cases_wave1_rate, cases_wave1_1_rate, cases_wave1_2_rate,
+                      cases_wave2_rate, cases_wave3_rate, cases_wave4_rate),
              smooth = FALSE,
              scale = FALSE,
              density = TRUE,
@@ -260,6 +267,7 @@ pairs.panels(dat_cumulative %>%
 ### Observed spatial patterns (from model with no predictors) ###
 
 # Check whether controlling for first wave's incidence (and vaccination) improves model fit:
+anova(n1_2a, n1_2a_adj, test = 'Chisq')
 anova(n2a, n2a_adj, test = 'Chisq')
 anova(n2b, n2b_adj, test = 'Chisq')
 anova(n3a, n3a_adj, test = 'Chisq')
@@ -277,6 +285,7 @@ spatial_trend_NULL <- dat_cumulative %>%
          cases_wave3 = 100,
          cases_wave4 = 100,
          cases_wave1_rate = mean(dat_cumulative$cases_wave1_rate),
+         cases_wave1_1_rate = mean(dat_cumulative$cases_wave1_1_rate),
          cases_wave2_rate = mean(dat_cumulative$cases_wave2_rate),
          cases_wave3_rate = mean(dat_cumulative$cases_wave3_rate),
          cases_wave4_rate = mean(dat_cumulative$cases_wave4_rate),
@@ -288,7 +297,8 @@ spatial_trend_NULL <- dat_cumulative %>%
          ags2 = '01')
 
 spatial_trend_NULL <- spatial_trend_NULL %>%
-  mutate(fitted_n1a = predict(n1a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+  mutate(fitted_n1_1a = predict(n1_1a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n1_2a = predict(n1_2a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n2a = predict(n2a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n3a = predict(n3a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n4a = predict(n4a, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
@@ -296,6 +306,7 @@ spatial_trend_NULL <- spatial_trend_NULL %>%
          fitted_n2b = predict(n2b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n3b = predict(n3b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n4b = predict(n4b, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n1_2a_adj = predict(n1_2a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n2a_adj = predict(n2a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n2b_adj = predict(n2b_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n3a_adj = predict(n3a_adj, spatial_trend_NULL, type = 'response'),#, exclude = 's(ags2)'),
@@ -305,14 +316,20 @@ spatial_trend_NULL <- spatial_trend_NULL %>%
 
 map_fitted_NULL <- map_pan %>%
   left_join(spatial_trend_NULL %>%
-              select(lk, fitted_n1a:fitted_n4b_adj),
+              select(lk, fitted_n1_1a:fitted_n4b_adj),
             by = c('ARS' = 'lk'))
 rm(spatial_trend_NULL)
 
-p1a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') +
+p1_1a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1_1a), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
-  theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
+  theme_void() + labs(title = 'Wave 1_1', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+p1_2a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n1_2a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1_2', fill = 'Cases / 10000 Pop') +
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2a <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
@@ -359,10 +376,13 @@ p4b <- ggplot(map_fitted_NULL) + geom_sf(aes(fill = fitted_n4b), col = 'black') 
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
-grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
+layout_mat <- rbind(c(1, 2, 3, 3, 4, 4, 5, 5),
+                    c(6, 6, 7, 7, 8, 8, 9, 9))
+grid.arrange(p1_1a, p1_2a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, layout_matrix = layout_mat)#ncol = 4)
 
 # Check % deviance explained:
-summary(n1a)
+summary(n1_1a)
+summary(n1_2a_adj)
 summary(n2a_adj)
 summary(n3a_adj)
 summary(n4a_adj)
@@ -425,7 +445,8 @@ print(p_corr)
 ### Full models ###
 
 # Determine percent deviance explained:
-summary(n1a_full)
+summary(n1_1a_full)
+summary(n1_2a_full)
 summary(n1b_full)
 summary(n2a_full)
 summary(n2b_full)
@@ -435,7 +456,8 @@ summary(n4a_full)
 summary(n4b_full)
 
 # Compare deviance explained/model fit to null models:
-anova(n1a, n1a_full, test = 'Chisq')
+anova(n1_1a, n1_1a_full, test = 'Chisq')
+anova(n1_2a_adj, n1_2a_full, test = 'Chisq')
 anova(n2a_adj, n2a_full, test = 'Chisq')
 anova(n3a_adj, n3a_full, test = 'Chisq')
 anova(n4a_adj, n4a_full, test = 'Chisq')
@@ -446,8 +468,8 @@ anova(n3b_adj, n3b_full, test = 'Chisq')
 anova(n4b_adj, n4b_full, test = 'Chisq')
 
 # Plot smooth relationships between all predictors and outcomes (for incidence):
-mod_list <- list(n1a_full, n2a_full, n3a_full, n4a_full)
-names(mod_list) <- c('1', '2', '3', '4')
+mod_list <- list(n1_1a_full, n1_2a_full, n2a_full, n3a_full, n4a_full)
+names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
 
 pred_perc_18to64 <- get_marginal_prediction(dat_cumulative, 'perc_18to64', 'incidence', mod_list, standardize = TRUE)
 pred_perc_lessthan18 <- get_marginal_prediction(dat_cumulative, 'perc_lessthan18', 'incidence', mod_list, standardize = TRUE)
@@ -482,8 +504,8 @@ do.call('grid.arrange', c(plot_18to64_popdens, plot_lessthan18_popdens,
                           plot_18to64_GISD, plot_lessthan18_GISD[[1]],
                           plot_lessthan18_GISD[[2]], ncol = 4))
 
-mod_list <- list(n2a_full, n3a_full, n4a_full)
-names(mod_list) <- c('2', '3', '4')
+mod_list <- list(n1_2a_full, n2a_full, n3a_full, n4a_full)
+names(mod_list) <- c('1_2', '2', '3', '4')
 pred_cases_pre <- get_marginal_prediction(dat_cumulative, 'cases_pre', 'incidence', mod_list, standardize = TRUE)
 
 mod_list <- list(n3a_full, n4a_full)
@@ -547,13 +569,11 @@ spatial_trend_FULL <- dat_cumulative %>%
          cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
          cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
          cases_wave1_rate = mean(dat_cumulative$cases_wave1_rate),
+         cases_wave1_1_rate = mean(dat_cumulative$cases_wave1_1_rate),
          cases_wave2_rate = mean(dat_cumulative$cases_wave2_rate),
          cases_wave3_rate = mean(dat_cumulative$cases_wave3_rate),
          cases_wave4_rate = mean(dat_cumulative$cases_wave4_rate),
          ags2 = '01',
-         cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
-         cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
-         cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
          perc_18to64 = mean(dat_cumulative$perc_18to64),
          perc_lessthan18 = mean(dat_cumulative$perc_lessthan18),
          hosp_beds = mean(dat_cumulative$hosp_beds),
@@ -567,7 +587,8 @@ spatial_trend_FULL <- dat_cumulative %>%
          vacc_w4_reg = mean(dat_cumulative$vacc_w4_reg))
 
 spatial_trend_FULL <- spatial_trend_FULL %>%
-  mutate(fitted_n1a = predict(n1a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+  mutate(fitted_n1_1a = predict(n1_1a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
+         fitted_n1_2a = predict(n1_2a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n2a = predict(n2a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n3a = predict(n3a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
          fitted_n4a = predict(n4a_full, spatial_trend_FULL, type = 'response'),#, exclude = 's(ags2)'),
@@ -578,14 +599,20 @@ spatial_trend_FULL <- spatial_trend_FULL %>%
 
 map_fitted_FULL <- map_pan %>%
   left_join(spatial_trend_FULL %>%
-              select(lk, fitted_n1a:fitted_n4b),
+              select(lk, fitted_n1_1a:fitted_n4b),
             by = c('ARS' = 'lk'))
 rm(spatial_trend_FULL)
 
-p1a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1a), col = 'black') +
+p1_1a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1_1a), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis() +
-  theme_void() + labs(title = 'Wave 1', fill = 'Cases / 10000 Pop') +
+  theme_void() + labs(title = 'Wave 1_1', fill = 'Cases / 10000 Pop') +
+  theme(legend.position = 'bottom', plot.title = element_text(size = 20),
+        legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+p1_2a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n1_2a), col = 'black') +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis() +
+  theme_void() + labs(title = 'Wave 1_2', fill = 'Cases / 10000 Pop') +
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 p2a <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n2a), col = 'black') +
@@ -632,7 +659,7 @@ p4b <- ggplot(map_fitted_FULL) + geom_sf(aes(fill = fitted_n4b), col = 'black') 
   theme(legend.position = 'bottom', plot.title = element_text(size = 20),
         legend.title = element_text(size = 12), legend.text = element_text(size = 12))
 
-grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
+grid.arrange(p1_1a, p1_2a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, layout_matrix = layout_mat)#ncol = 4)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

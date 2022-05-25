@@ -75,12 +75,17 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     } else {
       
       if (pred_var_orig == 'cases_pre') {
-        pred_var <- paste0(pred_var_orig, wave, '_rate')
+        if (is.numeric(wave)) {
+          pred_var <- paste0(pred_var_orig, wave, '_rate')
+        } else {
+          pred_var <- 'cases_wave1_1_rate'
+        }
+        
       } else if (pred_var_orig == 'vacc') {
         pred_var <- paste0(pred_var_orig, '_w', wave)
       } else if (pred_var_orig == 'vacc_reg') {
         pred_var <- paste0('vacc_w', wave, '_reg')
-      }else if (pred_var_orig == 'cases_rate') {
+      } else if (pred_var_orig == 'cases_rate') {
         if (between_waves) {
           pred_var <- paste0('cases_summer', i, '_rate')
         } else {
@@ -115,12 +120,26 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       
     } else {
       
-      if (outcome_measure == 'incidence') {
-        outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
-      } else if (outcome_measure == 'cfr') {
-        outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+      if (is.numeric(wave)) {
+        if (outcome_measure == 'incidence') {
+          outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
+        } else if (outcome_measure == 'cfr') {
+          outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+        } else {
+          stop('Unrecognized outcome measure.')
+        }
       } else {
-        stop('Unrecognized outcome measure.')
+        if (outcome_measure == 'incidence') {
+          if (wave == '1_1') {
+            outcome_var <- 'cases_wave1_1_rate'
+          } else if (wave == '1_2') {
+            outcome_var <- 'cases_wave1_2_rate'
+          } else {
+            stop('Unrecognized partial wave.')
+          }
+        } else {
+          stop('Unrecognized outcome measure.')
+        }
       }
       
     }
@@ -210,7 +229,12 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                vacc_w4_2 = mean(dat$vacc_w4_2),
                vacc_summer2 = mean(dat$vacc_summer2),
                vacc_w3_reg = mean(dat$vacc_w3_reg),
-               vacc_w4_reg = mean(dat$vacc_w4_reg)) %>%
+               vacc_w4_reg = mean(dat$vacc_w4_reg),
+               vacc_w3_1_reg = mean(dat$vacc_w3_1_reg),
+               vacc_w3_2_reg = mean(dat$vacc_w3_2_reg),
+               vacc_w4_1_reg = mean(dat$vacc_w4_1_reg),
+               vacc_w4_2_reg = mean(dat$vacc_w4_2_reg),
+               vacc_summer2_reg = mean(dat$vacc_summer2_reg)) %>%
         select(-all_of(pred_var))
       
       # Give correct name to pred_var column:
@@ -285,7 +309,12 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                vacc_w4_2 = mean(dat$vacc_w4_2),
                vacc_summer2 = mean(dat$vacc_summer2),
                vacc_w3_reg = mean(dat$vacc_w3_reg),
-               vacc_w4_reg = mean(dat$vacc_w4_reg)) %>%
+               vacc_w4_reg = mean(dat$vacc_w4_reg),
+               vacc_w3_1_reg = mean(dat$vacc_w3_1_reg),
+               vacc_w3_2_reg = mean(dat$vacc_w3_2_reg),
+               vacc_w4_1_reg = mean(dat$vacc_w4_1_reg),
+               vacc_w4_2_reg = mean(dat$vacc_w4_2_reg),
+               vacc_summer2_reg = mean(dat$vacc_summer2_reg)) %>%
         select(-all_of(pred_var))
       
       # Give correct name to pred_var column:
@@ -444,9 +473,9 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
       
       for (w in which_waves) {
         dat_temp1_w <- dat_temp1 %>%
-          filter(str_detect(wave, as.character(w)))
+          filter(str_detect(wave, paste0('Wave ', as.character(w))))
         dat_temp2_w <- dat_temp2 %>%
-          filter(str_detect(wave, as.character(w)))
+          filter(str_detect(wave, paste0('Wave ', as.character(w))))
         
         p_temp1_w <- ggplot(data = dat_temp1_w, aes(group = var2)) +
           geom_ribbon(aes(x = var1, ymin = lower, ymax = upper, fill = var2), alpha = 0.1) +

@@ -26,7 +26,9 @@ source('src/functions/load_data.R')
 # Assess residuals
 
 # Load models:
-n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
+n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
+n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
+# n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
 n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
@@ -36,7 +38,8 @@ n4a_full <- read_rds('results/fitted_models/FULL_n4a_ml.rds')
 n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 
 # Add fitted values to data frame:
-dat_cumulative$fitted_n1a <- fitted(n1a_full)
+dat_cumulative$fitted_n1_1a <- fitted(n1_1a_full)
+dat_cumulative$fitted_n1_2a <- fitted(n1_2a_full)
 dat_cumulative$fitted_n1b <- fitted(n1b_full)
 dat_cumulative$fitted_n2a <- fitted(n2a_full)
 dat_cumulative$fitted_n2b <- fitted(n2b_full)
@@ -47,11 +50,21 @@ dat_cumulative$fitted_n4b <- fitted(n4b_full)
 
 # Plot observed vs. fitted values:
 par(mfrow = c(2, 2))
-plot(dat_cumulative$cases_wave1, fitted(n1a_full),
+plot(dat_cumulative$cases_wave1_1, fitted(n1_1a_full),
      xlab = 'Observed Values', ylab = 'Fitted Values',
-     main = 'Cases per Pop (Wave 1)', pch = 20)
-lines(dat_cumulative$cases_wave1, dat_cumulative$cases_wave1,
+     main = 'Cases per Pop (Wave 1_1)', pch = 20)
+lines(dat_cumulative$cases_wave1_1, dat_cumulative$cases_wave1_1,
       col = 'gray80')
+plot(dat_cumulative$cases_wave1_2, fitted(n1_2a_full),
+     xlab = 'Observed Values', ylab = 'Fitted Values',
+     main = 'Cases per Pop (Wave 1_2)', pch = 20)
+lines(dat_cumulative$cases_wave1_2, dat_cumulative$cases_wave1_2,
+      col = 'gray80')
+# plot(dat_cumulative$cases_wave1, fitted(n1a_full),
+#      xlab = 'Observed Values', ylab = 'Fitted Values',
+#      main = 'Cases per Pop (Wave 1)', pch = 20)
+# lines(dat_cumulative$cases_wave1, dat_cumulative$cases_wave1,
+#       col = 'gray80')
 plot(dat_cumulative$deaths_wave1, fitted(n1b_full),
      xlab = 'Observed Values', ylab = 'Fitted Values',
      main = 'Deaths per Case (Wave 1)', pch = 20)
@@ -89,10 +102,19 @@ lines(dat_cumulative$deaths_wave4, dat_cumulative$deaths_wave4,
       col = 'gray80')
 
 # Plot residuals vs. fitted values:
-plot(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance'),
+par(mfrow = c(2, 2))
+plot(log(fitted(n1_1a_full)), residuals(n1_1a_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-     main = 'Cases per Pop (Wave 1)', pch = 20)#, col = dat_cumulative$bundesland)
-lines(smooth.spline(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance')))
+     main = 'Cases per Pop (Wave 1_1)', pch = 20)#, col = dat_cumulative$bundesland)
+lines(smooth.spline(log(fitted(n1_1a_full)), residuals(n1_1a_full, type = 'deviance')))
+plot(log(fitted(n1_2a_full)), residuals(n1_2a_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Cases per Pop (Wave 1_2)', pch = 20)#, col = dat_cumulative$bundesland)
+lines(smooth.spline(log(fitted(n1_2a_full)), residuals(n1_2a_full, type = 'deviance')))
+# plot(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance'),
+#      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+#      main = 'Cases per Pop (Wave 1)', pch = 20)#, col = dat_cumulative$bundesland)
+# lines(smooth.spline(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance')))
 plot(log(fitted(n1b_full)), residuals(n1b_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
      main = 'Deaths per Case (Wave 1)', pch = 20)#, col = dat_cumulative$bundesland)
@@ -126,7 +148,11 @@ lines(smooth.spline(log(fitted(n4b_full)), residuals(n4b_full, type = 'deviance'
 # https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 # https://aosmith.rbind.io/2017/12/21/using-dharma-for-residual-checks-of-unsupported-models/
 par(mfrow = c(2, 2))
-check_dharma(dat_cumulative, n1a_full, depend = 'cases')
+check_dharma(dat_cumulative, n1_1a_full, depend = 'cases')
+par(mfrow = c(2, 2))
+check_dharma(dat_cumulative, n1_2a_full, depend = 'cases')
+# par(mfrow = c(2, 2))
+# check_dharma(dat_cumulative, n1a_full, depend = 'cases')
 par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n1b_full, depend = 'deaths')
 par(mfrow = c(2, 2))
@@ -143,7 +169,9 @@ par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n4b_full, depend = 'deaths')
 
 # Calculate Moran's I for residuals:
-dat_cumulative$resid_n1a <- residuals(n1a_full, type = 'deviance')
+dat_cumulative$resid_n1_1a <- residuals(n1_1a_full, type = 'deviance')
+dat_cumulative$resid_n1_2a <- residuals(n1_2a_full, type = 'deviance')
+# dat_cumulative$resid_n1a <- residuals(n1a_full, type = 'deviance')
 dat_cumulative$resid_n1b <- residuals(n1b_full, type = 'deviance')
 dat_cumulative$resid_n2a <- residuals(n2a_full, type = 'deviance')
 dat_cumulative$resid_n2b <- residuals(n2b_full, type = 'deviance')
@@ -155,7 +183,7 @@ dat_cumulative$resid_n4b <- residuals(n4b_full, type = 'deviance')
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
-              select(lk, resid_n1a, resid_n1b, resid_n2a, resid_n2b,
+              select(lk, resid_n1_1a, resid_n1_2a, resid_n1b, resid_n2a, resid_n2b,
                      resid_n3a, resid_n3b, resid_n4a, resid_n4b),
             by = c('ARS' = 'lk')) %>%
   drop_na()
@@ -165,7 +193,9 @@ attr(nb, 'region.id') <- map_base$ARS
 names(nb) <- attr(nb, 'region.id')
 
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
-moran.mc(map_base$resid_n1a, lw, nsim = 999)
+moran.mc(map_base$resid_n1_1a, lw, nsim = 999)
+moran.mc(map_base$resid_n1_2a, lw, nsim = 999)
+# moran.mc(map_base$resid_n1a, lw, nsim = 999)
 moran.mc(map_base$resid_n1b, lw, nsim = 999)
 moran.mc(map_base$resid_n2a, lw, nsim = 999)
 moran.mc(map_base$resid_n2b, lw, nsim = 999)
