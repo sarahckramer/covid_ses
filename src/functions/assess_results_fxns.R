@@ -392,7 +392,7 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
 }
 
 
-plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plot = TRUE, standardize = TRUE, which_waves = NULL) {
+plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plot = TRUE, standardize = TRUE, which_waves = NULL, color_vals = NULL) {
   # Function to plot marginal predictions
   # param pred_res: Output from get_marginal_prediction
   # param pred_var: The predictor(s) of interest
@@ -403,7 +403,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
   # returns: A plot of the marginal prediction, with 95% CI
   
   if (standardize) {
-    outcome_lab <- paste0('Predicted Change in ', outcome_lab)
+    outcome_lab <- paste0('Relative Change (', outcome_lab, ')')
   } else {
     outcome_lab <- paste(outcome_lab, '(Predicted)', sep = ' ')
   }
@@ -517,22 +517,35 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
     dat_temp <- pred_res %>%
       rename('var' = pred_var)
     
+    if (is.null(color_vals)) {
+      color_vals <- c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3')
+    }
+    
     if (single_plot) {
       p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
         geom_ribbon(aes(x = var, ymin = lower, ymax = upper, fill = wave), alpha = 0.1) +
         geom_line(aes(x = var, y = fitted, col = wave)) +
         theme_classic() +
+        theme(legend.text = element_text(size = 14),
+              axis.title = element_text(size = 14),
+              axis.text = element_text(size = 14)) +
         # scale_color_viridis(discrete = TRUE) +
         # scale_fill_viridis(discrete = TRUE) +
-        scale_color_brewer(palette = 'Set1') +
-        scale_fill_brewer(palette = 'Set1') +
+        # scale_color_brewer(palette = 'Set1') +
+        # scale_fill_brewer(palette = 'Set1') +
+        scale_color_manual(values = color_vals) +
+        scale_fill_manual(values = color_vals) +
         labs(x = pred_var, y = outcome_lab, fill = '', col = '')
+      p_temp
     } else {
       p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
         geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
         geom_line(aes(x = var, y = fitted)) +
         facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
         theme_classic() +
+        theme(strip.text = element_text(size = 14),
+              axis.title = element_text(size = 14),
+              axis.text = element_text(size = 14)) +
         labs(x = pred_var, y = outcome_lab, fill = '', col = '')
       
     }
