@@ -35,31 +35,39 @@ n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
 # Explore potential model improvements
 
 # # Should both pop_dens AND living_area be included?:
-# n1a_comp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-#                   s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                   s(perc_service) + s(perc_production) +
+# n1_1a_comp <- gam(cases_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 45) + s(ags2, bs = 're', k = 16) +
+#                     s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                     s(perc_service) + s(perc_production) + s(living_area) +
+#                     offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+# n1_2a_comp <- gam(cases_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+#                     s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                     s(perc_service) + s(perc_production) + s(cases_wave1_1_rate) + s(living_area) +
+#                     offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+# n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
+#                   s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                   s(perc_service) + s(perc_production) + s(living_area) +
+#                   ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
+#                   s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+# 
+# n3a_comp <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 65) + s(ags2, bs = 're', k = 16) +
+#                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                   s(perc_service) + s(perc_production) + s(living_area) +
+#                   ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
+#                   s(cases_pre3_rate) + s(vacc_w3_reg) +
 #                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# n2a_comp <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
-#                   s(perc_18to64) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
-#                   s(perc_service) + s(perc_production) + s(cases_pre_rate) +
+# 
+# n4a_comp <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+#                   s(perc_18to64) + s(perc_lessthan18, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                   s(perc_service) + s(perc_production) + s(living_area) +
+#                   ti(perc_lessthan18, GISD_Score) +
+#                   s(cases_pre4_rate) + s(vacc_w4_reg) +
 #                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
-# n1a_comp_alt <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-#                       s(perc_18to64) + s(care_home_beds) + s(GISD_Score) + s(living_area, k = 25) +
-#                       s(perc_service) + s(perc_production) +
-#                       offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# n2a_comp_alt <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
-#                       s(perc_18to64) + s(care_home_beds, k = 25) + s(GISD_Score) + s(living_area) +
-#                       s(perc_service) + s(perc_production) + s(cases_pre_rate) +
-#                       offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# 
-# anova(n1a_full, n1a_comp, test = 'Chisq')
-# anova(n1a_full, n1a_comp_alt, test = 'Chisq')
-# 
-# anova(n2a_full, n2a_comp, test = 'Chisq')
-# anova(n2a_full, n2a_comp_alt, test = 'Chisq')
-# 
-# rm(n1a_comp, n2a_comp, n1a_comp_alt, n2a_comp_alt)
+# AIC(n1_1a_full, n1_1a_comp)
+# AIC(n1_2a_full, n1_2a_comp)
+# AIC(n2a_full, n2a_comp)
+# AIC(n3a_full, n3a_comp)
+# AIC(n4a_full, n4a_comp)
 
 # # Try including alternative age group information:
 # n1a_comp <- gam(cases_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
