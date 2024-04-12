@@ -26,6 +26,9 @@ inkar_dat_old1 <- inkar_dat_old1[-1, ]
 inkar_dat_old2 <- inkar_dat_old2[-1, ]
 
 # Keep only columns of interest:
+inkar_dat <- inkar_dat %>%
+  select(Kennziffer:`Einwohner 65 Jahre und älter`, `Siedlungsdichte in km²`:Wohnfläche,
+         Pflegeheimplätze:`Nahversorgung Apotheken Durchschnittsdistanz`)
 inkar_dat_old1 <- inkar_dat_old1 %>%
   select(Kennziffer, `Beschäftigte in personenbezogenen Dienstleistungsberufen`)
 inkar_dat_old2 <- inkar_dat_old2 %>%
@@ -54,12 +57,8 @@ inkar_dat <- inkar_dat %>%
          'lk_name' = 'Raumeinheit',
          'lk_type' = 'Aggregat',
          'perc_65plus' = 'Einwohner 65 Jahre und älter',
-         'perc_75plus' = 'Einwohner 75 Jahre und älter',
-         'perc_women' = 'Frauenanteil',
-         'perc_imm' = 'Ausländeranteil',
          'pop_dens' = 'Siedlungsdichte in km²',
          'living_area' = 'Wohnfläche',
-         'perc_apt_multifamily' = 'Wohnungen in Mehrfamilienhäusern',
          'care_home_beds' = 'Pflegeheimplätze',
          'hosp_beds' = 'Krankenhausbetten',
          'avg_dist_pharm' = 'Nahversorgung Apotheken Durchschnittsdistanz',
@@ -68,8 +67,8 @@ inkar_dat <- inkar_dat %>%
 
 # Reorganize variables to put health/control variables first:
 inkar_dat <- inkar_dat %>%
-  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_lessthan18:perc_18to64, perc_65plus:perc_imm, care_home_beds,
-         pop_dens:perc_apt_multifamily, perc_service:perc_production)
+  select(lk_code:lk_type, hosp_beds:avg_dist_pharm, perc_lessthan18:perc_18to64, perc_65plus, care_home_beds,
+         pop_dens:living_area, perc_service:perc_production)
 
 # Plot:
 plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
@@ -78,37 +77,13 @@ plot(inkar_dat[, 4:ncol(inkar_dat)], pch = 20)
 
 # Deprivation index
 
-# First, read in and format index data themselves:
+# Read in and format index data:
 di_dat <- read_csv('data/raw/independent_vars/deprivation_index_NEW.csv')
 di_dat <- di_dat %>%
   filter(Jahr == 2017) %>%
   select(Kreiskennziffer, GISD_Score:TS_Arbeitswelt_adj) %>%
-  mutate(Kreiskennziffer = str_pad(Kreiskennziffer, width = 5, side = 'left', pad = '0'))
-
-# Then, get individual variables (and similar variables):
-di_variables_dat <- read_csv2('data/raw/independent_vars/inkar_data_deprivationsindex_individual_variables_NEW.csv')
-di_variables_dat <- di_variables_dat[-1, ]
-
-di_variables_dat <- di_variables_dat %>%
-  select(!Raumeinheit:Aggregat)
-
-# Merge:
-di_dat <- di_dat %>%
-  left_join(di_variables_dat, by = c('Kreiskennziffer' = 'Kennziffer'))
-rm(di_variables_dat)
-
-# Rename variables:
-di_dat <- di_dat %>%
-  rename('lk_code' = 'Kreiskennziffer',
-         'perc_no_degree' = `Schulabgänger ohne Abschluss`,
-         'perc_workers_academic_degree' = `Beschäftigte mit akademischem Berufsabschluss`,
-         'perc_workers_no_voc_degree' = `Beschäftigte ohne Berufsabschluss`,
-         'perc_debt' = 'Schuldnerquote',
-         'household_income' = 'Haushaltseinkommen',
-         'tax_force' = 'Steuerkraft',
-         'unemployment' = 'Arbeitslosenquote',
-         'gross_income' = 'Bruttoverdienst',
-         'perc_SV_workers' = 'Beschäftigtenquote')
+  mutate(Kreiskennziffer = str_pad(Kreiskennziffer, width = 5, side = 'left', pad = '0')) %>%
+  rename('lk_code' = 'Kreiskennziffer')
 
 # Plot:
 plot(di_dat[, 2:ncol(di_dat)], pch = 20)
@@ -120,7 +95,8 @@ plot(di_dat[, 2:ncol(di_dat)], pch = 20)
 # https://www.medrxiv.org/content/10.1101/2021.07.09.21260257v3
 
 # Read in data:
-vacc_dat <- fromJSON('data/raw/independent_vars/vacc/all_county_vacc_all_dates.json')
+vacc_dat <- fromJSON('data/raw/independent_vars/vacc/3_all_county_vacc_all_dates.json')
+vacc_dat_regional <- fromJSON('data/raw/independent_vars/vacc/2_all_county_vacc_all_dates.json')
 
 # Format:
 vacc_dat <- vacc_dat %>%
@@ -128,15 +104,24 @@ vacc_dat <- vacc_dat %>%
   select(-ID_State) %>%
   mutate(ID_County = as.character(ID_County),
          ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
+vacc_dat_regional <- vacc_dat_regional %>%
+  as_tibble() %>%
+  select(-ID_State) %>%
+  mutate(ID_County = as.character(ID_County),
+         ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
 
 # Add population data and calculate vaccination rates:
-pop_dat <- read_csv2('data/raw/independent_vars/pop_counts_12411-0015_NEW2020.csv', col_names = FALSE, skip = 6, n_max = 476) %>%
-  select(-X2) %>%
-  rename(lk = X1, pop = X3) %>%
-  mutate(pop = as.numeric(pop)) %>%
-  filter(!is.na(pop))
+pop_dat <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
+  select(ags5, kr_ew_20) %>%
+  rename('lk' = 'ags5',
+         'pop' = 'kr_ew_20')
 
 vacc_dat <- vacc_dat %>%
+  left_join(pop_dat, by = c('ID_County' = 'lk')) %>%
+  mutate(vacc1_rate = Vacc_partially / pop,
+         vacc2_rate = Vacc_completed / pop,
+         vacc3_rate = Vacc_refreshed / pop)
+vacc_dat_regional <- vacc_dat_regional %>%
   left_join(pop_dat, by = c('ID_County' = 'lk')) %>%
   mutate(vacc1_rate = Vacc_partially / pop,
          vacc2_rate = Vacc_completed / pop,
@@ -151,12 +136,29 @@ vacc_dat <- vacc_dat %>%
          Year = format(Date, '%Y'),
          Week = format(Date, '%V'),
          .after = Date)
+vacc_dat_regional <- vacc_dat_regional %>%
+  filter(Date %in% week_ends) %>%
+  mutate(Date = as.Date(Date),
+         Year = format(Date, '%Y'),
+         Week = format(Date, '%V'),
+         .after = Date)
 rm(week_ends)
 
 # Get vaccination rates at 2 weeks before the midpoint of each wave (weeks 66 and 92 / 13 and 39 of 2021):
+# (And partial waves (weeks 63 and 70 for wave 3 / weeks 87 and 97 for wave 4 - weeks 10 and 17 / 34 and 44 of 2021))
+# (And for summer 2 - week 77 / week 24 of 2021)
 vacc_dat <- vacc_dat %>%
   filter(Year == '2021' &
-           (Week %in% c('13', '39')))
+           (Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')))
+vacc_dat_regional <- vacc_dat_regional %>%
+  filter(Year == '2021' &
+           (Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')))
 
 # Convert to wide format:
 vacc_dat <- vacc_dat %>%
@@ -164,10 +166,21 @@ vacc_dat <- vacc_dat %>%
   select(year_week, ID_County, vacc2_rate) %>%
   pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)# %>%
   # rename_with(~ paste0('vacc_', .x), .cols = !ID_County)
-names(vacc_dat)[2:3] <- c('vacc_w3', 'vacc_w4')
+names(vacc_dat)[2:8] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2')
+vacc_dat <- vacc_dat %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_summer2)
+
+vacc_dat_regional <- vacc_dat_regional %>%
+  mutate(year_week = paste(Year, Week, sep = '_')) %>%
+  select(year_week, ID_County, vacc2_rate) %>%
+  pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)
+names(vacc_dat_regional)[2:8] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2')
+vacc_dat_regional <- vacc_dat_regional %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_summer2)
 
 # Plot:
 plot(vacc_dat$vacc_w3, vacc_dat$vacc_w4, pch = 20)
+plot(vacc_dat_regional$vacc_w3, vacc_dat_regional$vacc_w4, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -185,6 +198,7 @@ rm(inkar_dat, di_dat)
 
 write_csv(ses_dat, file = 'data/formatted/independent_vars/ses_independent_variables.csv')
 write_csv(vacc_dat, file = 'data/formatted/independent_vars/vacc_dat.csv')
+write_csv(vacc_dat_regional, file = 'data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 

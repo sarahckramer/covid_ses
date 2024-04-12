@@ -21,6 +21,23 @@ cdp_dat <- read_csv('data/raw/cdp/todesfaelle.csv')
 # Check for missing dates:
 missing_dates <- check_for_missing_dates(cdp_dat)
 
+# Get cumulative data (for checking):
+cdp_dat_check <- cdp_dat %>%
+  filter(variable == 'kr_tod_md_kum') %>%
+  select(-c(`_id`, kreis, variable)) %>%
+  pivot_longer(-c(ags2, bundesland, ags5), names_to = 'date', values_to = 'deaths') %>%
+  mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d')) %>%
+  rename('lk' = 'ags5') %>%
+  unique()
+
+# Get incident data in all ages combined (for distinguishing between waves):
+cdp_dat_inc <- cdp_dat %>%
+  filter(variable == 'kr_tod_md') %>%
+  select(-c(`_id`, ags2, bundesland, kreis, variable)) %>%
+  pivot_longer(-ags5, names_to = 'date', values_to = 'deaths') %>%
+  mutate(date = as.Date(str_sub(date, 2, 9), format = '%Y%m%d')) %>%
+  rename('lk' = 'ags5')
+
 # Limit to death data by age group:
 cdp_dat <- cdp_dat %>%
   filter(variable %in% c('kr_tod_a0004', 'kr_tod_a0514', 'kr_tod_a1534', 'kr_tod_a3559', 'kr_tod_a6079', 'kr_tod_a80', 'kr_tod_99')) %>%
@@ -39,9 +56,9 @@ expect_equal(dim(cdp_dat)[1], length(unique(cdp_dat$date)) * length(unique(cdp_d
 
 # Allocate deaths with no age data proportionally:
 cdp_list <- split(cdp_dat, cdp_dat$lk)
-expect_true(length(cdp_list) == 401)
+expect_true(length(cdp_list) == 400)
 
-for (i in 1:401) {
+for (i in 1:400) {
   
   # To ensure that the final "long" tibble has the right dimensions:
   dim_orig <- nrow(cdp_list[[i]])
@@ -68,7 +85,7 @@ for (i in 1:401) {
         
       } else {
         print(cdp_temp[j, 'kr_tod_99'])
-        # This happens very rarely - only 2 deaths total
+        # This happens very rarely - only 3 deaths total
       }
       
     }
@@ -123,7 +140,6 @@ cdp_dat <- cdp_dat %>%
 expect_true(cdp_dat %>% group_by(lk, variable) %>% mutate(check = cummax(deaths)) %>% filter(deaths != check) %>% nrow() == 0)
 
 # Compare sums to cumulative data in original data:
-cdp_dat_check <- read_csv('data/formatted/daily_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
 cdp_dat_sum_all_ages <- cdp_dat %>%
   group_by(ags2, bundesland, lk, date) %>%
   summarise(deaths = sum(deaths))
@@ -131,12 +147,11 @@ cdp_dat_sum_all_ages <- cdp_dat %>%
 cdp_dat_check <- cdp_dat_check %>%
   left_join(cdp_dat_sum_all_ages, by = c('ags2', 'bundesland', 'lk', 'date'))
 cdp_dat_check %>%
-  select(-c(death_rate, pop)) %>%
   filter(deaths.x != deaths.y) %>%
   mutate(diff = deaths.x - deaths.y) %>%
   pull(diff) %>%
   summary()
-# never more than 1; different in 461 / 283200 (0.16%) data points; only in 2 lks
+# never more than 1; different in 627 / 312000 (0.20%) data points
 rm(cdp_dat_check, cdp_dat_sum_all_ages)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -163,6 +178,12 @@ cdp_dat_new <- cdp_dat %>%
 expect_true(nrow(cdp_dat) == nrow(cdp_dat_new))
 cdp_dat <- cdp_dat_new
 rm(cdp_dat_new)
+
+cdp_dat_inc <- cdp_dat_inc %>%
+  left_join(pop_dat %>%
+              group_by(lk) %>%
+              summarise(pop = sum(pop)),
+            by = c('lk'))
 
 cdp_dat <- cdp_dat %>%
   mutate(death_rate = deaths / pop)
@@ -209,6 +230,42 @@ cdp_dat_wk <- cdp_dat_wk %>%
 
 # Write data to file:
 write_csv(cdp_dat_wk, file = 'data/formatted/STAND_weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get weekly data (incident CDP data)
+
+# Add week and year numbers:
+cdp_dat_inc_wk <- cdp_dat_inc %>%
+  mutate(Week = format(date, '%V'),
+         Year = format(date, '%Y'),
+         Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year),
+         year_week = paste(Year, Week, sep = '_'))
+
+# Remove incomplete weeks:
+dates_to_remove <- cdp_dat_inc_wk %>%
+  group_by(lk, year_week) %>%
+  summarise(len = length(deaths)) %>%
+  filter(len < 7,
+         year_week != '2020_09') %>%
+  ungroup() %>%
+  select(-c(lk, len)) %>%
+  unique()
+
+cdp_dat_inc_wk <- cdp_dat_inc_wk %>%
+  filter(!(year_week %in% dates_to_remove$year_week))
+
+# Sum over each LK/week:
+cdp_dat_inc_wk <- cdp_dat_inc_wk %>%
+  group_by(lk, Year, Week, pop) %>%
+  summarise(deaths = sum(deaths)) %>%
+  mutate(death_rate = deaths / pop * 100000) %>%
+  ungroup() %>%
+  select(Year:Week, lk, deaths:death_rate, pop)
+
+# Write data to file:
+write_csv(cdp_dat_inc_wk, file = 'data/formatted/weekly_covid_deaths_by_lk_INCIDENT_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 

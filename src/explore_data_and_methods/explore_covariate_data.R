@@ -13,45 +13,50 @@ library(gridExtra)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Open pdf:
+# Open pdf
 pdf('results/plots/explore_covariate_data_NEW.pdf', width = 18, height = 12)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Read in and format data
+
 # Read in data:
 ses_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables.csv')
-vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
+vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 
-# Limit to variables of interest:
+# Remove Landkreise (LK(s)) that were later merged:
 ses_dat <- ses_dat %>%
-  select(lk_code, hosp_beds:perc_65plus, perc_women:perc_imm, pop_dens:TS_Arbeitswelt_adj)
+  filter(!(lk_code %in% c('16056', '16063')))
+vacc_dat <- vacc_dat %>%
+  filter(!(ID_County %in% c('16056', '16063')))
 
 # Join with vaccination data:
-ses_dat_plus <- ses_dat %>%
+ses_dat <- ses_dat %>%
   left_join(vacc_dat, by = c('lk_code' = 'ID_County'))
 rm(vacc_dat)
 
 # Plot associations between variables:
-pairs(ses_dat_plus[, -1], pch = 20)#, lower.panel = NULL)
+pairs(ses_dat[, 4:ncol(ses_dat)], pch = 20)#, lower.panel = NULL)
 
 # Plot histograms of variables:
-par(mfrow = c(4, 5))
-for (i in 2:ncol(ses_dat_plus)) {
-  hist(unlist(ses_dat_plus[, i]), breaks = 25, main = names(ses_dat_plus)[i])
+par(mfrow = c(4, 4))
+for (i in 4:ncol(ses_dat)) {
+  hist(unlist(ses_dat[, i]), breaks = 25, main = names(ses_dat)[i])
 }
+rm(i)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Explore correlations between exposures
 cor_mat_spearman = p_mat_spearman = cor_mat_kendall = p_mat_kendall =
-  matrix(NA, nrow = ncol(ses_dat_plus) - 1, ncol = ncol(ses_dat_plus) - 1)
-for (ix in 1:(ncol(ses_dat_plus) - 2)) {
-  for (jx in (ix + 1):(ncol(ses_dat_plus) - 1)) {
+  matrix(NA, nrow = ncol(ses_dat) - 3, ncol = ncol(ses_dat) - 3)
+for (ix in 1:(ncol(ses_dat) - 4)) {
+  for (jx in (ix + 1):(ncol(ses_dat) - 3)) {
     if (ix != jx) {
-      cor_mat_spearman[ix, jx] = cor.test(ses_dat_plus[, ix + 1][[1]], ses_dat_plus[, jx + 1][[1]], method = 'spearman')$estimate
-      p_mat_spearman[ix, jx] = cor.test(ses_dat_plus[, ix + 1][[1]], ses_dat_plus[, jx + 1][[1]], method = 'spearman')$p.value
-      cor_mat_kendall[ix, jx] = cor.test(ses_dat_plus[, ix + 1][[1]], ses_dat_plus[, jx + 1][[1]], method = 'kendall')$estimate
-      p_mat_kendall[ix, jx] = cor.test(ses_dat_plus[, ix + 1][[1]], ses_dat_plus[, jx + 1][[1]], method = 'kendall')$p.value
+      cor_mat_spearman[ix, jx] = cor.test(ses_dat[, ix + 3][[1]], ses_dat[, jx + 3][[1]], method = 'spearman')$estimate
+      p_mat_spearman[ix, jx] = cor.test(ses_dat[, ix + 3][[1]], ses_dat[, jx + 3][[1]], method = 'spearman')$p.value
+      cor_mat_kendall[ix, jx] = cor.test(ses_dat[, ix + 3][[1]], ses_dat[, jx + 3][[1]], method = 'kendall')$estimate
+      p_mat_kendall[ix, jx] = cor.test(ses_dat[, ix + 3][[1]], ses_dat[, jx + 3][[1]], method = 'kendall')$p.value
     }
   }
 }
@@ -61,7 +66,7 @@ rownames(cor_mat_spearman) = colnames(cor_mat_spearman) =
   rownames(p_mat_spearman) = colnames(p_mat_spearman) =
   rownames(cor_mat_kendall) = colnames(cor_mat_kendall) =
   rownames(p_mat_kendall) = colnames(p_mat_kendall) =
-  names(ses_dat_plus)[2:ncol(ses_dat_plus)]
+  names(ses_dat)[4:ncol(ses_dat)]
 
 par(mfrow = c(2, 2))
 corrplot(cor_mat_spearman, method = 'number', diag = FALSE, type = 'upper', p.mat = p_mat_spearman)
@@ -69,32 +74,30 @@ corrplot(cor_mat_kendall, method = 'number', diag = FALSE, type = 'upper', p.mat
 
 corrplot(cor_mat_spearman, method = 'color', diag = FALSE, type = 'upper', p.mat = p_mat_spearman, sig.level = 0.05 / 100)
 corrplot(cor_mat_kendall, method = 'color', diag = FALSE, type = 'upper', p.mat = p_mat_kendall)
-# May be a good idea to remove average distance to pharmacies - this seems to be highly related to population density
-# Potentially remove percent of apartments in multi-family housing, too - population density and living area should be enough
-# Commuters in and out are also highly positively correlated, but there are likely some regions (cities in particular) where
-# there are a lot of incoming and very few outgoing commuters, so they could still both be informative
 
-ses_dat_plus <- ses_dat_plus %>%
-  select(-c(avg_dist_pharm, perc_apt_multifamily))
+rm(cor_mat_spearman, cor_mat_kendall, p_mat_spearman, p_mat_kendall)
+
+# Remove variables that are highly correlated:
+ses_dat <- ses_dat %>%
+  select(-c(avg_dist_pharm, living_area))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Map data:
-map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
+# Map data
 
-expect_true(all(unique(map_base$ARS) %in% unique(ses_dat_plus$lk_code)))
-expect_true(all(unique(ses_dat_plus$lk_code) %in% unique(map_base$ARS)))
+# Read in and format map data:
+map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
+expect_true(all(unique(ses_dat$lk_code) %in% unique(map_base$ARS)))
 
 nb <- spdep::poly2nb(map_base, row.names = map_base$ARS, queen = TRUE)
 attr(nb, 'region.id') <- map_base$ARS
 names(nb) <- attr(nb, 'region.id')
 
-map_base[, c('long', 'lat')] <- st_centroid(map_base) %>% st_transform(., '+proj=longlat') %>% st_coordinates()
-
 map_base <- map_base %>%
-  inner_join(ses_dat_plus, by = c('ARS' = 'lk_code'))
+  left_join(ses_dat, by = c('ARS' = 'lk_code'))
 
-vars_to_plot <- names(ses_dat_plus)[2:length(names(ses_dat_plus))]
+# Plot:
+vars_to_plot <- names(ses_dat)[4:ncol(ses_dat)]
 plot_list <- vector('list', length(vars_to_plot))
 for (i in 1:length(vars_to_plot)) {
   var <- vars_to_plot[i]
@@ -102,7 +105,7 @@ for (i in 1:length(vars_to_plot)) {
     rename('plot_var' = var)
   
   p.temp <- ggplot(data = map_plot) + geom_sf(aes(fill = plot_var)) +
-    scale_fill_viridis(na.value = 'transparent') + theme_void() +
+    scale_fill_viridis(na.value = 'gray80') + theme_void() +
     labs(fill = var)
   
   plot_list[[i]] <- p.temp
@@ -111,10 +114,8 @@ do.call('grid.arrange', c(plot_list, ncol = 4))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Calculate Moran's I for covariate data:
+# Calculate Moran's I for covariate data
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
-lw <- nb2listw(nb, style = "W", zero.policy = FALSE)
-# with other packages, can also use inverse distance matrix rather than just neighbors
 
 for (var in vars_to_plot) {
   print(var)
@@ -122,13 +123,13 @@ for (var in vars_to_plot) {
   map_base_temp <- map_base
   lw <- nb2listw(nb, style = "W", zero.policy = FALSE)
   
-  if (any(is.na(map_base[, var][[1]]))) {
-    map_base_temp <- map_base[!is.na(map_base[, var][[1]]), ]
+  if (any(is.na(map_base_temp[, var][[1]]))) {
+    map_base_temp <- map_base_temp[!is.na(map_base_temp[, var][[1]]), ]
     nb_temp <- spdep::poly2nb(map_base_temp, row.names = map_base_temp$ARS, queen = TRUE)
     lw <- nb2listw(nb_temp, style = "W", zero.policy = FALSE)
   }
   
-  if (var %in% c('hosp_beds', 'commuters_out')) {
+  if (var == 'hosp_beds') {
     moran.mc(map_base_temp[, var][[1]], lw, nsim = 999, alternative = 'less') %>%
       print()
   } else {
@@ -139,10 +140,9 @@ for (var in vars_to_plot) {
   print('')
 }
 
-# All significant; strongest positive autocorrelation with: GISD and Income/Work dimensions, living area, perc_imm, perc_65plus;
-# vaccinations partway through wave 4 much more clustered than partway through wave 3;
-# only hospital beds and outbound commuters significantly less clustered than expected;
-# <0.3: perc_women, perc_service, perc_production, commuters_in, education dimension
+# All significant; strongest positive autocorrelation with: GISD and Income/Work dimensions, perc_65plus;
+# vaccinations partway through wave 4 more clustered than partway through wave 3;
+# only hospital beds significantly less clustered than expected
 
 # Now do local Moran's I:
 for (var in vars_to_plot) {
@@ -200,10 +200,8 @@ for (var in vars_to_plot) {
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Where are data missing?:
-
-summary(ses_dat_plus)
-# one LK missing vaccination data; probably related to missing infection/death data from CDP
+# Any missing data?
+summary(ses_dat) # no missing data
 
 # ---------------------------------------------------------------------------------------------------------------------
 
