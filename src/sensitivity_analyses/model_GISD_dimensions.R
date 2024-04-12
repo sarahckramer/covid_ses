@@ -827,7 +827,7 @@ names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
 pred_a_bildung <- get_marginal_prediction(dat_cumulative, pred_var = 'TS_Bildung_adj',
                                           outcome_measure = 'incidence', mod_list, standardize = TRUE)
 plot_a_bildung <- plot_marginal_prediction(pred_a_bildung, 'TS_Bildung_adj', 'Cases / 10000 Pop',
-                                           single_plot = TRUE)
+                                           single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#377eb8', '#4daf4a', '#984ea3'))
 
 mod_list <- list(n1_1a_full_einkommen, n1_2a_full_einkommen, n2a_full_einkommen, n3a_full_einkommen, n4a_full_einkommen)
 names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
@@ -835,7 +835,7 @@ names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
 pred_a_einkommen <- get_marginal_prediction(dat_cumulative, pred_var = 'TS_Einkommen_adj',
                                             outcome_measure = 'incidence', mod_list, standardize = TRUE)
 plot_a_einkommen <- plot_marginal_prediction(pred_a_einkommen, 'TS_Einkommen_adj', 'Cases / 10000 Pop',
-                                             single_plot = TRUE)
+                                             single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#377eb8', '#4daf4a', '#984ea3'))
 
 mod_list <- list(n1_1a_full_arbeitswelt, n1_2a_full_arbeitswelt, n2a_full_arbeitswelt, n3a_full_arbeitswelt, n4a_full_arbeitswelt)
 names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
@@ -843,7 +843,7 @@ names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
 pred_a_arbeitswelt <- get_marginal_prediction(dat_cumulative, pred_var = 'TS_Arbeitswelt_adj',
                                               outcome_measure = 'incidence', mod_list, standardize = TRUE)
 plot_a_arbeitswelt <- plot_marginal_prediction(pred_a_arbeitswelt, 'TS_Arbeitswelt_adj', 'Cases / 10000 Pop',
-                                               single_plot = TRUE)
+                                               single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#377eb8', '#4daf4a', '#984ea3'))
 
 grid.arrange(plot_a_bildung, plot_a_einkommen, plot_a_arbeitswelt, nrow = 1)
 
