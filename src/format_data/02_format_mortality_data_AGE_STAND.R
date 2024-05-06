@@ -85,7 +85,7 @@ for (i in 1:400) {
         
       } else {
         print(cdp_temp[j, 'kr_tod_99'])
-        # This happens very rarely - only 3 deaths total
+        # This happens very rarely - only 6 deaths total
       }
       
     }
@@ -151,7 +151,7 @@ cdp_dat_check %>%
   mutate(diff = deaths.x - deaths.y) %>%
   pull(diff) %>%
   summary()
-# never more than 1; different in 627 / 312000 (0.20%) data points
+# never more than 1; different in 1222 / 353200 (0.35%) data points
 rm(cdp_dat_check, cdp_dat_sum_all_ages)
 
 # ---------------------------------------------------------------------------------------------------------------------
