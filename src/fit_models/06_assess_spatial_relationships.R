@@ -13,6 +13,7 @@ library(vegan)
 library(ncf)
 library(testthat)
 library(sf)
+library(testthat)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -93,6 +94,8 @@ n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')
 n3b_full <- read_rds('results/fitted_models/FULL_n3b_ml.rds')
 n4a_full <- read_rds('results/fitted_models/FULL_n4a_ml.rds')
 n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
+n5a_full <- read_rds('results/fitted_models/FULL_n5a_ml.rds')
+n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 
 # Calculate underlying spatial pattern:
 spatial_trend_FULL <- geo_dat %>%
@@ -102,29 +105,29 @@ spatial_trend_FULL <- geo_dat %>%
          cases_wave2 = 100,
          cases_wave3 = 100,
          cases_wave4 = 100,
+         cases_wave5 = 100,
          cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
          cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
          cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
+         cases_pre5_rate = mean(dat_cumulative$cases_pre5_rate),
          cases_wave1_rate = mean(dat_cumulative$cases_wave1_rate),
          cases_wave1_1_rate = mean(dat_cumulative$cases_wave1_1_rate),
          cases_wave2_rate = mean(dat_cumulative$cases_wave2_rate),
          cases_wave3_rate = mean(dat_cumulative$cases_wave3_rate),
          cases_wave4_rate = mean(dat_cumulative$cases_wave4_rate),
+         cases_wave5_rate = mean(dat_cumulative$cases_wave5_rate),
          ags2 = '01',
-         cases_pre2_rate = mean(dat_cumulative$cases_pre2_rate),
-         cases_pre3_rate = mean(dat_cumulative$cases_pre3_rate),
-         cases_pre4_rate = mean(dat_cumulative$cases_pre4_rate),
          perc_18to64 = mean(dat_cumulative$perc_18to64),
          perc_lessthan18 = mean(dat_cumulative$perc_lessthan18),
          hosp_beds = mean(dat_cumulative$hosp_beds),
          care_home_beds = mean(dat_cumulative$care_home_beds),
          GISD_Score = mean(dat_cumulative$GISD_Score),
          pop_dens = mean(dat_cumulative$pop_dens),
-         living_area = mean(dat_cumulative$living_area),
          perc_service = mean(dat_cumulative$perc_service),
          perc_production = mean(dat_cumulative$perc_production),
          vacc_w3_reg = mean(dat_cumulative$vacc_w3_reg),
-         vacc_w4_reg = mean(dat_cumulative$vacc_w4_reg))
+         vacc_w4_reg = mean(dat_cumulative$vacc_w4_reg),
+         vacc_w5_reg = mean(dat_cumulative$vacc_w5_reg))
 
 spatial_trend_FULL <- spatial_trend_FULL %>%
   mutate(fitted_n1_1a = predict(n1_1a_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
@@ -132,27 +135,31 @@ spatial_trend_FULL <- spatial_trend_FULL %>%
          fitted_n2a = predict(n2a_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
          fitted_n3a = predict(n3a_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
          fitted_n4a = predict(n4a_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
+         fitted_n5a = predict(n5a_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
          fitted_n1b = predict(n1b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
          fitted_n2b = predict(n2b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
          fitted_n3b = predict(n3b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
-         fitted_n4b = predict(n4b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)')) %>%
-  select(lk:lat, fitted_n1_1a:fitted_n4b)
+         fitted_n4b = predict(n4b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)'),
+         fitted_n5b = predict(n5b_full, spatial_trend_FULL, type = 'response', exclude = 's(ags2)')) %>%
+  select(lk:lat, fitted_n1_1a:fitted_n5b)
 expect_true(all.equal(geo_dat$lk, spatial_trend_FULL$lk))
 
 # Calculate "distance" between predicted incidence/CFR of each region:
-mats_a <- vector('list', length = 5)
-mats_b <- vector('list', length = 4)
+mats_a <- vector('list', length = 6)
+mats_b <- vector('list', length = 5)
 
 mats_a[[1]] <- as.matrix(dist(spatial_trend_FULL$fitted_n1_1a))
 mats_a[[2]] <- as.matrix(dist(spatial_trend_FULL$fitted_n1_2a))
 mats_a[[3]] <- as.matrix(dist(spatial_trend_FULL$fitted_n2a))
 mats_a[[4]] <- as.matrix(dist(spatial_trend_FULL$fitted_n3a))
 mats_a[[5]] <- as.matrix(dist(spatial_trend_FULL$fitted_n4a))
+mats_a[[6]] <- as.matrix(dist(spatial_trend_FULL$fitted_n5a))
 
 mats_b[[1]] <- as.matrix(dist(spatial_trend_FULL$fitted_n1b))
 mats_b[[2]] <- as.matrix(dist(spatial_trend_FULL$fitted_n2b))
 mats_b[[3]] <- as.matrix(dist(spatial_trend_FULL$fitted_n3b))
 mats_b[[4]] <- as.matrix(dist(spatial_trend_FULL$fitted_n4b))
+mats_b[[5]] <- as.matrix(dist(spatial_trend_FULL$fitted_n5b))
 
 mats_a <- lapply(mats_a, function(ix) {
   rownames(ix) = colnames(ix) = spatial_trend_FULL$lk
@@ -196,6 +203,9 @@ mantel(mats_a[[4]], mat_dist, method = 'spearman')
 mantel(mats_a[[5]], -mat_comm, method = 'spearman')
 mantel(mats_a[[5]], mat_dist, method = 'spearman')
 
+mantel(mats_a[[6]], -mat_comm, method = 'spearman')
+mantel(mats_a[[6]], mat_dist, method = 'spearman')
+
 mantel(mats_b[[1]], -mat_comm, method = 'spearman')
 mantel(mats_b[[1]], mat_dist, method = 'spearman')
 
@@ -208,14 +218,19 @@ mantel(mats_b[[3]], mat_dist, method = 'spearman')
 mantel(mats_b[[4]], -mat_comm, method = 'spearman')
 mantel(mats_b[[4]], mat_dist, method = 'spearman')
 
+mantel(mats_b[[5]], -mat_comm, method = 'spearman')
+mantel(mats_b[[5]], mat_dist, method = 'spearman')
+
 # Partial Mantel tests (control for geographic distance):
 partial.mantel.test(mats_a[[1]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_a[[2]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_a[[3]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_a[[4]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_a[[5]], mat_comm, mat_dist, method = 'spearman')
+partial.mantel.test(mats_a[[6]], mat_comm, mat_dist, method = 'spearman')
 
 partial.mantel.test(mats_b[[1]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_b[[2]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_b[[3]], mat_comm, mat_dist, method = 'spearman')
 partial.mantel.test(mats_b[[4]], mat_comm, mat_dist, method = 'spearman')
+partial.mantel.test(mats_b[[5]], mat_comm, mat_dist, method = 'spearman')
