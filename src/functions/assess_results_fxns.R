@@ -100,10 +100,12 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       
       if (outcome_measure == 'incidence') {
         outcome_var <- c('cases_wave1_1_rate', 'cases_wave1_2_rate', 'cases_wave2_1_rate', 'cases_wave2_2_rate',
-                         'cases_wave3_1_rate', 'cases_wave3_2_rate', 'cases_wave4_1_rate', 'cases_wave4_2_rate')[i]
+                         'cases_wave3_1_rate', 'cases_wave3_2_rate', 'cases_wave4_1_rate', 'cases_wave4_2_rate',
+                         'cases_wave5_1_rate', 'cases_wave5_2_rate')[i]
       } else if (outcome_measure == 'cfr') {
         outcome_var <- c('cfr_wave1_1', 'cfr_wave1_2', 'cfr_wave2_1', 'cfr_wave2_2',
-                         'cfr_wave3_1', 'cfr_wave3_2', 'cfr_wave4_1', 'cfr_wave4_2')[i]
+                         'cfr_wave3_1', 'cfr_wave3_2', 'cfr_wave4_1', 'cfr_wave4_2',
+                         'cfr_wave5_1', 'cfr_wave5_2')[i]
       } else {
         stop('Unrecognized outcome measure.')
       }

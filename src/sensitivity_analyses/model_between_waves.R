@@ -31,59 +31,58 @@ source('src/functions/assess_results_fxns.R')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Determine k-values for lat/long
-# 
-# # Loop through values and fit models:
-# n1a_summer_mods = n1b_summer_mods = n2a_summer_mods = n2b_summer_mods = vector('list', length = length(seq(10, 100, by = 10)))
-# 
-# for (i in 1:length(seq(10, 100, by = 10))) {
-#   k_val <- seq(10, 100, by = 10)[i]
-#   
-#   n1a_summer_mods[[i]] <- gam(cases_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
-#                                 s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                                 s(perc_service) + s(perc_production) +
-#                                 s(cases_wave1_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-#   n1b_summer_mods[[i]] <- gam(deaths_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
-#                                 s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer1_rate) +
-#                                 s(cases_wave1_rate) +
-#                                 offset(log(cases_summer1)), data = dat_cumulative, family = 'nb', method = 'ML')
-#   
-#   n2a_summer_mods[[i]] <- gam(cases_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
-#                                 s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                                 s(perc_service) + s(perc_production) +
-#                                 s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
-#                                 offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-#   n2b_summer_mods[[i]] <- gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
-#                                 s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
-#                                 s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
-#                                 offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML')
-#   
-# }
-# 
-# # Evaluate AICs and BICs:
-# n1a_summer_aics <- lapply(n1a_summer_mods, AIC) %>% unlist()
-# n1b_summer_aics <- lapply(n1b_summer_mods, AIC) %>% unlist()
-# n2a_summer_aics <- lapply(n2a_summer_mods, AIC) %>% unlist()
-# n2b_summer_aics <- lapply(n2b_summer_mods, AIC) %>% unlist()
-# 
-# n1a_summer_bics <- lapply(n1a_summer_mods, BIC) %>% unlist()
-# n1b_summer_bics <- lapply(n1b_summer_mods, BIC) %>% unlist()
-# n2a_summer_bics <- lapply(n2a_summer_mods, BIC) %>% unlist()
-# n2b_summer_bics <- lapply(n2b_summer_mods, BIC) %>% unlist()
-# 
-# # Plot:
-# par(mfrow = c(2, 1))
-# plot(seq(10, 100, by = 10), n1a_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
-# plot(seq(10, 100, by = 10), n1a_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
-# 
-# plot(seq(10, 100, by = 10), n1b_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
-# plot(seq(10, 100, by = 10), n1b_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
-# 
-# plot(seq(10, 100, by = 10), n2a_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
-# plot(seq(10, 100, by = 10), n2a_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
-# 
-# plot(seq(10, 100, by = 10), n2b_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
-# plot(seq(10, 100, by = 10), n2b_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+# Determine k-values for lat/long
+
+# Loop through values and fit models:
+n1a_summer_mods = n1b_summer_mods = n2a_summer_mods = n2b_summer_mods = vector('list', length = length(seq(10, 100, by = 10)))
+for (i in 1:length(seq(10, 100, by = 10))) {
+  k_val <- seq(10, 100, by = 10)[i]
+  
+  n1a_summer_mods[[i]] <- gam(cases_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+                                s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                                s(perc_service) + s(perc_production) +
+                                s(cases_wave1_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+  n1b_summer_mods[[i]] <- gam(deaths_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+                                s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer1_rate) +
+                                s(cases_wave1_rate) +
+                                offset(log(cases_summer1)), data = dat_cumulative, family = 'nb', method = 'ML')
+  
+  n2a_summer_mods[[i]] <- gam(cases_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+                                s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                                s(perc_service) + s(perc_production) +
+                                s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
+                                offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+  n2b_summer_mods[[i]] <- gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = k_val) + s(ags2, bs = 're', k = 16) +
+                                s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
+                                s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
+                                offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML')
+  
+}
+
+# Evaluate AICs and BICs:
+n1a_summer_aics <- lapply(n1a_summer_mods, AIC) %>% unlist()
+n1b_summer_aics <- lapply(n1b_summer_mods, AIC) %>% unlist()
+n2a_summer_aics <- lapply(n2a_summer_mods, AIC) %>% unlist()
+n2b_summer_aics <- lapply(n2b_summer_mods, AIC) %>% unlist()
+
+n1a_summer_bics <- lapply(n1a_summer_mods, BIC) %>% unlist()
+n1b_summer_bics <- lapply(n1b_summer_mods, BIC) %>% unlist()
+n2a_summer_bics <- lapply(n2a_summer_mods, BIC) %>% unlist()
+n2b_summer_bics <- lapply(n2b_summer_mods, BIC) %>% unlist()
+
+# Plot:
+par(mfrow = c(2, 1))
+plot(seq(10, 100, by = 10), n1a_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+plot(seq(10, 100, by = 10), n1a_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+
+plot(seq(10, 100, by = 10), n1b_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+plot(seq(10, 100, by = 10), n1b_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+
+plot(seq(10, 100, by = 10), n2a_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+plot(seq(10, 100, by = 10), n2a_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
+
+plot(seq(10, 100, by = 10), n2b_summer_aics, pch = 20, type = 'b', xlab = 'k', ylab = 'AIC')
+plot(seq(10, 100, by = 10), n2b_summer_bics, pch = 20, type = 'b', xlab = 'k', ylab = 'BIC')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -115,7 +114,7 @@ n1b_summer <- bake(file = 'results/fitted_models/SA/FULL_n1b_summer_ml.rds',
 n2a_summer <- bake(file = 'results/fitted_models/SA/FULL_n2a_summer_ml.rds',
                    expr = {
                      gam(cases_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 55) + s(ags2, bs = 're', k = 16) +
-                           s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                           s(perc_18to64) + s(perc_lessthan18, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                            s(perc_service) + s(perc_production) +
                            s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
                            offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
@@ -123,9 +122,9 @@ n2a_summer <- bake(file = 'results/fitted_models/SA/FULL_n2a_summer_ml.rds',
 )
 n2b_summer <- bake(file = 'results/fitted_models/SA/FULL_n2b_summer_ml.rds',
                    expr = {
-                     gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
-                           s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate, k = 25) +
-                           s(cases_pre_summer2_rate) + s(vacc_summer2_reg) + ti(cases_summer2_rate, hosp_beds) +
+                     gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                           s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
+                           s(cases_pre_summer2_rate) + s(vacc_summer2_reg) + #ti(cases_summer2_rate, hosp_beds) +
                            offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML')
                    }
 )
@@ -139,49 +138,42 @@ gam.check(n2b_summer, rep = 50)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Check for inclusion of interactions
-# 
-# # Initial check:
-# n1a_comp <- gam(cases_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-#                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                   s(perc_service) + s(perc_production) +
-#                   ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
-#                   ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
-#                   s(cases_wave1_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# n1b_comp <- gam(deaths_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
-#                   s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer1_rate) +
-#                   ti(pop_dens, GISD_Score) + ti(cases_summer1_rate, hosp_beds) +
-#                   s(cases_wave1_rate) +
-#                   offset(log(cases_summer1)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# 
-# n2a_comp <- gam(cases_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
-#                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                   s(perc_service) + s(perc_production) +
-#                   ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
-#                   ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
-#                   s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
-#                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# n2b_comp <- gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
-#                   s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
-#                   ti(pop_dens, GISD_Score) + ti(cases_summer2_rate, hosp_beds) +
-#                   s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
-#                   offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML', select = TRUE)
-# 
-# # Confirm improved model fit:
-# n1a_comp <- gam(cases_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-#                   s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                   s(perc_service) + s(perc_production) +
-#                   ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
-#                   s(cases_wave1_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-# n2b_comp <- gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
-#                   s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
-#                   ti(cases_summer2_rate, hosp_beds) +
-#                   s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
-#                   offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML')
-# 
-# anova(n1a_summer, n1a_comp, test = 'Chisq')
-# anova(n2b_summer, n2b_comp, test = 'Chisq')
-# # Only n2b_comp is significantly improved
+# Check for inclusion of interactions
+
+# Fit with all possible interactions:
+n1a_comp <- gam(cases_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
+                  ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
+                  s(cases_wave1_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1b_comp <- gam(deaths_summer1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens, k = 25) + s(cases_summer1_rate) +
+                  s(cases_wave1_rate) + ti(pop_dens, GISD_Score) + ti(cases_summer1_rate, hosp_beds) +
+                  offset(log(cases_summer1)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+n2a_comp <- gam(cases_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 55) + s(ags2, bs = 're', k = 16) +
+                  s(perc_18to64) + s(perc_lessthan18, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                  s(perc_service) + s(perc_production) +
+                  s(cases_pre_summer2_rate) + s(vacc_summer2_reg) +
+                  ti(perc_18to64, pop_dens) + ti(perc_18to64, GISD_Score) + ti(pop_dens, GISD_Score) +
+                  ti(perc_lessthan18, pop_dens) + ti(perc_lessthan18, GISD_Score) +
+                  offset(log(pop)), data = dat_cumulative, family = 'tw', method = 'ML')
+n2b_comp <- gam(deaths_summer2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                  s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_summer2_rate) +
+                  ti(pop_dens, GISD_Score) + ti(cases_summer2_rate, hosp_beds) +
+                  s(cases_pre_summer2_rate) + s(vacc_summer2_reg) + #ti(cases_summer2_rate, hosp_beds) +
+                  offset(log(cases_summer2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+AIC(n1a_summer, n1a_comp)
+AIC(n2a_summer, n2a_comp)
+AIC(n1b_summer, n1b_comp)
+AIC(n2b_summer, n2b_comp)
+
+BIC(n1a_summer, n1a_comp)
+BIC(n2a_summer, n2a_comp)
+BIC(n1b_summer, n1b_comp)
+BIC(n2b_summer, n2b_comp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -349,12 +341,3 @@ pred_b_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr'
 plot_b_cases_rate <- plot_marginal_prediction(pred_b_cases_rate, 'cases_rate', 'CFR',
                                               single_plot = FALSE)
 print(plot_b_cases_rate)
-
-pred_b_cases_rate_hosp_beds <- get_marginal_prediction(dat_cumulative, c('cases_rate', 'hosp_beds'),
-                                                       'cfr', mod_list, standardize = TRUE,
-                                                       partial_waves = FALSE, between_waves = TRUE)
-plot_b_cases_rate_hosp_beds <- plot_marginal_prediction(pred_b_cases_rate_hosp_beds,
-                                                        c('cases_rate', 'hosp_beds'),
-                                                        'CFR', single_plot = FALSE,
-                                                        which_waves = 'Wave summer1')
-print(plot_b_cases_rate_hosp_beds)

@@ -42,23 +42,15 @@ n1_1a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1_1a_NOSPATIAL_ml.r
 n1_2a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1_2a_NOSPATIAL_ml.rds',
                       expr = {
                         gam(cases_wave1_2 ~ s(ags2, bs = 're', k = 16) +
-                              s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                              s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) +
                               s(perc_service) + s(perc_production) + s(cases_wave1_1_rate) +
                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                       }
 )
-# n1a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1a_NOSPATIAL_ml.rds',
-#                     expr = {
-#                       gam(cases_wave1 ~ s(ags2, bs = 're', k = 16) +
-#                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-#                             s(perc_service) + s(perc_production) +
-#                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-#                     }
-# )
 n1b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1b_NOSPATIAL_ml.rds',
                     expr = {
                       gam(deaths_wave1 ~ s(ags2, bs = 're', k = 16) +
-                            s(hosp_beds, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
+                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
                             offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
 )
@@ -67,16 +59,15 @@ n1b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1b_NOSPATIAL_ml.rds',
 n2a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n2a_NOSPATIAL_ml.rds',
                     expr = {
                       gam(cases_wave2 ~ s(ags2, bs = 're', k = 16) +
-                            s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                            s(perc_18to64, k = 25) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) +
                             s(perc_service) + s(perc_production) +
-                            ti(perc_18to64, pop_dens, k = 8) + ti(perc_lessthan18, pop_dens) +
                             s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
 )
 n2b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n2b_NOSPATIAL_ml.rds',
                     expr = {
                       gam(deaths_wave2 ~ s(ags2, bs = 're', k = 16) +
-                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score, k = 25) + s(pop_dens) + s(cases_wave2_rate, k = 25) +
+                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave2_rate) +
                             s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
 )
@@ -87,7 +78,6 @@ n3a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n3a_NOSPATIAL_ml.rds',
                       gam(cases_wave3 ~ s(ags2, bs = 're', k = 16) +
                             s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                             s(perc_service) + s(perc_production) +
-                            ti(perc_18to64, GISD_Score) + ti(perc_lessthan18, GISD_Score) +
                             s(cases_pre3_rate) + s(vacc_w3_reg) +
                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
@@ -95,8 +85,8 @@ n3a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n3a_NOSPATIAL_ml.rds',
 n3b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n3b_NOSPATIAL_ml.rds',
                     expr = {
                       gam(deaths_wave3 ~ s(ags2, bs = 're', k = 16) +
-                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate) +
-                            s(cases_pre3_rate) + s(vacc_w3_reg) +
+                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave3_rate, k = 25) +
+                            s(cases_pre3_rate) + s(vacc_w3_reg) + ti(pop_dens, GISD_Score) +
                             offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
 )
@@ -105,9 +95,8 @@ n3b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n3b_NOSPATIAL_ml.rds',
 n4a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n4a_NOSPATIAL_ml.rds',
                     expr = {
                       gam(cases_wave4 ~ s(ags2, bs = 're', k = 16) +
-                            s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                            s(perc_18to64) + s(perc_lessthan18, k = 25) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
                             s(perc_service) + s(perc_production) +
-                            ti(perc_lessthan18, GISD_Score) +
                             s(cases_pre4_rate) + s(vacc_w4_reg) +
                             offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
@@ -118,6 +107,25 @@ n4b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n4b_NOSPATIAL_ml.rds',
                             s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave4_rate) +
                             s(cases_pre4_rate) + s(vacc_w4_reg) +
                             offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
+                    }
+)
+
+# Wave 5:
+n5a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n5a_NOSPATIAL_ml.rds',
+                    expr = {
+                      gam(cases_wave5 ~ s(ags2, bs = 're', k = 16) +
+                            s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                            s(perc_service) + s(perc_production) +
+                            s(cases_pre5_rate, k = 25) + s(vacc_w5_reg) +
+                            offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+                    }
+)
+n5b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n5b_NOSPATIAL_ml.rds',
+                    expr = {
+                      gam(deaths_wave5 ~ s(ags2, bs = 're', k = 16) +
+                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave5_rate) +
+                            s(cases_pre5_rate) + s(vacc_w5_reg) +
+                            offset(log(cases_wave5)), data = dat_cumulative, family = 'nb', method = 'ML')
                     }
 )
 
@@ -132,6 +140,8 @@ gam.check(n3a_full_NS, rep = 50)
 gam.check(n3b_full_NS, rep = 50)
 gam.check(n4a_full_NS, rep = 50)
 gam.check(n4b_full_NS, rep = 50)
+gam.check(n5a_full_NS, rep = 50)
+gam.check(n5b_full_NS, rep = 50)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -144,10 +154,12 @@ check_dharma(dat_cumulative, n1_2a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n2a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n3a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n4a_full_NS, depend = 'none')
+check_dharma(dat_cumulative, n5a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n1b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n2b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n3b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n4b_full_NS, depend = 'none')
+check_dharma(dat_cumulative, n5b_full_NS, depend = 'none')
 
 # Check for residual spatial autocorrelation:
 dat_cumulative$resid_n1_1a <- residuals(n1_1a_full_NS, type = 'deviance')
@@ -159,12 +171,14 @@ dat_cumulative$resid_n3a <- residuals(n3a_full_NS, type = 'deviance')
 dat_cumulative$resid_n3b <- residuals(n3b_full_NS, type = 'deviance')
 dat_cumulative$resid_n4a <- residuals(n4a_full_NS, type = 'deviance')
 dat_cumulative$resid_n4b <- residuals(n4b_full_NS, type = 'deviance')
+dat_cumulative$resid_n5a <- residuals(n5a_full_NS, type = 'deviance')
+dat_cumulative$resid_n5b <- residuals(n5b_full_NS, type = 'deviance')
 
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
               select(lk, resid_n1_1a, resid_n1_2a, resid_n1b, resid_n2a, resid_n2b,
-                     resid_n3a, resid_n3b, resid_n4a, resid_n4b),
+                     resid_n3a, resid_n3b, resid_n4a, resid_n4b, resid_n5a, resid_n5b),
             by = c('ARS' = 'lk')) %>%
   drop_na()
 
@@ -182,6 +196,8 @@ moran.mc(map_base$resid_n3a, lw, nsim = 999)
 moran.mc(map_base$resid_n3b, lw, nsim = 999)
 moran.mc(map_base$resid_n4a, lw, nsim = 999)
 moran.mc(map_base$resid_n4b, lw, nsim = 999)
+moran.mc(map_base$resid_n5a, lw, nsim = 999)
+moran.mc(map_base$resid_n5b, lw, nsim = 999)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -195,6 +211,8 @@ n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')
 n3b_full <- read_rds('results/fitted_models/FULL_n3b_ml.rds')
 n4a_full <- read_rds('results/fitted_models/FULL_n4a_ml.rds')
 n4b_full <- read_rds('results/fitted_models/FULL_n4b_ml.rds')
+n5a_full <- read_rds('results/fitted_models/FULL_n5a_ml.rds')
+n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -216,6 +234,9 @@ summary(n3a_full_NS)
 summary(n4a_full)
 summary(n4a_full_NS)
 
+summary(n5a_full)
+summary(n5a_full_NS)
+
 summary(n1b_full)
 summary(n1b_full_NS)
 
@@ -228,44 +249,33 @@ summary(n3b_full_NS)
 summary(n4b_full)
 summary(n4b_full_NS)
 
+summary(n5b_full)
+summary(n5b_full_NS)
+
 # Plot smooth relationships between GISD_Score and incidence/CFR:
-mod_list <- list(n1_1a_full_NS, n1_2a_full_NS, n2a_full_NS, n3a_full_NS, n4a_full_NS)
-names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
+mod_list <- list(n1_1a_full_NS, n1_2a_full_NS, n2a_full_NS, n3a_full_NS, n4a_full_NS, n5a_full_NS)
+names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
 
 pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'incidence', mod_list, standardize = TRUE)
-plot_a_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
+plot_a_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'))
 print(plot_a_GISD_Score)
 
-mod_list <- list(n1b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS)
-names(mod_list) <- c('1', '2', '3', '4')
+mod_list <- list(n1b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS, n5b_full_NS)
+names(mod_list) <- c('1', '2', '3', '4', '5')
 
 pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'cfr', mod_list, standardize = TRUE)
 plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = TRUE)
 print(plot_b_GISD_Score)
 
 # Plot interactions with GISD_Score:
-mod_list <- list(n1_1a_full_NS, n1_2a_full_NS, n2a_full_NS, n3a_full_NS, n4a_full_NS)
-names(mod_list) <- c('1_1', '1_2', '2', '3', '4')
-
-pred_GISD_Score_perc18to64 <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'perc_18to64'),
-                                                      'incidence', mod_list, standardize = TRUE)
-pred_GISD_Score_perclessthan18 <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'perc_lessthan18'),
-                                                          'incidence', mod_list, standardize = TRUE)
-
-plot_a_GISD_Score_perc18to64 <- plot_marginal_prediction(pred_GISD_Score_perc18to64, c('GISD_Score', 'perc_18to64'),
-                                                         'Cases / 10000 Pop', single_plot = FALSE,
-                                                         which_waves = 3)
-plot_a_GISD_Score_perclessthan18 <- plot_marginal_prediction(pred_GISD_Score_perclessthan18, c('GISD_Score', 'perc_lessthan18'),
-                                                             'Cases / 10000 Pop', single_plot = FALSE,
-                                                             which_waves = c(3, 4))
-
-grid.arrange(plot_a_GISD_Score_perc18to64[[1]], plot_a_GISD_Score_perclessthan18[[1]][[1]])
-print(plot_a_GISD_Score_perclessthan18[[1]][[2]])
+pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'),
+                                                   'cfr', mod_list, standardize = TRUE)
+plot_b_GISD_Score_popdens <- plot_marginal_prediction(pred_GISD_Score_popdens, c('GISD_Score', 'pop_dens'),
+                                                      'CFR', single_plot = FALSE,
+                                                      which_waves = 3)
+print(plot_b_GISD_Score_popdens[[1]])
 
 # Plot smooth relationships between incidence and CFR:
-mod_list <- list(n1b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS)
-names(mod_list) <- c('1', '2', '3', '4')
-
 pred_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr', mod_list, standardize = TRUE)
 plot_b_cases_rate <- plot_marginal_prediction(pred_cases_rate, 'cases_rate', 'CFR', single_plot = FALSE)
 print(plot_b_cases_rate)
