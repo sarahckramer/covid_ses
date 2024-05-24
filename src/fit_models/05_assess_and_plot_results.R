@@ -169,7 +169,7 @@ p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$
 
 fig1 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 1.5)),
                     arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 1.5)))
-ggsave('results/Figure1.svg', fig1, width = 16.5, height = 9.25)
+# ggsave('results/Figure1.svg', fig1, width = 16.5, height = 9.25)
 
 # Significant clustering by Moran's I?:
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
@@ -358,9 +358,9 @@ plot_a_lessthan18 <- plot_a_lessthan18 + labs(x = '% Aged <18', tag = 'E') + the
 plot_a_pop_dens <- plot_a_pop_dens + labs(x = 'Population Density (100s / km2)', tag = 'F') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
 plot_a_care_home_beds <- plot_a_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'G') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
 
-fig2 <- plot_a_GISD_Score + plot_a_service + plot_a_production + plot_a_18to64 + plot_a_lessthan18 +
+fig1 <- plot_a_GISD_Score + plot_a_service + plot_a_production + plot_a_18to64 + plot_a_lessthan18 +
   plot_a_pop_dens + plot_a_care_home_beds + plot_layout(nrow = 2)
-ggsave('results/Figure2.svg', fig2, width = 22, height = 7.8)
+ggsave('results/Figure1.svg', fig1, width = 22, height = 7.8)
 
 mod_list <- list(n1_2a_full, n2a_full, n3a_full, n4a_full, n5a_full)
 names(mod_list) <- c('1_2', '2', '3', '4', '5')
@@ -394,14 +394,18 @@ plot_b_GISD_Score <- plot_b_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plo
 plot_b_hosp_beds <- plot_b_hosp_beds + labs(x = 'Hospital Beds per 1000 Pop', tag = 'B') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
 plot_b_care_home_beds <- plot_b_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'C') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
 
-fig3 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layout(nrow = 1)
-ggsave('results/Figure3.svg', fig3, width = 15.8, height = 4.0)
+fig2 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layout(nrow = 1)
+ggsave('results/Figure2.svg', fig2, width = 15.8, height = 4.0)
 
 # plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = FALSE)
 # plot_b_hosp_beds <- plot_marginal_prediction(pred_hosp_beds, 'hosp_beds', 'CFR', single_plot = FALSE)
 # plot_b_care_home_beds <- plot_marginal_prediction(pred_care_home_beds, 'care_home_beds', 'CFR', single_plot = FALSE)
 # 
 # grid.arrange(plot_b_hosp_beds, plot_b_care_home_beds, plot_b_GISD_Score, ncol = 1)
+
+pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'), 'cfr', mod_list, standardize = TRUE)
+plot_b_GISD_Score_popdens <- plot_marginal_prediction(pred_GISD_Score_popdens, c('GISD_Score', 'pop_dens'), 'CFR', single_plot = TRUE, which_waves = 3)
+print(plot_b_GISD_Score_popdens[[1]])
 
 pred_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr', mod_list, standardize = TRUE)
 
@@ -423,7 +427,7 @@ print(plot_b_cases_rate)
 print(plot_b_cases_pre)
 print(plot_b_vacc)
 
-ggsave('results/Figure4.svg', plot_b_cases_rate, width = 13.125, height = 4.25)
+ggsave('results/Figure3.svg', plot_b_cases_rate, width = 13.125, height = 4.25)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
