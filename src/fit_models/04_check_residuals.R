@@ -28,8 +28,8 @@ source('src/functions/load_data.R')
 # Load models:
 n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
 n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
-# n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
+n1_1b_full <- read_rds('results/fitted_models/FULL_n1_1b_ml.rds')
+n1_2b_full <- read_rds('results/fitted_models/FULL_n1_2b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')
@@ -42,7 +42,8 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 # Add fitted values to data frame:
 dat_cumulative$fitted_n1_1a <- fitted(n1_1a_full)
 dat_cumulative$fitted_n1_2a <- fitted(n1_2a_full)
-dat_cumulative$fitted_n1b <- fitted(n1b_full)
+dat_cumulative$fitted_n1_1b <- fitted(n1_1b_full)
+dat_cumulative$fitted_n1_2b <- fitted(n1_2b_full)
 dat_cumulative$fitted_n2a <- fitted(n2a_full)
 dat_cumulative$fitted_n2b <- fitted(n2b_full)
 dat_cumulative$fitted_n3a <- fitted(n3a_full)
@@ -64,15 +65,15 @@ plot(dat_cumulative$cases_wave1_2, fitted(n1_2a_full),
      main = 'Cases per Pop (Wave 1_2)', pch = 20)
 lines(dat_cumulative$cases_wave1_2, dat_cumulative$cases_wave1_2,
       col = 'gray80')
-# plot(dat_cumulative$cases_wave1, fitted(n1a_full),
-#      xlab = 'Observed Values', ylab = 'Fitted Values',
-#      main = 'Cases per Pop (Wave 1)', pch = 20)
-# lines(dat_cumulative$cases_wave1, dat_cumulative$cases_wave1,
-#       col = 'gray80')
-plot(dat_cumulative$deaths_wave1, fitted(n1b_full),
+plot(dat_cumulative$deaths_wave1_1, fitted(n1_1b_full),
      xlab = 'Observed Values', ylab = 'Fitted Values',
-     main = 'Deaths per Case (Wave 1)', pch = 20)
-lines(dat_cumulative$deaths_wave1, dat_cumulative$deaths_wave1,
+     main = 'Deaths per Case (Wave 1_1)', pch = 20)
+lines(dat_cumulative$deaths_wave1_1, dat_cumulative$deaths_wave1_1,
+      col = 'gray80')
+plot(dat_cumulative$deaths_wave1_2, fitted(n1_2b_full),
+     xlab = 'Observed Values', ylab = 'Fitted Values',
+     main = 'Deaths per Case (Wave 1_2)', pch = 20)
+lines(dat_cumulative$deaths_wave1_2, dat_cumulative$deaths_wave1_2,
       col = 'gray80')
 plot(dat_cumulative$cases_wave2, fitted(n2a_full),
      xlab = 'Observed Values', ylab = 'Fitted Values',
@@ -125,14 +126,14 @@ plot(log(fitted(n1_2a_full)), residuals(n1_2a_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
      main = 'Cases per Pop (Wave 1_2)', pch = 20)#, col = dat_cumulative$bundesland)
 lines(smooth.spline(log(fitted(n1_2a_full)), residuals(n1_2a_full, type = 'deviance')))
-# plot(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance'),
-#      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-#      main = 'Cases per Pop (Wave 1)', pch = 20)#, col = dat_cumulative$bundesland)
-# lines(smooth.spline(log(fitted(n1a_full)), residuals(n1a_full, type = 'deviance')))
-plot(log(fitted(n1b_full)), residuals(n1b_full, type = 'deviance'),
+plot(log(fitted(n1_1b_full)), residuals(n1_1b_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
-     main = 'Deaths per Case (Wave 1)', pch = 20)#, col = dat_cumulative$bundesland)
-lines(smooth.spline(log(fitted(n1b_full)), residuals(n1b_full, type = 'deviance')))
+     main = 'Deaths per Case (Wave 1_1)', pch = 20)#, col = dat_cumulative$bundesland)
+lines(smooth.spline(log(fitted(n1_1b_full)), residuals(n1_1b_full, type = 'deviance')))
+plot(log(fitted(n1_2b_full)), residuals(n1_2b_full, type = 'deviance'),
+     xlab = 'Fitted Values', ylab = 'Deviance Residuals',
+     main = 'Deaths per Case (Wave 1_2)', pch = 20)#, col = dat_cumulative$bundesland)
+lines(smooth.spline(log(fitted(n1_2b_full)), residuals(n1_2b_full, type = 'deviance')))
 plot(log(fitted(n2a_full)), residuals(n2a_full, type = 'deviance'),
      xlab = 'Fitted Values', ylab = 'Deviance Residuals',
      main = 'Cases per Pop (Wave 2)', pch = 20)#, col = dat_cumulative$bundesland)
@@ -173,10 +174,10 @@ par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n1_1a_full, depend = 'cases')
 par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n1_2a_full, depend = 'cases')
-# par(mfrow = c(2, 2))
-# check_dharma(dat_cumulative, n1a_full, depend = 'cases')
 par(mfrow = c(2, 2))
-check_dharma(dat_cumulative, n1b_full, depend = 'deaths')
+check_dharma(dat_cumulative, n1_1b_full, depend = 'deaths')
+par(mfrow = c(2, 2))
+check_dharma(dat_cumulative, n1_2b_full, depend = 'deaths')
 par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n2a_full, depend = 'cases')
 par(mfrow = c(2, 2))
@@ -197,8 +198,8 @@ check_dharma(dat_cumulative, n5b_full, depend = 'deaths')
 # Calculate Moran's I for residuals:
 dat_cumulative$resid_n1_1a <- residuals(n1_1a_full, type = 'deviance')
 dat_cumulative$resid_n1_2a <- residuals(n1_2a_full, type = 'deviance')
-# dat_cumulative$resid_n1a <- residuals(n1a_full, type = 'deviance')
-dat_cumulative$resid_n1b <- residuals(n1b_full, type = 'deviance')
+dat_cumulative$resid_n1_1b <- residuals(n1_1b_full, type = 'deviance')
+dat_cumulative$resid_n1_2b <- residuals(n1_2b_full, type = 'deviance')
 dat_cumulative$resid_n2a <- residuals(n2a_full, type = 'deviance')
 dat_cumulative$resid_n2b <- residuals(n2b_full, type = 'deviance')
 dat_cumulative$resid_n3a <- residuals(n3a_full, type = 'deviance')
@@ -211,7 +212,7 @@ dat_cumulative$resid_n5b <- residuals(n5b_full, type = 'deviance')
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
-              select(lk, resid_n1_1a, resid_n1_2a, resid_n1b, resid_n2a, resid_n2b,
+              select(lk, resid_n1_1a, resid_n1_2a, resid_n1_1b, resid_n1_2b, resid_n2a, resid_n2b,
                      resid_n3a, resid_n3b, resid_n4a, resid_n4b, resid_n5a, resid_n5b),
             by = c('ARS' = 'lk')) %>%
   drop_na()
@@ -224,8 +225,8 @@ lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
 
 moran.mc(map_base$resid_n1_1a, lw, nsim = 999)
 moran.mc(map_base$resid_n1_2a, lw, nsim = 999)
-# moran.mc(map_base$resid_n1a, lw, nsim = 999)
-moran.mc(map_base$resid_n1b, lw, nsim = 999)
+moran.mc(map_base$resid_n1_1b, lw, nsim = 999)
+moran.mc(map_base$resid_n1_2b, lw, nsim = 999)
 moran.mc(map_base$resid_n2a, lw, nsim = 999)
 moran.mc(map_base$resid_n2b, lw, nsim = 999)
 moran.mc(map_base$resid_n3a, lw, nsim = 999)

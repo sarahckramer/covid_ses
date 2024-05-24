@@ -22,7 +22,8 @@ source('src/functions/load_data.R')
 # Load full models:
 n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
 n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
+n1_1b_full <- read_rds('results/fitted_models/FULL_n1_1b_ml.rds')
+n1_2b_full <- read_rds('results/fitted_models/FULL_n1_2b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')
@@ -202,10 +203,15 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 #                   s(cases_pre5_rate, k = 25) + s(vacc_w5_reg) +
 #                   offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
 # 
-# n1b_comp <- gam(deaths_wave1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-#                   s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
-#                   ti(pop_dens, GISD_Score) + ti(cases_wave1_rate, hosp_beds) + offset(log(cases_wave1)),
-#                 data = dat_cumulative, family = 'nb', method = 'ML')
+# n1_1b_comp <- gam(deaths_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+#                     s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_1_rate) +
+#                     ti(pop_dens, GISD_Score) + ti(cases_wave1_rate, hosp_beds) +
+#                     offset(log(cases_wave1_1)), data = dat_cumulative, family = 'nb', method = 'ML')
+# n1_2b_comp <- gam(deaths_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+#                     s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+#                     s(cases_wave1_1_rate) + s(cases_wave1_2_rate) +
+#                     ti(pop_dens, GISD_Score) + ti(cases_wave1_rate, hosp_beds) +
+#                     offset(log(cases_wave1_2)), data = dat_cumulative, family = 'nb', method = 'ML')
 # n2b_comp <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
 #                   s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave2_rate) +
 #                   s(cases_pre2_rate) + ti(pop_dens, GISD_Score) + ti(cases_wave1_rate, hosp_beds) +
@@ -231,7 +237,8 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 # gam.check(n4a_comp, rep = 50)
 # gam.check(n5a_comp, rep = 50)
 # 
-# gam.check(n1b_comp, rep = 50)
+# gam.check(n1_1b_comp, rep = 50)
+# gam.check(n1_2b_comp, rep = 50)
 # gam.check(n2b_comp, rep = 50)
 # gam.check(n3b_comp, rep = 50)
 # gam.check(n4b_comp, rep = 50)
@@ -239,7 +246,8 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 # 
 # AIC(n1_1a_base, n1_1a_comp)
 # AIC(n1_2a_base, n1_2a_comp)
-# AIC(n1b_full, n1b_comp)
+# AIC(n1_1b_full, n1_1b_comp)
+# AIC(n1_2b_full, n1_2b_comp)
 # AIC(n2a_base, n2a_comp)
 # AIC(n2b_full, n2b_comp)
 # AIC(n3a_base, n3a_comp)
@@ -249,6 +257,7 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 # AIC(n5a_base, n5a_comp)
 # AIC(n5b_full, n5b_comp)
 # 
+# BIC(n1_2b_full, n1_2b_comp)
 # BIC(n2a_base, n2a_comp)
 # BIC(n3b_full, n3b_comp)
 # BIC(n4a_base, n4a_comp)

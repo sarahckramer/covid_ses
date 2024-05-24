@@ -139,6 +139,14 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
           } else {
             stop('Unrecognized partial wave.')
           }
+        } else if (outcome_measure == 'cfr') {
+          if (wave == '1_1') {
+            outcome_var <- 'cfr_wave1_1'
+          } else if (wave == '1_2') {
+            outcome_var <- 'cfr_wave1_2'
+          } else {
+            stop('Unrecognized partial wave.')
+          }
         } else {
           stop('Unrecognized outcome measure.')
         }

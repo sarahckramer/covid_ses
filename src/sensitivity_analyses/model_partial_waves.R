@@ -35,40 +35,6 @@ source('src/functions/assess_results_fxns.R')
 # By default, use same k-values for lat/long as for full waves, but adjust based on gam.check/DHARMa
 # For all other parameters, check gam.check, and use same k's for both partial waves
 
-# Wave 1:
-# n1_1a_full <- bake(file = 'results/fitted_models/SA/FULL_n1_1a_ml.rds',
-#                    expr = {
-#                      gam(cases_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-#                            s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
-#                            s(perc_service) + s(perc_production) +
-#                            offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-#                    }
-# )
-# n1_2a_full <- bake(file = 'results/fitted_models/SA/FULL_n1_2a_ml.rds',
-#                    expr = {
-#                      gam(cases_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-#                            s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds, k = 25) + s(GISD_Score) + s(pop_dens) +
-#                            s(perc_service) + s(perc_production) + s(cases_wave1_1_rate) +
-#                            offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-#                    }
-# )
-
-n1_1b_full <- bake(file = 'results/fitted_models/SA/FULL_n1_1b_ml.rds',
-                   expr = {
-                     gam(deaths_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-                           s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_1_rate) +
-                           offset(log(cases_wave1_1)), data = dat_cumulative, family = 'nb', method = 'ML')
-                   }
-)
-n1_2b_full <- bake(file = 'results/fitted_models/SA/FULL_n1_2b_ml.rds',
-                   expr = {
-                     gam(deaths_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
-                           s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_2_rate) +
-                           s(cases_wave1_1_rate) +
-                           offset(log(cases_wave1_2)), data = dat_cumulative, family = 'nb', method = 'ML')
-                   }
-)
-
 # Wave 2:
 n2_1a_full <- bake(file = 'results/fitted_models/SA/FULL_n2_1a_ml.rds',
                    expr = {
@@ -215,10 +181,6 @@ n5_2b_full <- bake(file = 'results/fitted_models/SA/FULL_n5_2b_ml.rds',
 
 # Quick check of fits:
 par(mfrow = c(2, 2))
-# gam.check(n1_1a_full, rep = 50)
-# gam.check(n1_2a_full, rep = 50)
-gam.check(n1_1b_full, rep = 50)
-gam.check(n1_2b_full, rep = 50)
 
 gam.check(n2_1a_full, rep = 50)
 gam.check(n2_2a_full, rep = 50)
@@ -245,16 +207,6 @@ gam.check(n5_2b_full, rep = 50)
 # Residual checks
 
 # Check using DHARMa package:
-# par(mfrow = c(2, 2))
-# check_dharma(dat_cumulative, n1_1a_full, depend = 'none')
-# par(mfrow = c(2, 2))
-# check_dharma(dat_cumulative, n1_2a_full, depend = 'none')
-
-par(mfrow = c(2, 2))
-check_dharma(dat_cumulative, n1_1b_full, depend = 'none')
-par(mfrow = c(2, 2))
-check_dharma(dat_cumulative, n1_2b_full, depend = 'none')
-
 par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n2_1a_full, depend = 'none')
 par(mfrow = c(2, 2))
@@ -296,10 +248,6 @@ par(mfrow = c(2, 2))
 check_dharma(dat_cumulative, n5_2b_full, depend = 'none')
 
 # Check for residual spatial autocorrelation:
-# dat_cumulative$resid_n1_1a <- residuals(n1_1a_full, type = 'deviance')
-# dat_cumulative$resid_n1_2a <- residuals(n1_2a_full, type = 'deviance')
-dat_cumulative$resid_n1_1b <- residuals(n1_1b_full, type = 'deviance')
-dat_cumulative$resid_n1_2b <- residuals(n1_2b_full, type = 'deviance')
 dat_cumulative$resid_n2_1a <- residuals(n2_1a_full, type = 'deviance')
 dat_cumulative$resid_n2_2a <- residuals(n2_2a_full, type = 'deviance')
 dat_cumulative$resid_n2_1b <- residuals(n2_1b_full, type = 'deviance')
@@ -320,7 +268,7 @@ dat_cumulative$resid_n5_2b <- residuals(n5_2b_full, type = 'deviance')
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
-              select(lk, resid_n1_1b:resid_n5_2b),
+              select(lk, resid_n2_1a:resid_n5_2b),
             by = c('ARS' = 'lk')) %>%
   drop_na()
 
@@ -329,11 +277,6 @@ attr(nb, 'region.id') <- map_base$ARS
 names(nb) <- attr(nb, 'region.id')
 
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
-# moran.mc(map_base$resid_n1_1a, lw, nsim = 999)
-# moran.mc(map_base$resid_n1_2a, lw, nsim = 999)
-moran.mc(map_base$resid_n1_1b, lw, nsim = 999)
-moran.mc(map_base$resid_n1_2b, lw, nsim = 999)
-
 moran.mc(map_base$resid_n2_1a, lw, nsim = 999)
 moran.mc(map_base$resid_n2_2a, lw, nsim = 999)
 moran.mc(map_base$resid_n2_1b, lw, nsim = 999)
@@ -357,8 +300,6 @@ moran.mc(map_base$resid_n5_2b, lw, nsim = 999)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in full wave models:
-# n1a_full <- read_rds('results/fitted_models/FULL_n1a_ml.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')
@@ -618,10 +559,6 @@ pairs.panels(dat_cumulative %>%
              cex.cor = 0.6)
 
 # Compare deviance explained to full wave models:
-# summary(n1a_full)
-# summary(n1_1a_full)
-# summary(n1_2a_full)
-
 summary(n2a_full)
 summary(n2_1a_full)
 summary(n2_2a_full)
@@ -637,10 +574,6 @@ summary(n4_2a_full)
 summary(n5a_full)
 summary(n5_1a_full)
 summary(n5_2a_full)
-
-summary(n1b_full)
-summary(n1_1b_full)
-summary(n1_2b_full)
 
 summary(n2b_full)
 summary(n2_1b_full)
@@ -661,6 +594,8 @@ summary(n5_2b_full)
 # Plot smooth relationships between GISD_Score and incidence/CFR for each pair of partial waves:
 n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
 n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
+n1_1b_full <- read_rds('results/fitted_models/FULL_n1_1b_ml.rds')
+n1_2b_full <- read_rds('results/fitted_models/FULL_n1_2b_ml.rds')
 
 mod_list <- list(n1_1a_full, n1_2a_full, n2_1a_full, n2_2a_full, n3_1a_full, n3_2a_full, n4_1a_full, n4_2a_full, n5_1a_full, n5_2a_full)
 names(mod_list) <- c('1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2', '5_1', '5_2')
