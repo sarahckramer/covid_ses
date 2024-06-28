@@ -601,40 +601,26 @@ mod_list <- list(n1_1a_full, n1_2a_full, n2_1a_full, n2_2a_full, n3_1a_full, n3_
 names(mod_list) <- c('1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2', '5_1', '5_2')
 
 pred_a_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'incidence', mod_list,
-                                           standardize = TRUE, partial_waves = TRUE)
+                                             standardize = TRUE, partial_waves = TRUE)
 
-plot_a_wave1 <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(str_detect(wave, 'Wave 1')),
-                                         'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
-plot_a_wave2 <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(str_detect(wave, 'Wave 2')),
-                                         'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
-plot_a_wave3 <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(str_detect(wave, 'Wave 3')),
-                                         'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
-plot_a_wave4 <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(str_detect(wave, 'Wave 4')),
-                                         'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
-plot_a_wave5 <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(str_detect(wave, 'Wave 5')),
-                                         'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE)
-# grid.arrange(plot_a_wave1, plot_a_wave2, plot_a_wave3, plot_a_wave4, plot_a_wave5, ncol = 2)
+plot_a <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(!str_detect(wave, 'Wave 1')),
+                                   'GISD_Score', 'Cases / 10000 Pop', single_plot = FALSE)
+plot_a <- plot_a + labs(x = 'GISD', y = 'Relative Change\n(Cases / 10000 Pop', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_2b_full, n4_1b_full, n4_2b_full, n5_1b_full, n5_2b_full)
 names(mod_list) <- c('1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2', '5_1', '5_2')
 
 pred_b_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'cfr', mod_list,
-                                           standardize = TRUE, partial_waves = TRUE)
+                                             standardize = TRUE, partial_waves = TRUE)
 
-plot_b_wave1 <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(str_detect(wave, 'Wave 1')),
-                                         'GISD_Score', 'CFR', single_plot = TRUE)
-plot_b_wave2 <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(str_detect(wave, 'Wave 2')),
-                                         'GISD_Score', 'CFR', single_plot = TRUE)
-plot_b_wave3 <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(str_detect(wave, 'Wave 3')),
-                                         'GISD_Score', 'CFR', single_plot = TRUE)
-plot_b_wave4 <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(str_detect(wave, 'Wave 4')),
-                                         'GISD_Score', 'CFR', single_plot = TRUE)
-plot_b_wave5 <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(str_detect(wave, 'Wave 5')),
-                                         'GISD_Score', 'CFR', single_plot = TRUE)
-# grid.arrange(plot_b_wave1, plot_b_wave2, plot_b_wave3, plot_b_wave4, plot_b_wave5, ncol = 2)
-grid.arrange(plot_a_wave1, plot_a_wave2, plot_a_wave3, plot_a_wave4, plot_a_wave5,
-             plot_b_wave1, plot_b_wave2, plot_b_wave3, plot_b_wave4, plot_b_wave5,
-             ncol = 2)
+plot_b <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(!str_detect(wave, 'Wave 1')),
+                                   'GISD_Score', 'CFR', single_plot = FALSE)
+plot_b <- plot_b + labs(x = 'GISD', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+
+figS8 <- arrangeGrob(plot_a, plot_b, nrow = 2)
+plot(figS8)
+
+ggsave('results/FigureS8.svg', figS8, width = 13.125, height = 8.5)
 
 # Plot interactions with GISD_Score, if present:
 mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_2b_full, n4_1b_full, n4_2b_full, n5_1b_full, n5_2b_full)

@@ -269,16 +269,72 @@ summary(n5b_full_NS)
 mod_list <- list(n1_1a_full_NS, n1_2a_full_NS, n2a_full_NS, n3a_full_NS, n4a_full_NS, n5a_full_NS)
 names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
 
-pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'incidence', mod_list, standardize = TRUE)
-plot_a_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'))
-print(plot_a_GISD_Score)
+pred_GISD_Score_NOSPATIAL <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'incidence', mod_list, standardize = TRUE)
 
-mod_list <- list(n1b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS, n5b_full_NS)
-names(mod_list) <- c('1', '2', '3', '4', '5')
+mod_list <- list(n1_1a_full, n1_2a_full, n2a_full, n3a_full, n4a_full, n5a_full)
+names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
 
-pred_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'cfr', mod_list, standardize = TRUE)
-plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = TRUE)
-print(plot_b_GISD_Score)
+pred_GISD_Score_FULL <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'incidence', mod_list, standardize = TRUE)
+
+# plot_a_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'Cases / 10000 Pop', single_plot = TRUE, color_vals = c('#e41a1c', '#ff7f00', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'))
+# plot_a_GISD_Score <- plot_a_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+# print(plot_a_GISD_Score)
+
+pred_GISD_Score <- pred_GISD_Score_FULL %>%
+  mutate(type = 'Full Model') %>%
+  bind_rows(pred_GISD_Score_NOSPATIAL %>%
+              mutate(type = 'No Spatial Term'))
+
+plot_a_GISD_Score <- ggplot(data = pred_GISD_Score, aes(group = type)) +
+  geom_ribbon(aes(x = GISD_Score, ymin = lower, ymax = upper, fill = type), alpha = 0.1) +
+  geom_line(aes(x = GISD_Score, y = fitted, col = type)) +
+  facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
+  theme_classic() +
+  theme(legend.text = element_text(size = 14),
+        legend.position = 'bottom',
+        strip.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14)) +
+  scale_color_brewer(palette = 'Set1') +
+  scale_fill_brewer(palette = 'Set1') +
+  labs(x = 'GISD Score', y = 'Relative Change (Incidence)', fill = '', col = '')
+
+mod_list <- list(n1_1b_full_NS, n1_2b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS, n5b_full_NS)
+names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
+
+pred_GISD_Score_NOSPATIAL <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'cfr', mod_list, standardize = TRUE)
+
+mod_list <- list(n1_1b_full, n1_2b_full, n2b_full, n3b_full, n4b_full, n5b_full)
+names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
+
+pred_GISD_Score_FULL <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'cfr', mod_list, standardize = TRUE)
+
+# plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = TRUE)
+# plot_b_GISD_Score <- plot_b_GISD_Score + labs(x = 'GISD', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+# print(plot_b_GISD_Score)
+
+pred_GISD_Score <- pred_GISD_Score_FULL %>%
+  mutate(type = 'Full Model') %>%
+  bind_rows(pred_GISD_Score_NOSPATIAL %>%
+              mutate(type = 'No Spatial Term'))
+
+plot_b_GISD_Score <- ggplot(data = pred_GISD_Score, aes(group = type)) +
+  geom_ribbon(aes(x = GISD_Score, ymin = lower, ymax = upper, fill = type), alpha = 0.1) +
+  geom_line(aes(x = GISD_Score, y = fitted, col = type)) +
+  facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
+  theme_classic() +
+  theme(legend.text = element_text(size = 14),
+        legend.position = 'bottom',
+        strip.text = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14)) +
+  scale_color_brewer(palette = 'Set1') +
+  scale_fill_brewer(palette = 'Set1') +
+  labs(x = 'GISD Score', y = 'Relative Change (CFR)', fill = '', col = '')
+
+figS9 <- arrangeGrob(plot_a_GISD_Score, plot_b_GISD_Score, ncol = 1)
+plot(figS9)
+ggsave('results/FigureS9.svg', figS9, width = 19.6875, height = 8.5)
 
 # Plot interactions with GISD_Score:
 pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'),

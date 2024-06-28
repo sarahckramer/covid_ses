@@ -91,39 +91,39 @@ p1a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave1_rate), col = 'bla
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 1', tag = 'A') +#, fill = 'Cases / 10000 Pop') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5),
-        plot.tag = element_text(size = 26), plot.tag.position = c(0.08, 0.96))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5),
+        plot.tag = element_text(size = 20), plot.tag.position = c(0.08, 0.96))
 p2a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave2_rate), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 2') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p3a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave3_rate), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 3') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p4a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave4_rate), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 4') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p5a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave5_rate), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 5') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 
 p_legend_a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave5_rate), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80', breaks = c(10, 200, 500, 1000, 2000, 3000)) +
   theme_void() + labs(fill = 'Incidence') +
-  theme(legend.position = 'right', legend.title = element_text(size = 18), legend.text = element_text(size = 16),
+  theme(legend.position = 'right', legend.title = element_text(size = 18), legend.text = element_text(size = 14),
         legend.key.width = unit(0.9, 'cm'), legend.key.height = unit(1.75, 'cm'))
 p_legend_a <- ggplotGrob(p_legend_a)$grobs[[which(sapply(ggplotGrob(p_legend_a)$grobs, function(x) x$name) == 'guide-box')]]
 
@@ -132,48 +132,49 @@ p1b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave1), col = 'black', lw
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 1', tag = 'B') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5),
-        plot.tag = element_text(size = 26), plot.tag.position = c(0.08, 0.96))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5),
+        plot.tag = element_text(size = 20), plot.tag.position = c(0.08, 0.96))
 p2b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave2), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 2') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p3b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave3), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 3') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p4b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave4), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 4') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 p5b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave5), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, map_pan$cfr_wave5, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80') +
   theme_void() + labs(title = 'Wave 5') +
-  theme(legend.position = 'none', plot.title = element_text(size = 22, hjust = 0.5))
+  theme(legend.position = 'none', plot.title = element_text(size = 18, hjust = 0.5))
 
 p_legend_b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave5), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, map_pan$cfr_wave5, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80', breaks = c(0, 1, 4, 8, 16)) +
   theme_void() + labs(fill = 'CFR') +
-  theme(legend.position = 'right', legend.title = element_text(size = 20), legend.text = element_text(size = 16),
+  theme(legend.position = 'right', legend.title = element_text(size = 18), legend.text = element_text(size = 14),
         legend.key.width = unit(0.9, 'cm'), legend.key.height = unit(1.75, 'cm'))
 p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$grobs, function(x) x$name) == 'guide-box')]]
 
 # grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
 # fig1 <- (p1a + p2a + p3a + p4a + p5a + plot_layout(nrow = 1)) / (p1b + p2b + p3b + p4b + p5b + plot_layout(nrow = 1))
 
-fig1 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 1.5)),
-                    arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 1.5)))
-# ggsave('results/Figure1.svg', fig1, width = 16.5, height = 9.25)
+figS4 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 1.5)),
+                     arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 1.5)))
+plot(figS4)
+# ggsave('results/FigureS4.svg', figS4, width = 16.5, height = 9.25)
 
 # Significant clustering by Moran's I?:
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
@@ -293,6 +294,27 @@ pairs.panels(dat_ses,
              cex.cor = 0.6)
 rm(dat_ses)
 
+# And plot map of GISD values:
+map_gisd <- map_base %>%
+  left_join(dat_cumulative %>%
+              select(lk, GISD_Score),
+            by = c('ARS' = 'lk'))
+
+figS2 <- ggplot(data = map_gisd) + geom_sf(aes(fill = GISD_Score), col = 'black', lwd = 0.5) +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  scale_fill_viridis(na.value = 'gray80') + #, n.breaks = 10) +
+  theme_void() + labs(fill = 'GISD Score') +
+  theme(plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_text(size = 18),
+        legend.text = element_text(size = 14),
+        legend.position = 'right',
+        legend.key.width = unit(0.9, 'cm'),
+        legend.key.height = unit(1.75, 'cm'))
+print(figS2)
+# ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
+
+rm(map_gisd)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 ### Full models ###
@@ -364,17 +386,17 @@ plot_a_production <- plot_marginal_prediction(pred_perc_production, 'perc_produc
 # grid.arrange(plot_a_GISD_Score, plot_a_service, plot_a_production,
 #              plot_a_18to64, plot_a_lessthan18, plot_a_pop_dens, plot_a_care_home_beds, nrow = 2)
 
-plot_a_GISD_Score <- plot_a_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_service <- plot_a_service + labs(x = '% Service', tag = 'B') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_production <- plot_a_production + labs(x = '% Production', tag = 'C') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_18to64 <- plot_a_18to64 + labs(x = '% Aged 18-64', tag = 'D') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_lessthan18 <- plot_a_lessthan18 + labs(x = '% Aged <18', tag = 'E') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_pop_dens <- plot_a_pop_dens + labs(x = 'Population Density (100s / km2)', tag = 'F') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_a_care_home_beds <- plot_a_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'G') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
+plot_a_GISD_Score <- plot_a_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_service <- plot_a_service + labs(x = '% Service', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_production <- plot_a_production + labs(x = '% Production', tag = 'C') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_18to64 <- plot_a_18to64 + labs(x = '% Aged 18-64', tag = 'D') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_lessthan18 <- plot_a_lessthan18 + labs(x = '% Aged <18', tag = 'E') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_pop_dens <- plot_a_pop_dens + labs(x = 'Population Density (100s / km2)', tag = 'F') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_care_home_beds <- plot_a_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'G') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 fig1 <- plot_a_GISD_Score + plot_a_service + plot_a_production + plot_a_18to64 + plot_a_lessthan18 +
   plot_a_pop_dens + plot_a_care_home_beds + plot_layout(nrow = 2)
-ggsave('results/Figure1.svg', fig1, width = 22, height = 7.8)
+# ggsave('results/Figure1.svg', fig1, width = 22.5, height = 7.8)
 
 mod_list <- list(n1_2a_full, n2a_full, n3a_full, n4a_full, n5a_full)
 names(mod_list) <- c('1_2', '2', '3', '4', '5')
@@ -384,8 +406,11 @@ mod_list <- list(n3a_full, n4a_full, n5a_full)
 names(mod_list) <- c('3', '4', '5')
 pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc_reg', 'incidence', mod_list, standardize = TRUE)
 
-plot_a_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'Cases / 10000 Pop', single_plot = TRUE)
+plot_a_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'Cases / 10000 Pop', single_plot = FALSE)
 plot_a_vacc <- plot_marginal_prediction(pred_vacc, 'vacc', 'Cases / 10000 Pop', single_plot = FALSE)
+
+plot_a_cases_pre <- plot_a_cases_pre + labs(x = 'Incidence (per 10000 Population) in Past 6 Months', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_vacc <- plot_a_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpoint', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 print(plot_a_cases_pre)
 print(plot_a_vacc)
@@ -404,12 +429,12 @@ plot_b_care_home_beds <- plot_marginal_prediction(pred_care_home_beds, 'care_hom
 
 # grid.arrange(plot_b_GISD_Score, plot_b_hosp_beds, plot_b_care_home_beds, nrow = 1)
 
-plot_b_GISD_Score <- plot_b_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_b_hosp_beds <- plot_b_hosp_beds + labs(x = 'Hospital Beds per 1000 Pop', tag = 'B') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
-plot_b_care_home_beds <- plot_b_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'C') + theme(plot.tag = element_text(size = 26), plot.tag.position = c(0.02, 0.98))
+plot_b_GISD_Score <- plot_b_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_b_hosp_beds <- plot_b_hosp_beds + labs(x = 'Hospital Beds per 1000 Pop', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_b_care_home_beds <- plot_b_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'C') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 fig2 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layout(nrow = 1)
-ggsave('results/Figure2.svg', fig2, width = 15.8, height = 4.0)
+# ggsave('results/Figure2.svg', fig2, width = 16.875, height = 4.0)
 
 # plot_b_GISD_Score <- plot_marginal_prediction(pred_GISD_Score, 'GISD_Score', 'CFR', single_plot = FALSE)
 # plot_b_hosp_beds <- plot_marginal_prediction(pred_hosp_beds, 'hosp_beds', 'CFR', single_plot = FALSE)
@@ -419,7 +444,10 @@ ggsave('results/Figure2.svg', fig2, width = 15.8, height = 4.0)
 
 pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'), 'cfr', mod_list, standardize = TRUE)
 plot_b_GISD_Score_popdens <- plot_marginal_prediction(pred_GISD_Score_popdens, c('GISD_Score', 'pop_dens'), 'CFR', single_plot = TRUE, which_waves = 3)
-print(plot_b_GISD_Score_popdens[[1]])
+
+figS5 <- plot_b_GISD_Score_popdens[[1]] + labs(x = 'GISD', col = 'Population Density\n(100s / km2)', fill = 'Population Density\n(100s / km2)')
+print(figS5)
+# ggsave('results/FigureS5.svg', figS5, width = 6, height = 4.0)
 
 pred_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr', mod_list, standardize = TRUE)
 
@@ -434,14 +462,26 @@ pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc_reg', 'cfr', mod_list
 plot_b_cases_rate <- plot_marginal_prediction(pred_cases_rate, 'cases_rate', 'CFR', single_plot = FALSE)
 plot_b_cases_rate <- plot_b_cases_rate + labs(x = 'Incidence per 10000 Pop')
 
-plot_b_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'CFR', single_plot = TRUE)
+plot_b_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'CFR', single_plot = FALSE)
 plot_b_vacc <- plot_marginal_prediction(pred_vacc, 'vacc', 'CFR', single_plot = FALSE)
+
+plot_b_cases_pre <- plot_b_cases_pre + labs(x = 'Incidence (per 10000 Population) in Past 6 Months', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_b_vacc <- plot_b_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpoint', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 print(plot_b_cases_rate)
 print(plot_b_cases_pre)
 print(plot_b_vacc)
 
-ggsave('results/Figure3.svg', plot_b_cases_rate, width = 13.125, height = 4.25)
+# ggsave('results/Figure3.svg', plot_b_cases_rate, width = 15.75, height = 4.25)
+
+figS6 <- arrangeGrob(plot_a_cases_pre, plot_b_cases_pre, ncol = 1)
+figS7 <- arrangeGrob(plot_a_vacc, plot_b_vacc, ncol = 1)
+
+plot(figS6)
+# ggsave('results/FigureS6.svg', figS6, width = 13.125, height = 8.5)
+
+plot(figS7)
+# ggsave('results/FigureS7.svg', figS7, width = 10, height = 8.5)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

@@ -51,6 +51,60 @@ p4 <- ggplot(data = dat_inc_DE, aes(x = time, y = case_rate)) +
   geom_vline(xintercept = c(9, 14, 20, 40, 48, 61, 69, 74, 85, 93, 104, 113, 126), lty = 2) + geom_hline(yintercept = 50)
 grid.arrange(p1, p4, ncol = 1)
 
+dat_inc_DE <- dat_inc_DE %>%
+  inner_join(dat_inc_wk %>% select(time, Year, Week, date) %>% unique(), by = 'time')
+
+x_breaks <- c(9, 17 + 5/7, 26 + 3/7, 35 + 2/7, 44,
+              52 + 5/7, 61 + 1/7, 69 + 6/7, 78 + 4/7, 87 + 3/7, 96 + 1/7,
+              104 + 6/7, 113 + 2/7, 122)
+x_labs <- c('Mar 2020', 'May 2020', 'Jul 2020', 'Sep 2020', 'Nov 2020',
+            'Jan 2021', 'Mar 2021', 'May 2021', 'Jul 2021', 'Sep 2021', 'Nov 2021',
+            'Jan 2022', 'Mar 2022', 'May 2022')
+
+p.s1.a <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = case_rate)) +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 84, xmax = 104, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#984ea3') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 104, xmax = 126, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#f781bf') +
+  geom_line() +
+  # geom_vline(xintercept = c(9, 20, 39, 61, 74, 84, 104, 126), col = 'black') +
+  geom_vline(xintercept = c(14, 48, 69, 93, 113), col = c('#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'), lty = 2) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 35, vjust = 0.62),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.005, 0.97)) +
+  scale_x_continuous(breaks = x_breaks, labels = x_labs) +
+  # scale_x_continuous(breaks = c(53, 105), labels = c('2021', '2022')) +
+  scale_y_continuous(limits = c(0, 2000), n.breaks = 10) +
+  labs(x = 'Date', y = 'Incidence\n(per 10000 Pop)', tag = 'A')
+p.s1.b <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = cfr)) +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 84, xmax = 104, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#984ea3') +
+  geom_rect(data = dat_inc_DE[1, ], aes(xmin = 104, xmax = 126, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#f781bf') +
+  geom_line() +
+  # geom_vline(xintercept = c(9, 20, 39, 61, 74, 84, 104, 126), col = 'black') +
+  geom_vline(xintercept = c(14, 48, 69, 93, 113), col = c('#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'), lty = 2) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 35, vjust = 0.62),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.005, 0.97)) +
+  scale_x_continuous(breaks = x_breaks, labels = x_labs) +
+  # scale_x_continuous(breaks = c(53, 105), labels = c('2021', '2022')) +
+  scale_y_continuous(n.breaks = 10) +
+  labs(x = 'Date', y = '\nCase Fatality Rate', tag = 'B')
+
+figs1 <- arrangeGrob(p.s1.a, p.s1.b, ncol = 1)
+plot(figs1)
+
+# ggsave('results/FigureS1.svg', width = 9.5, height = 6.5, figs1)
+
 # Clean up:
 rm(dat_inc_DE, dat_inc_wk_i)
 
