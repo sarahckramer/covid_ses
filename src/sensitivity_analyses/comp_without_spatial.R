@@ -47,12 +47,20 @@ n1_2a_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1_2a_NOSPATIAL_ml.r
                               offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
                       }
 )
-n1b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n1b_NOSPATIAL_ml.rds',
-                    expr = {
-                      gam(deaths_wave1 ~ s(ags2, bs = 're', k = 16) +
-                            s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_rate) +
-                            offset(log(cases_wave1)), data = dat_cumulative, family = 'nb', method = 'ML')
-                    }
+n1_1b_full_NS <- bake(file = 'results/fitted_models/FULL_n1_1b_NOSPATIAL_ml.rds',
+                      expr = {
+                        gam(deaths_wave1_1 ~ s(ags2, bs = 're', k = 16) +
+                              s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave1_1_rate) +
+                              offset(log(cases_wave1_1)), data = dat_cumulative, family = 'nb', method = 'ML')
+                      }
+)
+n1_2b_full_NS <- bake(file = 'results/fitted_models/FULL_n1_2b_NOSPATIAL_ml.rds',
+                      expr = {
+                        gam(deaths_wave1_2 ~ s(ags2, bs = 're', k = 16) +
+                              s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                              s(cases_wave1_1_rate) + s(cases_wave1_2_rate) +
+                              offset(log(cases_wave1_2)), data = dat_cumulative, family = 'nb', method = 'ML')
+                      }
 )
 
 # Wave 2:
@@ -133,7 +141,8 @@ n5b_full_NS <- bake(file = 'results/fitted_models/SA/FULL_n5b_NOSPATIAL_ml.rds',
 par(mfrow = c(2, 2))
 gam.check(n1_1a_full_NS, rep = 50)
 gam.check(n1_2a_full_NS, rep = 50)
-gam.check(n1b_full_NS, rep = 50)
+gam.check(n1_1b_full_NS, rep = 50)
+gam.check(n1_2b_full_NS, rep = 50)
 gam.check(n2a_full_NS, rep = 50)
 gam.check(n2b_full_NS, rep = 50)
 gam.check(n3a_full_NS, rep = 50)
@@ -155,7 +164,8 @@ check_dharma(dat_cumulative, n2a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n3a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n4a_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n5a_full_NS, depend = 'none')
-check_dharma(dat_cumulative, n1b_full_NS, depend = 'none')
+check_dharma(dat_cumulative, n1_1b_full_NS, depend = 'none')
+check_dharma(dat_cumulative, n1_2b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n2b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n3b_full_NS, depend = 'none')
 check_dharma(dat_cumulative, n4b_full_NS, depend = 'none')
@@ -164,7 +174,8 @@ check_dharma(dat_cumulative, n5b_full_NS, depend = 'none')
 # Check for residual spatial autocorrelation:
 dat_cumulative$resid_n1_1a <- residuals(n1_1a_full_NS, type = 'deviance')
 dat_cumulative$resid_n1_2a <- residuals(n1_2a_full_NS, type = 'deviance')
-dat_cumulative$resid_n1b <- residuals(n1b_full_NS, type = 'deviance')
+dat_cumulative$resid_n1_1b <- residuals(n1_1b_full_NS, type = 'deviance')
+dat_cumulative$resid_n1_2b <- residuals(n1_2b_full_NS, type = 'deviance')
 dat_cumulative$resid_n2a <- residuals(n2a_full_NS, type = 'deviance')
 dat_cumulative$resid_n2b <- residuals(n2b_full_NS, type = 'deviance')
 dat_cumulative$resid_n3a <- residuals(n3a_full_NS, type = 'deviance')
@@ -177,7 +188,7 @@ dat_cumulative$resid_n5b <- residuals(n5b_full_NS, type = 'deviance')
 map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
-              select(lk, resid_n1_1a, resid_n1_2a, resid_n1b, resid_n2a, resid_n2b,
+              select(lk, resid_n1_1a, resid_n1_2a, resid_n1_1b, resid_n1_2b, resid_n2a, resid_n2b,
                      resid_n3a, resid_n3b, resid_n4a, resid_n4b, resid_n5a, resid_n5b),
             by = c('ARS' = 'lk')) %>%
   drop_na()
@@ -189,7 +200,8 @@ names(nb) <- attr(nb, 'region.id')
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
 moran.mc(map_base$resid_n1_1a, lw, nsim = 999)
 moran.mc(map_base$resid_n1_2a, lw, nsim = 999)
-moran.mc(map_base$resid_n1b, lw, nsim = 999)
+moran.mc(map_base$resid_n1_1b, lw, nsim = 999)
+moran.mc(map_base$resid_n1_2b, lw, nsim = 999)
 moran.mc(map_base$resid_n2a, lw, nsim = 999)
 moran.mc(map_base$resid_n2b, lw, nsim = 999)
 moran.mc(map_base$resid_n3a, lw, nsim = 999)
@@ -204,7 +216,8 @@ moran.mc(map_base$resid_n5b, lw, nsim = 999)
 # Read in models with lat/long included:
 n1_1a_full <- read_rds('results/fitted_models/FULL_n1_1a_ml.rds')
 n1_2a_full <- read_rds('results/fitted_models/FULL_n1_2a_ml.rds')
-n1b_full <- read_rds('results/fitted_models/FULL_n1b_ml.rds')
+n1_1b_full <- read_rds('results/fitted_models/FULL_n1_1b_ml.rds')
+n1_2b_full <- read_rds('results/fitted_models/FULL_n1_2b_ml.rds')
 n2a_full <- read_rds('results/fitted_models/FULL_n2a_ml.rds')
 n2b_full <- read_rds('results/fitted_models/FULL_n2b_ml.rds')
 n3a_full <- read_rds('results/fitted_models/FULL_n3a_ml.rds')

@@ -144,13 +144,13 @@ n4_2b_full <- bake(file = 'results/fitted_models/SA/FULL_n4_2b_ml.rds',
 
 # Wave 5:
 n5_1a_full <- bake(file = 'results/fitted_models/SA/FULL_n5_1a_ml.rds',
-                 expr = {
-                   gam(cases_wave5_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
-                         s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
-                         s(perc_service) + s(perc_production) +
-                         s(cases_pre5_rate, k = 25) + s(vacc_w5_1_reg) +
-                         offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
-                 }
+                   expr = {
+                     gam(cases_wave5_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                           s(perc_18to64) + s(perc_lessthan18) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) +
+                           s(perc_service) + s(perc_production) +
+                           s(cases_pre5_rate, k = 25) + s(vacc_w5_1_reg) +
+                           offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+                   }
 )
 n5_2a_full <- bake(file = 'results/fitted_models/SA/FULL_n5_2a_ml.rds',
                    expr = {
@@ -163,12 +163,12 @@ n5_2a_full <- bake(file = 'results/fitted_models/SA/FULL_n5_2a_ml.rds',
 )
 
 n5_1b_full <- bake(file = 'results/fitted_models/SA/FULL_n5_1b_ml.rds',
-                 expr = {
-                   gam(deaths_wave5_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
-                         s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave5_1_rate) +
-                         s(cases_pre5_rate) + s(vacc_w5_1_reg) +
-                         offset(log(cases_wave5_1)), data = dat_cumulative, family = 'nb', method = 'ML')
-                 }
+                   expr = {
+                     gam(deaths_wave5_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                           s(hosp_beds) + s(care_home_beds) + s(GISD_Score) + s(pop_dens) + s(cases_wave5_1_rate) +
+                           s(cases_pre5_rate) + s(vacc_w5_1_reg) +
+                           offset(log(cases_wave5_1)), data = dat_cumulative, family = 'nb', method = 'ML')
+                   }
 )
 n5_2b_full <- bake(file = 'results/fitted_models/SA/FULL_n5_2b_ml.rds',
                    expr = {
@@ -641,11 +641,11 @@ mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_
 names(mod_list) <- c('1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2', '5_1', '5_2')
 
 pred_popdens_GISD <- get_marginal_prediction(dat_cumulative, c('pop_dens', 'GISD_Score'), 'cfr',
-                                            mod_list, standardize = TRUE, partial_waves = TRUE)
+                                             mod_list, standardize = TRUE, partial_waves = TRUE)
 
 plot_popdens_GISD <- plot_marginal_prediction(pred_popdens_GISD, c('pop_dens', 'GISD_Score'),
-                                             'CFR', single_plot = FALSE,
-                                             which_waves = c('3_1', '3_2'))
+                                              'CFR', single_plot = FALSE,
+                                              which_waves = c('3_1', '3_2'))
 
 grid.arrange(plot_popdens_GISD[[2]][[1]], plot_popdens_GISD[[2]][[2]], ncol = 2)
 
