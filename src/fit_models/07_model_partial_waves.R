@@ -605,7 +605,7 @@ pred_a_GISD_Score <- get_marginal_prediction(dat_cumulative, 'GISD_Score', 'inci
 
 plot_a <- plot_marginal_prediction(pred_a_GISD_Score %>% filter(!str_detect(wave, 'Wave 1')),
                                    'GISD_Score', 'Cases / 10000 Pop', single_plot = FALSE)
-plot_a <- plot_a + labs(x = 'GISD', y = 'Relative Change\n(Cases / 10000 Pop', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a <- plot_a + labs(x = 'GISD', y = 'Relative Change (Incidence)', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_2b_full, n4_1b_full, n4_2b_full, n5_1b_full, n5_2b_full)
 names(mod_list) <- c('1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2', '5_1', '5_2')
