@@ -122,7 +122,7 @@ p_legend_a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave5_rate), col
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cases_wave1_rate, map_pan$cases_wave2_rate, map_pan$cases_wave3_rate, map_pan$cases_wave4_rate, map_pan$cases_wave5_rate, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80', breaks = c(10, 200, 500, 1000, 2000, 3000)) +
-  theme_void() + labs(fill = 'Incidence') +
+  theme_void() + labs(fill = 'Incidence (per\n10,000 Pop.)') +
   theme(legend.position = 'right', legend.title = element_text(size = 18), legend.text = element_text(size = 14),
         legend.key.width = unit(0.9, 'cm'), legend.key.height = unit(1.75, 'cm'))
 p_legend_a <- ggplotGrob(p_legend_a)$grobs[[which(sapply(ggplotGrob(p_legend_a)$grobs, function(x) x$name) == 'guide-box')]]
@@ -163,7 +163,7 @@ p_legend_b <- ggplot(data = map_pan) + geom_sf(aes(fill = cfr_wave5), col = 'bla
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
   scale_fill_viridis(limits = c(0, max(map_pan$cfr_wave1, map_pan$cfr_wave2, map_pan$cfr_wave3, map_pan$cfr_wave4, map_pan$cfr_wave5, na.rm = TRUE)),
                      trans = 'sqrt', na.value = 'gray80', breaks = c(0, 1, 4, 8, 16)) +
-  theme_void() + labs(fill = 'CFR') +
+  theme_void() + labs(fill = 'CFR (%)') +
   theme(legend.position = 'right', legend.title = element_text(size = 18), legend.text = element_text(size = 14),
         legend.key.width = unit(0.9, 'cm'), legend.key.height = unit(1.75, 'cm'))
 p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$grobs, function(x) x$name) == 'guide-box')]]
@@ -171,8 +171,8 @@ p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$
 # grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
 # fig1 <- (p1a + p2a + p3a + p4a + p5a + plot_layout(nrow = 1)) / (p1b + p2b + p3b + p4b + p5b + plot_layout(nrow = 1))
 
-figS4 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 1.5)),
-                     arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 1.5)))
+figS4 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 2.25)),
+                     arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 2.25)))
 plot(figS4)
 # ggsave('results/FigureS4.svg', figS4, width = 16.5, height = 9.25)
 
@@ -313,6 +313,27 @@ figS2 <- ggplot(data = map_gisd) + geom_sf(aes(fill = GISD_Score), col = 'black'
 print(figS2)
 # ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
 
+# Alternatively, plot quintiles:
+map_gisd <- map_gisd %>%
+  mutate(GISD_quint = ntile(GISD_Score, 5))
+
+figS2_alt <- ggplot() +
+  geom_sf(data = map_gisd, fill = 'gray60', col = 'black', lwd = 0.5) +
+  geom_sf(data = map_gisd %>% drop_na(), aes(fill = as.character(GISD_quint)), col = 'black', lwd = 0.5) +
+  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
+  # scale_fill_viridis(na.value = 'gray80', discrete = TRUE) +
+  scale_fill_brewer(palette = 'PuBuGn') +
+  theme_void() + labs(fill = 'GISD Score\n(Quintiles)') +
+  theme(plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_text(size = 18),
+        legend.text = element_text(size = 14),
+        legend.position = 'right',
+        legend.key.width = unit(1.0, 'cm'),
+        legend.key.height = unit(1.0, 'cm'),
+        legend.key.spacing.y = unit(3, 'pt'))
+print(figS2_alt)
+ggsave('results/FigureS2_alt.svg', figS2_alt, width = 5, height = 5.25)
+
 rm(map_gisd)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -409,8 +430,8 @@ pred_vacc <- get_marginal_prediction(dat_cumulative, 'vacc_reg', 'incidence', mo
 plot_a_cases_pre <- plot_marginal_prediction(pred_cases_pre, 'cases_pre', 'Cases / 10000 Pop', single_plot = FALSE)
 plot_a_vacc <- plot_marginal_prediction(pred_vacc, 'vacc', 'Cases / 10000 Pop', single_plot = FALSE)
 
-plot_a_cases_pre <- plot_a_cases_pre + labs(x = 'Incidence (per 10000 Population) in Past 6 Months', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
-plot_a_vacc <- plot_a_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpoint', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_cases_pre <- plot_a_cases_pre + labs(x = 'Incidence (per 10000 Population) in Past 6 Months', y = 'Relative Change (Incidence)', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
+plot_a_vacc <- plot_a_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpoint', y = 'Relative Change (Incidence)', tag = 'A') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
 print(plot_a_cases_pre)
 print(plot_a_vacc)

@@ -61,7 +61,7 @@ x_labs <- c('Mar 2020', 'May 2020', 'Jul 2020', 'Sep 2020', 'Nov 2020',
             'Jan 2021', 'Mar 2021', 'May 2021', 'Jul 2021', 'Sep 2021', 'Nov 2021',
             'Jan 2022', 'Mar 2022', 'May 2022')
 
-p.s1.a <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = case_rate)) +
+p.s1.a <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = case_rate / 10)) +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
@@ -78,9 +78,9 @@ p.s1.a <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = ca
         plot.tag.position = c(0.005, 0.97)) +
   scale_x_continuous(breaks = x_breaks, labels = x_labs) +
   # scale_x_continuous(breaks = c(53, 105), labels = c('2021', '2022')) +
-  scale_y_continuous(limits = c(0, 2000), n.breaks = 10) +
-  labs(x = 'Date', y = 'Incidence\n(per 10000 Pop)', tag = 'A')
-p.s1.b <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = cfr)) +
+  scale_y_continuous(limits = c(0, 200), n.breaks = 10) +
+  labs(x = 'Date', y = 'Incidence\n(per 10,000 Pop.)', tag = 'A')
+p.s1.b <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = cfr * 100)) +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
   geom_rect(data = dat_inc_DE[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
@@ -98,7 +98,7 @@ p.s1.b <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = cf
   scale_x_continuous(breaks = x_breaks, labels = x_labs) +
   # scale_x_continuous(breaks = c(53, 105), labels = c('2021', '2022')) +
   scale_y_continuous(n.breaks = 10) +
-  labs(x = 'Date', y = '\nCase Fatality Rate', tag = 'B')
+  labs(x = 'Date', y = '\nCase Fatality Rate (%)', tag = 'B')
 
 figs1 <- arrangeGrob(p.s1.a, p.s1.b, ncol = 1)
 plot(figs1)
