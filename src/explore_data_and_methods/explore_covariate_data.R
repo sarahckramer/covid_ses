@@ -77,9 +77,9 @@ corrplot(cor_mat_kendall, method = 'color', diag = FALSE, type = 'upper', p.mat 
 
 rm(cor_mat_spearman, cor_mat_kendall, p_mat_spearman, p_mat_kendall)
 
-# Remove variables that are highly correlated:
-ses_dat <- ses_dat %>%
-  select(-c(avg_dist_pharm, living_area))
+# # Remove variables that are highly correlated:
+# ses_dat <- ses_dat %>%
+#   select(-living_area)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -102,7 +102,7 @@ plot_list <- vector('list', length(vars_to_plot))
 for (i in 1:length(vars_to_plot)) {
   var <- vars_to_plot[i]
   map_plot <- map_base %>%
-    rename('plot_var' = var)
+    rename('plot_var' = all_of(var))
   
   p.temp <- ggplot(data = map_plot) + geom_sf(aes(fill = plot_var)) +
     scale_fill_viridis(na.value = 'gray80') + theme_void() +
@@ -140,8 +140,8 @@ for (var in vars_to_plot) {
   print('')
 }
 
-# All significant; strongest positive autocorrelation with: GISD and Income/Work dimensions, perc_65plus;
-# vaccinations partway through wave 4 more clustered than partway through wave 3;
+# All significant; strongest positive autocorrelation with: GISD, perc_65plus, living_area, vacc;
+# vaccinations partway through wave 4 more clustered than partway through wave 3 and wave 5;
 # only hospital beds significantly less clustered than expected
 
 # Now do local Moran's I:
@@ -159,7 +159,7 @@ for (var in vars_to_plot) {
   
   loc_moran_temp <- localmoran_perm(map_base_temp[, var][[1]], lw, alternative = 'two.sided', nsim = 999)
   
-  p_vals <- loc_moran_temp %>% as_tibble() %>% select('Pr(z != 0)') %>% unlist() %>% cbind('bonferroni' = p.adjust(., 'bonferroni'))
+  p_vals <- loc_moran_temp %>% as_tibble() %>% select('Pr(z != E(Ii))') %>% unlist() %>% cbind('bonferroni' = p.adjust(., 'bonferroni'))
   rownames(p_vals) <- NULL
   colnames(p_vals)[1] <- 'none'
   

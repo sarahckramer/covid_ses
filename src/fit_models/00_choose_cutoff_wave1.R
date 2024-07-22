@@ -58,7 +58,7 @@ for (wk in 10:18) {#9:19) {
   # Join with relevant predictors:
   dat_cases_temp <- dat_cases_temp %>%
     inner_join(dat_cumulative %>%
-                 select(lk, long:lat, hosp_beds:TS_Arbeitswelt_adj),
+                 select(lk, long:lat, hosp_beds:GISD_Score),
                by = 'lk') %>%
     mutate(ags2 = factor(ags2))
   

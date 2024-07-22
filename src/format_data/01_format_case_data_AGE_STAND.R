@@ -139,7 +139,7 @@ cdp_dat <- cdp_dat %>%
 # Check that the calculation worked:
 expect_true(cdp_dat %>% group_by(lk, variable) %>% mutate(check = cummax(cases)) %>% filter(cases != check) %>% nrow() == 0)
 
-# Reallocate 58 "missing" cases in Heinsberg:
+# Reallocate 57 "missing" cases in Heinsberg:
 x_temp <- cdp_dat %>%
   pivot_wider(names_from = 'variable',
               values_from = 'cases') %>%
@@ -147,7 +147,7 @@ x_temp <- cdp_dat %>%
          date == min(date)) %>%
   select(kr_inf_a0004:kr_inf_a80) %>%
   unlist()
-to_add <- 58
+to_add <- 57
 
 vals_to_add <- reallocate_preserving_sum(x_temp, to_add) - x_temp
 rm(x_temp, to_add)
@@ -175,7 +175,7 @@ cdp_dat_check %>%
   mutate(diff = cases.x - cases.y) %>%
   pull(diff) %>%
   summary()
-# 1-4, with median 1.0 and mean 1.422; only different in 30137 / 312000 (9.66%) of data points
+# 1-4, with median 1.0 and mean 1.447; only different in 34360 / 353200 (9.73%) of data points
 rm(cdp_dat_check, cdp_dat_sum_all_ages)
 
 # Store age-structured cumulative data, as well:

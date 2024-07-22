@@ -136,7 +136,6 @@ rm(vacc_dat_regional)
 # Load predictor data:
 inkar_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables.csv')
 # hosp_beds: Number of hospital beds per 1000 population
-# avg_dist_pharm: Average distance to the nearest pharmacy in meters
 # perc_lessthan18: Percentage of the population under the age of 18
 # perc_18to64: Percentage of the population aged 18 through 64
 # perc_65plus: Percentage of the population aged 65 or older
@@ -146,9 +145,6 @@ inkar_dat <- read_csv('data/formatted/independent_vars/ses_independent_variables
 # perc_service: Percentage of workers employed in person-related service jobs (“personenbezogene Dienstleistungsberufe”)
 # perc_production: Percentage of workers employed in production-oriented jobs (“Produktionsberufe”)
 # GISD_Score: German Index of Socioeconomic Deprivation score
-# TS_Bildung_adj: Education dimension of the GISD
-# TS_Einkommen_adj: Income dimension of the GISD
-# TS_Arbeitswelt_adj: Employement dimension of the GISD
 
 # Join with case/death data:
 dat_cumulative <- dat_cumulative %>%

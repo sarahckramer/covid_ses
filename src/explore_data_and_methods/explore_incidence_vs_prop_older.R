@@ -20,7 +20,7 @@ dat_cumulative <- dat_cumulative %>%
   mutate(time = if_else(Year == 2020, Week, Week + 53),
          time = if_else(Year == 2022, time + 52, time),
          .before = Year) %>%
-  filter(time %in% c(14, 20, 39, 61, 74, 84, 104, 110)) %>%
+  filter(time %in% c(14, 20, 39, 61, 74, 84, 104, 126)) %>%
   select(time, lk, cases) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = cases) %>%
@@ -28,7 +28,7 @@ dat_cumulative <- dat_cumulative %>%
          cases_wave2 = wk_61 - wk_39,
          cases_wave3 = wk_74 - wk_61,
          cases_wave4 = wk_104 - wk_84,
-         cases_wave5 = wk_110 - wk_104,
+         cases_wave5 = wk_126 - wk_104,
          cases_wave1_1 = wk_14,
          cases_wave1_2 = wk_20 - wk_14) %>%
   select(lk, cases_wave1:cases_wave1_2) %>%
@@ -56,7 +56,7 @@ dat_prop <- dat_prop %>%
   mutate(time = if_else(Year == 2020, Week, Week + 53),
          time = if_else(Year == 2022, time + 52, time),
          .before = Year) %>%
-  filter(time %in% c(14, 20, 39, 61, 74, 84, 104, 110)) %>%
+  filter(time %in% c(14, 20, 39, 61, 74, 84, 104, 126)) %>%
   select(time, lk, variable, cases) %>%
   mutate(time = paste('wk', time, sep = '_')) %>%
   pivot_wider(names_from = time, values_from = cases) %>%
@@ -64,7 +64,7 @@ dat_prop <- dat_prop %>%
          cases_wave2 = wk_61 - wk_39,
          cases_wave3 = wk_74 - wk_61,
          cases_wave4 = wk_104 - wk_84,
-         cases_wave5 = wk_110 - wk_104,
+         cases_wave5 = wk_126 - wk_104,
          cases_wave1_1 = wk_14,
          cases_wave1_2 = wk_20 - wk_14) %>%
   select(lk:variable, cases_wave1:cases_wave1_2) %>%

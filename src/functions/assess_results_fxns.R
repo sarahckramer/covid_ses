@@ -100,10 +100,12 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       
       if (outcome_measure == 'incidence') {
         outcome_var <- c('cases_wave1_1_rate', 'cases_wave1_2_rate', 'cases_wave2_1_rate', 'cases_wave2_2_rate',
-                         'cases_wave3_1_rate', 'cases_wave3_2_rate', 'cases_wave4_1_rate', 'cases_wave4_2_rate')[i]
+                         'cases_wave3_1_rate', 'cases_wave3_2_rate', 'cases_wave4_1_rate', 'cases_wave4_2_rate',
+                         'cases_wave5_1_rate', 'cases_wave5_2_rate')[i]
       } else if (outcome_measure == 'cfr') {
         outcome_var <- c('cfr_wave1_1', 'cfr_wave1_2', 'cfr_wave2_1', 'cfr_wave2_2',
-                         'cfr_wave3_1', 'cfr_wave3_2', 'cfr_wave4_1', 'cfr_wave4_2')[i]
+                         'cfr_wave3_1', 'cfr_wave3_2', 'cfr_wave4_1', 'cfr_wave4_2',
+                         'cfr_wave5_1', 'cfr_wave5_2')[i]
       } else {
         stop('Unrecognized outcome measure.')
       }
@@ -122,9 +124,9 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
       
       if (is.numeric(wave)) {
         if (outcome_measure == 'incidence') {
-          outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate')[wave]
+          outcome_var <- c('cases_wave1_rate', 'cases_wave2_rate', 'cases_wave3_rate', 'cases_wave4_rate', 'cases_wave5_rate')[wave]
         } else if (outcome_measure == 'cfr') {
-          outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4')[wave]
+          outcome_var <- c('cfr_wave1', 'cfr_wave2', 'cfr_wave3', 'cfr_wave4', 'cfr_wave5')[wave]
         } else {
           stop('Unrecognized outcome measure.')
         }
@@ -134,6 +136,14 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
             outcome_var <- 'cases_wave1_1_rate'
           } else if (wave == '1_2') {
             outcome_var <- 'cases_wave1_2_rate'
+          } else {
+            stop('Unrecognized partial wave.')
+          }
+        } else if (outcome_measure == 'cfr') {
+          if (wave == '1_1') {
+            outcome_var <- 'cfr_wave1_1'
+          } else if (wave == '1_2') {
+            outcome_var <- 'cfr_wave1_2'
           } else {
             stop('Unrecognized partial wave.')
           }
@@ -175,6 +185,7 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave2 = 100,
                cases_wave3 = 100,
                cases_wave4 = 100,
+               cases_wave5 = 100,
                cases_wave1_1 = 100,
                cases_wave1_2 = 100,
                cases_wave2_1 = 100,
@@ -183,19 +194,24 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave3_2 = 100,
                cases_wave4_1 = 100,
                cases_wave4_2 = 100,
+               cases_wave5_1 = 100,
+               cases_wave5_2 = 100,
                cases_summer1 = 100,
                cases_summer2 = 100,
                cases_pre2_rate = mean(dat$cases_pre2_rate),
                cases_pre3_rate = mean(dat$cases_pre3_rate),
                cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_pre5_rate = mean(dat$cases_pre5_rate),
                cases_pre2_2_rate = mean(dat$cases_pre2_2_rate),
                cases_pre3_2_rate = mean(dat$cases_pre3_2_rate),
                cases_pre4_2_rate = mean(dat$cases_pre4_2_rate),
+               cases_pre5_2_rate = mean(dat$cases_pre5_2_rate),
                cases_pre_summer2_rate = mean(dat$cases_pre_summer2_rate),
                cases_wave1_rate = mean(dat$cases_wave1_rate),
                cases_wave2_rate = mean(dat$cases_wave2_rate),
                cases_wave3_rate = mean(dat$cases_wave3_rate),
                cases_wave4_rate = mean(dat$cases_wave4_rate),
+               cases_wave5_rate = mean(dat$cases_wave5_rate),
                cases_wave1_1_rate = mean(dat$cases_wave1_1_rate),
                cases_wave1_2_rate = mean(dat$cases_wave1_2_rate),
                cases_wave2_1_rate = mean(dat$cases_wave2_1_rate),
@@ -204,6 +220,8 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave3_2_rate = mean(dat$cases_wave3_2_rate),
                cases_wave4_1_rate = mean(dat$cases_wave4_1_rate),
                cases_wave4_2_rate = mean(dat$cases_wave4_2_rate),
+               cases_wave5_1_rate = mean(dat$cases_wave5_1_rate),
+               cases_wave5_2_rate = mean(dat$cases_wave5_2_rate),
                cases_summer1_rate = mean(dat$cases_summer1_rate),
                cases_summer2_rate = mean(dat$cases_summer2_rate),
                ags2 = '01',
@@ -214,26 +232,29 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                hosp_beds = mean(dat$hosp_beds),
                care_home_beds = mean(dat$care_home_beds),
                GISD_Score = mean(dat$GISD_Score),
-               TS_Bildung_adj = mean(dat$TS_Bildung_adj),
-               TS_Einkommen_adj = mean(dat$TS_Einkommen_adj),
-               TS_Arbeitswelt_adj = mean(dat$TS_Arbeitswelt_adj),
                pop_dens = mean(dat$pop_dens),
                living_area = mean(dat$living_area),
                perc_service = mean(dat$perc_service),
                perc_production = mean(dat$perc_production),
                vacc_w3 = mean(dat$vacc_w3),
                vacc_w4 = mean(dat$vacc_w4),
+               vacc_w5 = mean(dat$vacc_w5),
                vacc_w3_1 = mean(dat$vacc_w3_1),
                vacc_w3_2 = mean(dat$vacc_w3_2),
                vacc_w4_1 = mean(dat$vacc_w4_1),
                vacc_w4_2 = mean(dat$vacc_w4_2),
+               vacc_w5_1 = mean(dat$vacc_w5_1),
+               vacc_w5_2 = mean(dat$vacc_w5_2),
                vacc_summer2 = mean(dat$vacc_summer2),
                vacc_w3_reg = mean(dat$vacc_w3_reg),
                vacc_w4_reg = mean(dat$vacc_w4_reg),
+               vacc_w5_reg = mean(dat$vacc_w5_reg),
                vacc_w3_1_reg = mean(dat$vacc_w3_1_reg),
                vacc_w3_2_reg = mean(dat$vacc_w3_2_reg),
                vacc_w4_1_reg = mean(dat$vacc_w4_1_reg),
                vacc_w4_2_reg = mean(dat$vacc_w4_2_reg),
+               vacc_w5_1_reg = mean(dat$vacc_w5_1_reg),
+               vacc_w5_2_reg = mean(dat$vacc_w5_2_reg),
                vacc_summer2_reg = mean(dat$vacc_summer2_reg)) %>%
         select(-all_of(pred_var))
       
@@ -255,6 +276,7 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave2 = 100,
                cases_wave3 = 100,
                cases_wave4 = 100,
+               cases_wave5 = 100,
                cases_wave1_1 = 100,
                cases_wave1_2 = 100,
                cases_wave2_1 = 100,
@@ -263,19 +285,24 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave3_2 = 100,
                cases_wave4_1 = 100,
                cases_wave4_2 = 100,
+               cases_wave5_1 = 100,
+               cases_wave5_2 = 100,
                cases_summer1 = 100,
                cases_summer2 = 100,
                cases_pre2_rate = mean(dat$cases_pre2_rate),
                cases_pre3_rate = mean(dat$cases_pre3_rate),
                cases_pre4_rate = mean(dat$cases_pre4_rate),
+               cases_pre5_rate = mean(dat$cases_pre5_rate),
                cases_pre2_2_rate = mean(dat$cases_pre2_2_rate),
                cases_pre3_2_rate = mean(dat$cases_pre3_2_rate),
                cases_pre4_2_rate = mean(dat$cases_pre4_2_rate),
+               cases_pre5_2_rate = mean(dat$cases_pre5_2_rate),
                cases_pre_summer2_rate = mean(dat$cases_pre_summer2_rate),
                cases_wave1_rate = mean(dat$cases_wave1_rate),
                cases_wave2_rate = mean(dat$cases_wave2_rate),
                cases_wave3_rate = mean(dat$cases_wave3_rate),
                cases_wave4_rate = mean(dat$cases_wave4_rate),
+               cases_wave5_rate = mean(dat$cases_wave5_rate),
                cases_wave1_1_rate = mean(dat$cases_wave1_1_rate),
                cases_wave1_2_rate = mean(dat$cases_wave1_2_rate),
                cases_wave2_1_rate = mean(dat$cases_wave2_1_rate),
@@ -284,6 +311,8 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                cases_wave3_2_rate = mean(dat$cases_wave3_2_rate),
                cases_wave4_1_rate = mean(dat$cases_wave4_1_rate),
                cases_wave4_2_rate = mean(dat$cases_wave4_2_rate),
+               cases_wave5_1_rate = mean(dat$cases_wave5_1_rate),
+               cases_wave5_2_rate = mean(dat$cases_wave5_2_rate),
                cases_summer1_rate = mean(dat$cases_summer1_rate),
                cases_summer2_rate = mean(dat$cases_summer2_rate),
                ags2 = '01',
@@ -294,26 +323,29 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                hosp_beds = mean(dat$hosp_beds),
                care_home_beds = mean(dat$care_home_beds),
                GISD_Score = mean(dat$GISD_Score),
-               TS_Bildung_adj = mean(dat$TS_Bildung_adj),
-               TS_Einkommen_adj = mean(dat$TS_Einkommen_adj),
-               TS_Arbeitswelt_adj = mean(dat$TS_Arbeitswelt_adj),
                pop_dens = mean(dat$pop_dens),
                living_area = mean(dat$living_area),
                perc_service = mean(dat$perc_service),
                perc_production = mean(dat$perc_production),
                vacc_w3 = mean(dat$vacc_w3),
                vacc_w4 = mean(dat$vacc_w4),
+               vacc_w5 = mean(dat$vacc_w5),
                vacc_w3_1 = mean(dat$vacc_w3_1),
                vacc_w3_2 = mean(dat$vacc_w3_2),
                vacc_w4_1 = mean(dat$vacc_w4_1),
                vacc_w4_2 = mean(dat$vacc_w4_2),
+               vacc_w5_1 = mean(dat$vacc_w5_1),
+               vacc_w5_2 = mean(dat$vacc_w5_2),
                vacc_summer2 = mean(dat$vacc_summer2),
                vacc_w3_reg = mean(dat$vacc_w3_reg),
                vacc_w4_reg = mean(dat$vacc_w4_reg),
+               vacc_w5_reg = mean(dat$vacc_w5_reg),
                vacc_w3_1_reg = mean(dat$vacc_w3_1_reg),
                vacc_w3_2_reg = mean(dat$vacc_w3_2_reg),
                vacc_w4_1_reg = mean(dat$vacc_w4_1_reg),
                vacc_w4_2_reg = mean(dat$vacc_w4_2_reg),
+               vacc_w5_1_reg = mean(dat$vacc_w5_1_reg),
+               vacc_w5_2_reg = mean(dat$vacc_w5_2_reg),
                vacc_summer2_reg = mean(dat$vacc_summer2_reg)) %>%
         select(-all_of(pred_var))
       
@@ -481,6 +513,10 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
           geom_ribbon(aes(x = var1, ymin = lower, ymax = upper, fill = var2), alpha = 0.1) +
           geom_line(aes(x = var1, y = fitted, col = var2)) +
           theme_classic() +
+          theme(legend.title = element_text(size = 14),
+                legend.text = element_text(size = 14),
+                axis.title = element_text(size = 14),
+                axis.text = element_text(size = 14)) +
           scale_color_brewer(palette = 'Set2') +
           scale_fill_brewer(palette = 'Set2') +
           labs(x = pred_var[1], y = outcome_lab,
@@ -489,6 +525,10 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
           geom_ribbon(aes(x = var2, ymin = lower, ymax = upper, fill = var1), alpha = 0.1) +
           geom_line(aes(x = var2, y = fitted, col = var1)) +
           theme_classic() +
+          theme(legend.title = element_text(size = 14),
+                legend.text = element_text(size = 14),
+                axis.title = element_text(size = 14),
+                axis.text = element_text(size = 14)) +
           scale_color_brewer(palette = 'Set2') +
           scale_fill_brewer(palette = 'Set2') +
           labs(x = pred_var[2], y = outcome_lab,
@@ -518,7 +558,7 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
       rename('var' = pred_var)
     
     if (is.null(color_vals)) {
-      color_vals <- c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3')
+      color_vals <- c('#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#f781bf')
     }
     
     if (single_plot) {
@@ -538,15 +578,41 @@ plot_marginal_prediction <- function(pred_res, pred_var, outcome_lab, single_plo
         labs(x = pred_var, y = outcome_lab, fill = '', col = '')
       p_temp
     } else {
-      p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
-        geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
-        geom_line(aes(x = var, y = fitted)) +
-        facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
-        theme_classic() +
-        theme(strip.text = element_text(size = 14),
-              axis.title = element_text(size = 14),
-              axis.text = element_text(size = 14)) +
-        labs(x = pred_var, y = outcome_lab, fill = '', col = '')
+      
+      if (any(str_detect(dat_temp$wave, '2_1'))) {
+        
+        dat_temp <- dat_temp %>%
+          mutate(partial_wave = str_sub(wave, 8),
+                 wave = str_sub(wave, 1, 6))
+        p_temp <- ggplot(data = dat_temp, aes(group = paste(wave, partial_wave))) +
+          geom_ribbon(aes(x = var, ymin = lower, ymax = upper, fill = partial_wave), alpha = 0.1) +
+          geom_line(aes(x = var, y = fitted, col = partial_wave)) +
+          facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
+          theme_classic() +
+          theme(strip.text = element_text(size = 14),
+                axis.title = element_text(size = 14),
+                axis.text = element_text(size = 14),
+                legend.title = element_text(size = 14),
+                legend.text = element_text(size = 14),
+                legend.position = 'bottom') +
+          scale_color_brewer(palette = 'Set1') +
+          scale_fill_brewer(palette = 'Set1') +
+          labs(x = pred_var, y = outcome_lab, col = 'Partial Wave', fill = 'Partial Wave', col = '')
+        
+        
+      } else {
+        
+        p_temp <- ggplot(data = dat_temp, aes(group = wave)) +
+          geom_ribbon(aes(x = var, ymin = lower, ymax = upper), fill = 'gray90') +
+          geom_line(aes(x = var, y = fitted)) +
+          facet_wrap(~ wave, nrow = 1, scales = 'free_x') +
+          theme_classic() +
+          theme(strip.text = element_text(size = 14),
+                axis.title = element_text(size = 14),
+                axis.text = element_text(size = 14)) +
+          labs(x = pred_var, y = outcome_lab, fill = '', col = '')
+        
+      }
       
     }
     
