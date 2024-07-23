@@ -177,9 +177,10 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
                         expand_grid(var1 = seq(min(dat[, pred_var[1]]),
                                                max(dat[, pred_var[1]]),
                                                length.out = 100),
-                                    var2 = seq(min(dat[, pred_var[2]]),
-                                               max(dat[, pred_var[2]]),
-                                               length.out = 100))) %>%
+                                    var2 = c(seq(min(dat[, pred_var[2]]),
+                                                 max(dat[, pred_var[2]]),
+                                                 length.out = 100),
+                                             (min(dat[, pred_var[2]]) + (max(dat[, pred_var[2]]))) / 2))) %>%
         mutate(pop = 10000,
                cases_wave1 = 100,
                cases_wave2 = 100,
