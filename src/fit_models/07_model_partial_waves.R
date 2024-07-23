@@ -619,8 +619,7 @@ plot_b <- plot_b + labs(x = 'GISD', tag = 'B') + theme(plot.tag = element_text(s
 
 figS8 <- arrangeGrob(plot_a, plot_b, nrow = 2)
 plot(figS8)
-
-ggsave('results/FigureS8.svg', figS8, width = 13.125, height = 8.5)
+# ggsave('results/FigureS8.svg', figS8, width = 13.125, height = 8.5)
 
 # Plot interactions with GISD_Score, if present:
 mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_2b_full, n4_1b_full, n4_2b_full, n5_1b_full, n5_2b_full)

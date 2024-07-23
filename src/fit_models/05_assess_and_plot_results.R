@@ -332,7 +332,7 @@ figS2_alt <- ggplot() +
         legend.key.height = unit(1.0, 'cm'),
         legend.key.spacing.y = unit(3, 'pt'))
 print(figS2_alt)
-ggsave('results/FigureS2_alt.svg', figS2_alt, width = 5, height = 5.25)
+# ggsave('results/FigureS2_alt.svg', figS2_alt, width = 5, height = 5.25)
 
 rm(map_gisd)
 

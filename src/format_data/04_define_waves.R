@@ -102,7 +102,6 @@ p.s1.b <- ggplot(data = dat_inc_DE %>% filter(time <= 126), aes(x = time, y = cf
 
 figs1 <- arrangeGrob(p.s1.a, p.s1.b, ncol = 1)
 plot(figs1)
-
 # ggsave('results/FigureS1.svg', width = 9.5, height = 6.5, figs1)
 
 # Clean up:
