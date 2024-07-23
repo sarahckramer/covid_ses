@@ -8,7 +8,6 @@
 # Load libraries:
 library(tidyverse)
 library(mgcv)
-library(ggeffects)
 library(sf)
 library(testthat)
 library(pomp)
