@@ -81,7 +81,7 @@ map_pan <- map_base %>%
             by = c('ARS' = 'lk'))
 
 # Get map of Bundeslaender:
-map_bl <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_lan.shp')
+map_bl <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_LAN.shp')[1:16, ]
 
 # Plot case/death rates:
 p1a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave1_rate), col = 'black', lwd = 0.5) +
@@ -178,7 +178,7 @@ plot(figS4)
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
 map_pan <- map_pan %>%
   drop_na()
-map_temp <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp') %>%
+map_temp <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp') %>%
   filter(GEN != 'Eisenach', GEN != 'Wartburgkreis')
 
 nb <- spdep::poly2nb(map_temp, row.names = map_temp$ARS)

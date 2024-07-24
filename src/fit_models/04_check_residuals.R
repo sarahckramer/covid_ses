@@ -209,7 +209,7 @@ dat_cumulative$resid_n4b <- residuals(n4b_full, type = 'deviance')
 dat_cumulative$resid_n5a <- residuals(n5a_full, type = 'deviance')
 dat_cumulative$resid_n5b <- residuals(n5b_full, type = 'deviance')
 
-map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
+map_base <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
               select(lk, resid_n1_1a, resid_n1_2a, resid_n1_1b, resid_n1_2b, resid_n2a, resid_n2b,

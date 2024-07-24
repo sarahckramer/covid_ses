@@ -525,7 +525,7 @@ n5b_full <- read_rds('results/fitted_models/FULL_n5b_ml.rds')
 # # Try using MRF:
 # dat_cumulative$ARS <- factor(dat_cumulative$lk)
 # 
-# map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp') %>%
+# map_base <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp') %>%
 #   filter(GEN != 'Eisenach', GEN != 'Wartburgkreis')
 # 
 # nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)

@@ -265,7 +265,7 @@ dat_cumulative$resid_n5_2a <- residuals(n5_2a_full, type = 'deviance')
 dat_cumulative$resid_n5_1b <- residuals(n5_1b_full, type = 'deviance')
 dat_cumulative$resid_n5_2b <- residuals(n5_2b_full, type = 'deviance')
 
-map_base <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp')
+map_base <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp')
 map_base <- map_base %>%
   left_join(dat_cumulative %>%
               select(lk, resid_n2_1a:resid_n5_2b),
@@ -322,7 +322,7 @@ map_pan <- map_base %>%
                      cases_wave4_1_rate, cases_wave4_2_rate, cfr_wave4_1, cfr_wave4_2,
                      cases_wave5_1_rate, cases_wave5_2_rate, cfr_wave5_1, cfr_wave5_2),
             by = c('ARS' = 'lk'))
-map_bl <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_lan.shp')
+map_bl <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_LAN.shp')[1:16, ]
 
 p1_1a <- ggplot(data = map_pan) + geom_sf(aes(fill = cases_wave1_1_rate), col = 'black') +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
@@ -487,7 +487,7 @@ grid.arrange(p5_1b, p5_2b, nrow = 1)
 # Significant clustering by Moran's I?:
 map_pan <- map_pan %>%
   drop_na()
-map_temp <- st_read(dsn = 'data/raw/map/vg2500_01-01.gk3.shape/vg2500/vg2500_krs.shp') %>%
+map_temp <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp') %>%
   filter(GEN != 'Eisenach', GEN != 'Wartburgkreis')
 
 nb <- spdep::poly2nb(map_temp, row.names = map_temp$ARS)
