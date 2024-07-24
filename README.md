@@ -37,18 +37,23 @@ Data
 ----
 #### COVID-19 Data
 
+Data on COVID-19 cases and deaths by district and age group, as well as data on population sizes, were obtained from the [Corona Data Platform](https://www.healthcare-datenplattform.de/).
 
 #### German Index of Socioeconomic Deprivation (GISD)
 
+District-level socioeconomic position was measured using the GISD, which encompasses indicators on employment, income, and educational attainment. Data can be downloaded [here](https://github.com/robert-koch-institut/German_Index_of_Socioeconomic_Deprivation_GISD).
 
 #### Other demographic and socioeconomic data
 
+Data on all other key predictor variables were obtained from the database "Indicators and Maps for Spatial and Urban Development" (INKAR), available [here](https://www.inkar.de/).
 
 #### Vaccination data
 
+Vaccination rates for each district were estimated from vaccination rates at a larger, regional spatial scale, as described in [Koslow et al. (2022)](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1010054). Code to obtain these estimates can be found [here](https://github.com/SciCompMod/memilio/tree/main). Original vaccination data were obtained from the [Robert Koch Institute](https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland).
 
 #### Commuting data
 
+Code to obtain the formatted commuting data, which include both data collected by Germany's Federal Employment Agency and estimates for district-district pairs with very little commuting, can be found [here](https://github.com/SciCompMod/memilio/tree/main) (the same repository as for the vaccination data).
 
 Formatting Data
 ---------------
@@ -68,7 +73,7 @@ Code to conduct the main analyses are found in "fit_models."
 * In "01_choose_k.R", we explore initial choices for the value of k, the basis dimension, for the spatial smooth. Appropriate choice of the k-value is important because values that are too low may fail to adquately account for the lack of spatial independence in the data, while values that are too high may lead to overfitting.
 * All model fitting is conducted in "02_fit_models.R". Note that this code has been updated to reflect the final model equations, after performing all model checks described in the next two steps.
 * In "03_model_comparison.R", we explored various possible model improvement, including interaction terms and alternative spatial smoothers.
-* In "04_check_residuals.R", we check the quality of the model fit to the data using the DHARMa package, and confirm that there is no remaining spatial autocorrelation in the model residuals using Moran's I.
+* In "04_check_residuals.R", we check the quality of the model fit to the data using the [DHARMa package](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html), and confirm that there is no remaining spatial autocorrelation in the model residuals using Moran's I.
   * A function to run several analyses from the DHARMa package, as well as functions to conduct analyses included in the next step, can be found in "functions/assess_results_fxns.R".
 * Associations between predictors of interest and both incidence and case fatality rates are calculated and plotted in "05_assess_and_plot_results.R". Some basic plots of the data and descriptive analyses are also included here.
 
