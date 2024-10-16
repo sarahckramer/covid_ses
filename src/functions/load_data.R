@@ -11,19 +11,55 @@ if (!exists('keep_map')) {
 
 # Load cumulative data:
 dat_cumulative <- read_csv('data/formatted/STAND_cumulative_cases_and_deaths.csv')
+dat_agestrat <- read_csv('data/formatted/BYAGE_cumulative_cases_and_deaths.csv')
 
-# Check no zeros in case data:
-expect_true(dat_cumulative %>%
-              filter(val == 0) %>%
-              filter(str_detect(outcome, 'cases')) %>%
-              nrow() == 0)
-
-# # Where do zeroes occur?:
-# dat_cumulative %>%
-#   filter(val == 0) %>%
-#   pull(outcome) %>%
-#   table()
-# # No 0s in cumulative case counts; only from deaths and IFR in wave 1
+# Format data based on desired analysis:
+if (!exists('sens_age')) {
+  
+  # Check no zeros in case data:
+  expect_true(dat_cumulative %>%
+                filter(val == 0) %>%
+                filter(str_detect(outcome, 'cases')) %>%
+                nrow() == 0)
+  
+} else {
+  
+  if (sens_age == 'age_60plus') {
+    
+    # Limit to 60+ age group:
+    dat_cumulative <- dat_agestrat %>%
+      filter(age == '60') %>%
+      select(-age)
+    
+    # Check no zeros in case data:
+    expect_true(dat_cumulative %>%
+                  filter(val == 0) %>%
+                  filter(str_detect(outcome, 'cases') &
+                           !str_detect(outcome, 'summer')) %>%
+                  nrow() == 0)
+    
+    # If CFR is 100, set to NA:
+    dat_cumulative <- dat_cumulative %>%
+      mutate(val = if_else(val == 100 & str_detect(outcome, 'cfr'), NA, val))
+    # occurs once for wave 1_2
+    
+  } else if (sens_age == 'age_15thru59') {
+    
+    # Limit to 15-59 age group:
+    dat_cumulative <- dat_agestrat %>%
+      filter(age == '15') %>%
+      select(-age)
+    
+    # Check no zeros in case data:
+    expect_true(dat_cumulative %>%
+                  filter(val == 0) %>%
+                  filter(str_detect(outcome, 'cases')) %>%
+                  nrow() == 0)
+    
+  }
+  
+}
+rm(dat_agestrat)
 
 # Format:
 dat_cumulative <- dat_cumulative %>%
@@ -116,6 +152,15 @@ vacc_dat <- read_csv('data/formatted/independent_vars/vacc_dat.csv')
 # vacc_summer2: Estimated rate of full vaccination 2 weeks before the midpoint of summer 2021 (between waves 3 and 4)
 
 vacc_dat_regional <- read_csv('data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
+
+# Also get vaccination data by age, if needed:
+if (exists('sens_age')) {
+  if (sens_age == 'age_60plus') {
+    vacc_dat_regional <- read_csv('data/formatted/independent_vars/BYAGE_60plus_vacc_dat_REGIONAL.csv')
+  } else if (sens_age == 'age_15thru59') {
+    vacc_dat_regional <- read_csv('data/formatted/independent_vars/BYAGE_15thru59_vacc_dat_REGIONAL.csv')
+  }
+}
 
 # Join with case/death data:
 dat_cumulative <- dat_cumulative %>%

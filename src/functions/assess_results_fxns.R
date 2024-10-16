@@ -157,8 +157,8 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     # Get lat/long of LK with nearest to mean value of outcome rate:
     set_long_lat <- dat %>%
       rename('outcome' = all_of(outcome_var)) %>%
-      mutate(dist = abs(outcome - mean(outcome))) %>%
-      filter(dist == min(dist)) %>%
+      mutate(dist = abs(outcome - mean(outcome, na.rm = TRUE))) %>%
+      filter(dist == min(dist, na.rm = TRUE)) %>%
       select(long, lat)
     
     if (nrow(set_long_lat) > 1) {

@@ -112,6 +112,7 @@ di_dat <- di_dat %>%
 # Read in data:
 vacc_dat <- fromJSON('data/raw/independent_vars/vacc/3_all_county_vacc_all_dates.json')
 vacc_dat_regional <- fromJSON('data/raw/independent_vars/vacc/2_all_county_vacc_all_dates.json')
+vacc_dat_regional_BYAGE <- fromJSON('data/raw/independent_vars/vacc/2_all_county_ageinf_vacc_all_dates.json')
 
 # Format:
 vacc_dat <- vacc_dat %>%
@@ -124,12 +125,31 @@ vacc_dat_regional <- vacc_dat_regional %>%
   select(-ID_State) %>%
   mutate(ID_County = as.character(ID_County),
          ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
+vacc_dat_regional_BYAGE <- vacc_dat_regional_BYAGE %>%
+  as_tibble() %>%
+  select(-ID_State) %>%
+  mutate(ID_County = as.character(ID_County),
+         ID_County = str_pad(ID_County, width = 5, side = 'left', pad = '0'))
 
 # Add population data and calculate vaccination rates:
 pop_dat <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
   select(ags5, kr_ew_20) %>%
   rename('lk' = 'ags5',
          'pop' = 'kr_ew_20')
+
+pop_dat_60plus <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
+  select(ags5, kr_ew_00u05:kr_ew_80) %>%
+  rename('lk' = 'ags5') %>%
+  select(lk, kr_ew_60u80, kr_ew_80) %>%
+  mutate(pop = kr_ew_60u80 + kr_ew_80) %>%
+  select(lk, pop)
+
+pop_dat_15thru59 <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
+  select(ags5, kr_ew_00u05:kr_ew_80) %>%
+  rename('lk' = 'ags5') %>%
+  select(lk, kr_ew_15u35, kr_ew_35u60) %>%
+  mutate(pop = kr_ew_15u35 + kr_ew_35u60) %>%
+  select(lk, pop)
 
 vacc_dat <- vacc_dat %>%
   left_join(pop_dat, by = c('ID_County' = 'lk')) %>%
@@ -141,7 +161,32 @@ vacc_dat_regional <- vacc_dat_regional %>%
   mutate(vacc1_rate = Vacc_partially / pop,
          vacc2_rate = Vacc_completed / pop,
          vacc3_rate = Vacc_refreshed / pop)
-rm(pop_dat)
+
+vacc_dat_regional_60plus <- vacc_dat_regional_BYAGE %>%
+  filter(Age_RKI %in% c('60-79', '80-99')) %>%
+  group_by(Date, ID_County, County) %>%
+  summarise(Vacc_partially = sum(Vacc_partially),
+            Vacc_completed = sum(Vacc_completed),
+            Vacc_refreshed = sum(Vacc_refreshed)) %>%
+  ungroup() %>%
+  left_join(pop_dat_60plus, by = c('ID_County' = 'lk')) %>%
+  mutate(vacc1_rate = Vacc_partially / pop,
+         vacc2_rate = Vacc_completed / pop,
+         vacc3_rate = Vacc_refreshed / pop)
+
+vacc_dat_regional_15thru59 <- vacc_dat_regional_BYAGE %>%
+  filter(Age_RKI %in% c('15-34', '35-59')) %>%
+  group_by(Date, ID_County, County) %>%
+  summarise(Vacc_partially = sum(Vacc_partially),
+            Vacc_completed = sum(Vacc_completed),
+            Vacc_refreshed = sum(Vacc_refreshed)) %>%
+  ungroup() %>%
+  left_join(pop_dat_15thru59, by = c('ID_County' = 'lk')) %>%
+  mutate(vacc1_rate = Vacc_partially / pop,
+         vacc2_rate = Vacc_completed / pop,
+         vacc3_rate = Vacc_refreshed / pop)
+
+rm(pop_dat, pop_dat_60plus, pop_dat_15thru59, vacc_dat_regional_BYAGE)
 
 # Limit to the end of weeks:
 week_ends <- unique(vacc_dat$Date)[format(unique(as.Date(vacc_dat$Date)), '%w') == '0']
@@ -152,6 +197,18 @@ vacc_dat <- vacc_dat %>%
          Week = format(Date, '%V'),
          .after = Date)
 vacc_dat_regional <- vacc_dat_regional %>%
+  filter(Date %in% week_ends) %>%
+  mutate(Date = as.Date(Date),
+         Year = format(Date, '%Y'),
+         Week = format(Date, '%V'),
+         .after = Date)
+vacc_dat_regional_60plus <- vacc_dat_regional_60plus %>%
+  filter(Date %in% week_ends) %>%
+  mutate(Date = as.Date(Date),
+         Year = format(Date, '%Y'),
+         Week = format(Date, '%V'),
+         .after = Date)
+vacc_dat_regional_15thru59 <- vacc_dat_regional_15thru59 %>%
   filter(Date %in% week_ends) %>%
   mutate(Date = as.Date(Date),
          Year = format(Date, '%Y'),
@@ -178,6 +235,22 @@ vacc_dat_regional <- vacc_dat_regional %>%
                         '24')) |
            (Year == '2022' &
               Week %in% c('08', '02', '13')))
+vacc_dat_regional_60plus <- vacc_dat_regional_60plus %>%
+  filter((Year == '2021' &
+            Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')) |
+           (Year == '2022' &
+              Week %in% c('08', '02', '13')))
+vacc_dat_regional_15thru59 <- vacc_dat_regional_15thru59 %>%
+  filter((Year == '2021' &
+            Week %in% c('13', '39',
+                        '10', '17',
+                        '34', '44',
+                        '24')) |
+           (Year == '2022' &
+              Week %in% c('08', '02', '13')))
 
 # Convert to wide format:
 vacc_dat <- vacc_dat %>%
@@ -196,6 +269,29 @@ vacc_dat_regional <- vacc_dat_regional %>%
 names(vacc_dat_regional)[2:11] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2', 'vacc_w5_1', 'vacc_w5', 'vacc_w5_2')
 vacc_dat_regional <- vacc_dat_regional %>%
   select(ID_County, vacc_w3, vacc_w4, vacc_w5, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_w5_1, vacc_w5_2, vacc_summer2)
+
+vacc_dat_regional_60plus <- vacc_dat_regional_60plus %>%
+  mutate(year_week = paste(Year, Week, sep = '_')) %>%
+  select(year_week, ID_County, vacc2_rate) %>%
+  pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)
+names(vacc_dat_regional_60plus)[2:11] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2', 'vacc_w5_1', 'vacc_w5', 'vacc_w5_2')
+vacc_dat_regional_60plus <- vacc_dat_regional_60plus %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w5, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_w5_1, vacc_w5_2, vacc_summer2)
+
+vacc_dat_regional_15thru59 <- vacc_dat_regional_15thru59 %>%
+  mutate(year_week = paste(Year, Week, sep = '_')) %>%
+  select(year_week, ID_County, vacc2_rate) %>%
+  pivot_wider(id_cols = ID_County, names_from = year_week, values_from = vacc2_rate)
+names(vacc_dat_regional_15thru59)[2:11] <- c('vacc_w3_1', 'vacc_w3', 'vacc_w3_2', 'vacc_summer2', 'vacc_w4_1', 'vacc_w4', 'vacc_w4_2', 'vacc_w5_1', 'vacc_w5', 'vacc_w5_2')
+vacc_dat_regional_15thru59 <- vacc_dat_regional_15thru59 %>%
+  select(ID_County, vacc_w3, vacc_w4, vacc_w5, vacc_w3_1, vacc_w3_2, vacc_w4_1, vacc_w4_2, vacc_w5_1, vacc_w5_2, vacc_summer2)
+
+# If coverage >100%, set to 1:
+vacc_dat_regional_60plus <- vacc_dat_regional_60plus %>%
+  mutate(vacc_w4 = if_else(vacc_w4 > 1, 1, vacc_w4),
+         vacc_w5 = if_else(vacc_w5 > 1, 1, vacc_w5))
+vacc_dat_regional_15thru59 <- vacc_dat_regional_15thru59 %>%
+  mutate(vacc_w5 = if_else(vacc_w5 > 1, 1, vacc_w5))
 
 # Plot:
 plot(vacc_dat[, 2:4], pch = 20)
@@ -218,6 +314,8 @@ rm(inkar_dat, di_dat)
 write_csv(ses_dat, file = 'data/formatted/independent_vars/ses_independent_variables.csv')
 write_csv(vacc_dat, file = 'data/formatted/independent_vars/vacc_dat.csv')
 write_csv(vacc_dat_regional, file = 'data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
+write_csv(vacc_dat_regional_60plus, file = 'data/formatted/independent_vars/BYAGE_60plus_vacc_dat_REGIONAL.csv')
+write_csv(vacc_dat_regional_15thru59, file = 'data/formatted/independent_vars/BYAGE_15thru59_vacc_dat_REGIONAL.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 

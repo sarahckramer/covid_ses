@@ -205,7 +205,7 @@ pop_dat <- pop_dat %>%
   mutate(age = str_sub(variable, 7, 8)) %>%
   select(-variable)
 
-# Merge and calculate age-specific rates:
+# Merge:
 cdp_dat_new <- cdp_dat %>%
   mutate(age = str_sub(variable, 9, 10)) %>%
   left_join(pop_dat, by = c('lk', 'age'))
@@ -219,10 +219,15 @@ cdp_dat_inc <- cdp_dat_inc %>%
               summarise(pop = sum(pop)),
             by = c('lk'))
 
+# Store age-stratified data:
+cdp_dat_agestrat <- cdp_dat %>%
+  mutate(case_rate = cases / pop * 100000) %>%
+  select(ags2:lk, age, date, pop, cases, case_rate)
+
+# Get standard age distribution (country-level):
 cdp_dat <- cdp_dat %>%
   mutate(case_rate = cases / pop)
 
-# Get standard age distribution (country-level):
 pop_dat <- pop_dat %>%
   group_by(age) %>%
   summarise(pop = sum(pop)) %>%
@@ -257,6 +262,8 @@ cdp_dat_age_wk <- cdp_dat_age %>%
   filter(date %in% week_ends)
 cdp_dat_cumulative <- cdp_dat_cumulative %>%
   filter(date %in% week_ends)
+cdp_dat_agestrat <- cdp_dat_agestrat %>%
+  filter(date %in% week_ends)
 
 # Add column for year and for week number:
 cdp_dat_wk <- cdp_dat_wk %>%
@@ -277,11 +284,18 @@ cdp_dat_cumulative <- cdp_dat_cumulative %>%
          .after = date) %>%
   mutate(Year = if_else(Week == 53, '2020', Year),
          Year = if_else(Week == 52 & Year != '2020', '2021', Year))
+cdp_dat_agestrat <- cdp_dat_agestrat %>%
+  mutate(Year = format(date, '%Y'),
+         Week = format(date, '%V'),
+         .after = date) %>%
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year != '2020', '2021', Year))
 
 # Write data to file:
 write_csv(cdp_dat_wk, file = 'data/formatted/STAND_weekly_covid_cases_by_lk_CUMULATIVE_CDP.csv')
 write_csv(cdp_dat_age_wk, file = 'data/formatted/weekly_covid_cases_by_lk_by_age_CUMULATIVE_CDP.csv')
 write_csv(cdp_dat_cumulative, file = 'data/formatted/weekly_covid_cases_by_lk_CUMULATIVE_CDP.csv')
+write_csv(cdp_dat_agestrat, file = 'data/formatted/BYAGE_weekly_covid_cases_by_lk_CUMULATIVE_CDP.csv')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
