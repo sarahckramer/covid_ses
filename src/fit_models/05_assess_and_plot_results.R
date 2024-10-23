@@ -269,30 +269,14 @@ summary(n5b_adj)
 
 ### Plot relationships between SES variables (and show corr coefficients) ###
 
-# And plot map of GISD values:
+# And plot map of GISD quintiles:
 map_gisd <- map_base %>%
   left_join(dat_cumulative %>%
               select(lk, GISD_Score),
-            by = c('ARS' = 'lk'))
-
-figS2 <- ggplot(data = map_gisd) + geom_sf(aes(fill = GISD_Score), col = 'black', lwd = 0.5) +
-  geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
-  scale_fill_viridis(na.value = 'gray80') + #, n.breaks = 10) +
-  theme_void() + labs(fill = 'GISD Score') +
-  theme(plot.title = element_text(size = 18, hjust = 0.5),
-        legend.title = element_text(size = 18),
-        legend.text = element_text(size = 14),
-        legend.position = 'right',
-        legend.key.width = unit(0.9, 'cm'),
-        legend.key.height = unit(1.75, 'cm'))
-print(figS2)
-# ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
-
-# Alternatively, plot quintiles:
-map_gisd <- map_gisd %>%
+            by = c('ARS' = 'lk')) %>%
   mutate(GISD_quint = ntile(GISD_Score, 5))
 
-figS2_alt <- ggplot() +
+figS2 <- ggplot() +
   geom_sf(data = map_gisd, fill = 'gray60', col = 'black', lwd = 0.5) +
   geom_sf(data = map_gisd %>% drop_na(), aes(fill = as.character(GISD_quint)), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
@@ -306,8 +290,8 @@ figS2_alt <- ggplot() +
         legend.key.width = unit(1.0, 'cm'),
         legend.key.height = unit(1.0, 'cm'),
         legend.key.spacing.y = unit(3, 'pt'))
-print(figS2_alt)
-# ggsave('results/FigureS2_alt.svg', figS2_alt, width = 5, height = 5.25)
+print(figS2)
+# ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
 
 rm(map_gisd)
 

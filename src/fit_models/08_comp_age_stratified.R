@@ -399,9 +399,9 @@ plot_a_lessthan18 <- plot_a_lessthan18 + labs(x = '% Aged <18', tag = 'E') + the
 plot_a_pop_dens <- plot_a_pop_dens + labs(x = 'Population Density (100s / km2)', tag = 'F') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 plot_a_care_home_beds <- plot_a_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'G') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
-fig9s <- plot_a_GISD_Score + plot_a_service + plot_a_production + plot_a_18to64 + plot_a_lessthan18 +
+figS9 <- plot_a_GISD_Score + plot_a_service + plot_a_production + plot_a_18to64 + plot_a_lessthan18 +
   plot_a_pop_dens + plot_a_care_home_beds + plot_layout(nrow = 2)
-# ggsave('results/FigureS9.svg', fig9s, width = 22.5, height = 7.8)
+# ggsave('results/FigureS9.svg', figS9, width = 22.5, height = 7.8)
 
 # CFRs / 15-59:
 mod_list <- list(n1_1b_full, n1_2b_full, n2b_full, n3b_full, n4b_full, n5b_full)
@@ -419,8 +419,8 @@ plot_b_GISD_Score <- plot_b_GISD_Score + labs(x = 'GISD', tag = 'A') + theme(plo
 plot_b_hosp_beds <- plot_b_hosp_beds + labs(x = 'Hospital Beds per 1000 Pop', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 plot_b_care_home_beds <- plot_b_care_home_beds + labs(x = 'Care Home Beds per 10000 Pop', tag = 'C') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
-fig10s <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layout(nrow = 1)
-# ggsave('results/FigureS10.svg', fig10s, width = 16.875, height = 4.0)
+figS10 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layout(nrow = 1)
+# ggsave('results/FigureS10.svg', figS10, width = 16.875, height = 4.0)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
