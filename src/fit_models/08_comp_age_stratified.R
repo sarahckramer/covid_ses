@@ -243,6 +243,54 @@ moran.mc(map_base$resid_n5b, lw, nsim = 999)
 dat_60plus %>% select(cases_wave1_1_rate, cases_wave1_2_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate, cases_wave5_rate) %>% summary()
 dat_15thru59 %>% select(cfr_wave1_1, cfr_wave1_2, cfr_wave2:cfr_wave5) %>% summary()
 
+# Compare to age-standardized population:
+rm(sens_age)
+source('src/functions/load_data.R')
+
+dat_comp_incidence <- dat_cumulative %>%
+  select(lk, cases_wave1_1_rate, cases_wave1_2_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate, cases_wave5_rate) %>%
+  left_join(dat_60plus %>%
+              select(lk, cases_wave1_1_rate, cases_wave1_2_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate, cases_wave5_rate),
+            by = 'lk') %>%
+  mutate(diff1_1 = cases_wave1_1_rate.x - cases_wave1_1_rate.y,
+         diff1_2 = cases_wave1_2_rate.x - cases_wave1_2_rate.y,
+         diff2 = cases_wave2_rate.x - cases_wave2_rate.y,
+         diff3 = cases_wave3_rate.x - cases_wave3_rate.y,
+         diff4 = cases_wave4_rate.x - cases_wave4_rate.y,
+         diff5 = cases_wave5_rate.x - cases_wave5_rate.y) %>%
+  select(-contains('cases'))
+
+summary(dat_comp_incidence)
+
+wilcox.test(dat_comp_incidence$diff1_1, alternative = 'two.sided', conf.int = TRUE) # 60+ lower
+wilcox.test(dat_comp_incidence$diff1_2, alternative = 'two.sided', conf.int = TRUE) # 60+ higher
+wilcox.test(dat_comp_incidence$diff2, alternative = 'two.sided', conf.int = TRUE) # 60+ lower
+wilcox.test(dat_comp_incidence$diff3, alternative = 'two.sided', conf.int = TRUE) # 60+ lower
+wilcox.test(dat_comp_incidence$diff4, alternative = 'two.sided', conf.int = TRUE) # 60+ lower
+wilcox.test(dat_comp_incidence$diff5, alternative = 'two.sided', conf.int = TRUE) # 60+ lower
+
+dat_comp_cfr <- dat_cumulative %>%
+  select(lk, cfr_wave1_1, cfr_wave1_2, cfr_wave2:cfr_wave5) %>%
+  left_join(dat_15thru59 %>%
+              select(lk, cfr_wave1_1, cfr_wave1_2, cfr_wave2:cfr_wave5),
+            by = 'lk') %>%
+  mutate(diff1_1 = cfr_wave1_1.x - cfr_wave1_1.y,
+         diff1_2 = cfr_wave1_2.x - cfr_wave1_2.y,
+         diff2 = cfr_wave2.x - cfr_wave2.y,
+         diff3 = cfr_wave3.x - cfr_wave3.y,
+         diff4 = cfr_wave4.x - cfr_wave4.y,
+         diff5 = cfr_wave5.x - cfr_wave5.y) %>%
+  select(-contains('cfr'))
+
+summary(dat_comp_cfr)
+
+wilcox.test(dat_comp_cfr$diff1_1, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+wilcox.test(dat_comp_cfr$diff1_2, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+wilcox.test(dat_comp_cfr$diff2, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+wilcox.test(dat_comp_cfr$diff3, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+wilcox.test(dat_comp_cfr$diff4, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+wilcox.test(dat_comp_cfr$diff5, alternative = 'two.sided', conf.int = TRUE) # 15-59 lower
+
 # Assess spatial clustering in the data:
 map_base <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp')
 map_base <- map_base %>%
