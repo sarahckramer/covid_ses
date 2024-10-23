@@ -186,20 +186,30 @@ attr(nb, 'region.id') <- map_temp$ARS
 names(nb) <- attr(nb, 'region.id')
 
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
-moran.mc(map_pan$cases_wave1_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave1_1_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave1_2_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave2_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave3_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave4_rate, lw, nsim = 999)
-moran.mc(map_pan$cases_wave5_rate, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave1, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave1_1, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave1_2, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave2, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave3, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave4, lw, nsim = 999)
-moran.mc(map_pan$cfr_wave5, lw, nsim = 999)
+
+moran_LIST_a = moran_LIST_b = vector('list', length = 6)
+
+moran_LIST_a[[1]] <- moran.test(map_pan$cases_wave1_1_rate, lw)
+moran_LIST_a[[2]] <- moran.test(map_pan$cases_wave1_2_rate, lw)
+moran_LIST_a[[3]] <- moran.test(map_pan$cases_wave2_rate, lw)
+moran_LIST_a[[4]] <- moran.test(map_pan$cases_wave3_rate, lw)
+moran_LIST_a[[5]] <- moran.test(map_pan$cases_wave4_rate, lw)
+moran_LIST_a[[6]] <- moran.test(map_pan$cases_wave5_rate, lw)
+
+lapply(moran_LIST_a, function(ix) {
+  c(ix$estimate[1], ix$estimate[1] - 1.96 * sqrt(ix$estimate[3]), ix$estimate[1] + 1.96 * sqrt(ix$estimate[3]))
+})
+
+moran_LIST_b[[1]] <- moran.test(map_pan$cfr_wave1_1, lw)
+moran_LIST_b[[2]] <- moran.test(map_pan$cfr_wave1_2, lw)
+moran_LIST_b[[3]] <- moran.test(map_pan$cfr_wave2, lw)
+moran_LIST_b[[4]] <- moran.test(map_pan$cfr_wave3, lw)
+moran_LIST_b[[5]] <- moran.test(map_pan$cfr_wave4, lw)
+moran_LIST_b[[6]] <- moran.test(map_pan$cfr_wave5, lw)
+
+lapply(moran_LIST_b, function(ix) {
+  c(ix$estimate[1], ix$estimate[1] - 1.96 * sqrt(ix$estimate[3]), ix$estimate[1] + 1.96 * sqrt(ix$estimate[3]))
+})
 
 # How consistent are patterns from one wave to the next?:
 pairs.panels(dat_cumulative %>%

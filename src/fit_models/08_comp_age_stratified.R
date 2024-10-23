@@ -244,6 +244,7 @@ dat_60plus %>% select(cases_wave1_1_rate, cases_wave1_2_rate, cases_wave2_rate, 
 dat_15thru59 %>% select(cfr_wave1_1, cfr_wave1_2, cfr_wave2:cfr_wave5) %>% summary()
 
 # Assess spatial clustering in the data:
+map_base <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_KRS.shp')
 map_base <- map_base %>%
   left_join(dat_60plus %>%
               select(lk, cases_wave1_rate, cases_wave1_1_rate, cases_wave1_2_rate, cases_wave2_rate, cases_wave3_rate, cases_wave4_rate, cases_wave5_rate),
@@ -253,21 +254,35 @@ map_base <- map_base %>%
             by = c('ARS' = 'lk')) %>%
   drop_na()
 
+nb <- spdep::poly2nb(map_base, row.names = map_base$ARS)
+attr(nb, 'region.id') <- map_base$ARS
+names(nb) <- attr(nb, 'region.id')
+
 lw <- nb2listw(nb, style = 'W', zero.policy = FALSE)
-moran.mc(map_base$cases_wave1_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave1_1_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave1_2_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave2_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave3_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave4_rate, lw, nsim = 999)
-moran.mc(map_base$cases_wave5_rate, lw, nsim = 999)
-moran.mc(map_base$cfr_wave1, lw, nsim = 999)
-moran.mc(map_base$cfr_wave1_1, lw, nsim = 999)
-moran.mc(map_base$cfr_wave1_2, lw, nsim = 999)
-moran.mc(map_base$cfr_wave2, lw, nsim = 999)
-moran.mc(map_base$cfr_wave3, lw, nsim = 999)
-moran.mc(map_base$cfr_wave4, lw, nsim = 999)
-moran.mc(map_base$cfr_wave5, lw, nsim = 999)
+
+moran_LIST_a = moran_LIST_b = vector('list', length = 6)
+
+moran_LIST_a[[1]] <- moran.test(map_base$cases_wave1_1_rate, lw)
+moran_LIST_a[[2]] <- moran.test(map_base$cases_wave1_2_rate, lw)
+moran_LIST_a[[3]] <- moran.test(map_base$cases_wave2_rate, lw)
+moran_LIST_a[[4]] <- moran.test(map_base$cases_wave3_rate, lw)
+moran_LIST_a[[5]] <- moran.test(map_base$cases_wave4_rate, lw)
+moran_LIST_a[[6]] <- moran.test(map_base$cases_wave5_rate, lw)
+
+lapply(moran_LIST_a, function(ix) {
+  c(ix$estimate[1], ix$estimate[1] - 1.96 * sqrt(ix$estimate[3]), ix$estimate[1] + 1.96 * sqrt(ix$estimate[3]))
+})
+
+moran_LIST_b[[1]] <- moran.test(map_base$cfr_wave1_1, lw)
+moran_LIST_b[[2]] <- moran.test(map_base$cfr_wave1_2, lw)
+moran_LIST_b[[3]] <- moran.test(map_base$cfr_wave2, lw)
+moran_LIST_b[[4]] <- moran.test(map_base$cfr_wave3, lw)
+moran_LIST_b[[5]] <- moran.test(map_base$cfr_wave4, lw)
+moran_LIST_b[[6]] <- moran.test(map_base$cfr_wave5, lw)
+
+lapply(moran_LIST_b, function(ix) {
+  c(ix$estimate[1], ix$estimate[1] - 1.96 * sqrt(ix$estimate[3]), ix$estimate[1] + 1.96 * sqrt(ix$estimate[3]))
+})
 
 # Plot consistency in spatial patterns over time:
 pairs.panels(dat_60plus %>%
