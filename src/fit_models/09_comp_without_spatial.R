@@ -309,10 +309,12 @@ plot_a_GISD_Score <- ggplot(data = pred_GISD_Score, aes(group = type)) +
         legend.position = 'bottom',
         strip.text = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text = element_text(size = 14)) +
+        axis.text = element_text(size = 14),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.005, 0.97)) +
   scale_color_brewer(palette = 'Set1') +
   scale_fill_brewer(palette = 'Set1') +
-  labs(x = 'GISD Score', y = 'Relative Change (Incidence)', fill = '', col = '')
+  labs(x = 'GISD', y = 'Relative Change (Incidence)', fill = '', col = '', tag = 'A')
 
 mod_list <- list(n1_1b_full_NS, n1_2b_full_NS, n2b_full_NS, n3b_full_NS, n4b_full_NS, n5b_full_NS)
 names(mod_list) <- c('1_1', '1_2', '2', '3', '4', '5')
@@ -342,10 +344,12 @@ plot_b_GISD_Score <- ggplot(data = pred_GISD_Score, aes(group = type)) +
         legend.position = 'bottom',
         strip.text = element_text(size = 14),
         axis.title = element_text(size = 14),
-        axis.text = element_text(size = 14)) +
+        axis.text = element_text(size = 14),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.005, 0.97)) +
   scale_color_brewer(palette = 'Set1') +
   scale_fill_brewer(palette = 'Set1') +
-  labs(x = 'GISD Score', y = 'Relative Change (CFR)', fill = '', col = '')
+  labs(x = 'GISD', y = 'Relative Change (CFR)', fill = '', col = '', tag = 'B')
 
 figS11 <- arrangeGrob(plot_a_GISD_Score, plot_b_GISD_Score, ncol = 1)
 plot(figS11)
