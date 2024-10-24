@@ -359,7 +359,7 @@ get_marginal_prediction <- function(dat, pred_var, outcome_measure, mod_list, st
     # Get predictions and standard errors (link scale):
     pred_data_new <- pred_data %>%
       bind_cols(as.data.frame(predict(mod_list[[i]], pred_data, type = 'link',
-                                      se.fit = TRUE)))#, exclude = 's(ags2)')))
+                                      se.fit = TRUE, exclude = 's(ags2)')))
     
     # Get inverse of link function:
     ilink <- family(mod_list[[i]])$linkinv
