@@ -84,3 +84,7 @@ In "06_assess_spatial_relationships.R", we test whether the underlying patterns 
 Sensitivity Analysis
 --------------------
 To check whether shifts in the direction of the assocation between SEP and COVID-19 incidence or case fatality rates occurred during any waves other than wave 1, we also split all other waves into two partial waves, then fit our models to each of these partial models. Code to do this and to evaluate the results is found in "07_model_partial_waves.R".
+
+To test whether the associations between our predictors and outcomes of interest varied by age group, we also attempted an age-stratified analysis. Code for this sensitivity analysis is found in "08_comp_age_stratified.R".
+
+Finally, we tested the effect of excluding the smooth on latitude and longitude on our results. Code for this analysis is found in "09_comp_without_spatial.R".
