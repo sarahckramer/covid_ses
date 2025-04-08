@@ -170,10 +170,10 @@ p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$
 # grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
 # fig1 <- (p1a + p2a + p3a + p4a + p5a + plot_layout(nrow = 1)) / (p1b + p2b + p3b + p4b + p5b + plot_layout(nrow = 1))
 
-figS4 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 2.25)),
+figS5 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 2.25)),
                      arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 2.25)))
-plot(figS4)
-# ggsave('results/FigureS4.svg', figS4, width = 16.5, height = 9.25)
+plot(figS5)
+# ggsave('results/FigureS5.svg', figS5, width = 16.5, height = 9.25)
 
 # Significant clustering by Moran's I?:
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
@@ -277,7 +277,7 @@ map_gisd <- map_base %>%
             by = c('ARS' = 'lk')) %>%
   mutate(GISD_quint = ntile(GISD_Score, 5))
 
-figS2 <- ggplot() +
+figS3 <- ggplot() +
   geom_sf(data = map_gisd, fill = 'gray60', col = 'black', lwd = 0.5) +
   geom_sf(data = map_gisd %>% drop_na(), aes(fill = as.character(GISD_quint)), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
@@ -291,8 +291,8 @@ figS2 <- ggplot() +
         legend.key.width = unit(1.0, 'cm'),
         legend.key.height = unit(1.0, 'cm'),
         legend.key.spacing.y = unit(3, 'pt'))
-print(figS2)
-# ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
+print(figS3)
+# ggsave('results/FigureS3.svg', figS3, width = 5, height = 5.25)
 
 rm(map_gisd)
 
@@ -398,9 +398,9 @@ fig2 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layo
 pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'), 'cfr', mod_list, standardize = TRUE)
 plot_b_GISD_Score_popdens <- plot_marginal_prediction(pred_GISD_Score_popdens, c('GISD_Score', 'pop_dens'), 'CFR', single_plot = TRUE, which_waves = 3)
 
-figS5 <- plot_b_GISD_Score_popdens[[1]] + labs(x = 'GISD', col = 'Population Density\n(100s / km2)', fill = 'Population Density\n(100s / km2)')
-print(figS5)
-# ggsave('results/FigureS5.svg', figS5, width = 6, height = 4.0)
+figS6 <- plot_b_GISD_Score_popdens[[1]] + labs(x = 'GISD', col = 'Population Density\n(100s / km2)', fill = 'Population Density\n(100s / km2)')
+print(figS6)
+# ggsave('results/FigureS6.svg', figS6, width = 6, height = 4.0)
 
 pred_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr', mod_list, standardize = TRUE)
 
@@ -424,11 +424,8 @@ plot_b_vacc <- plot_b_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpo
 print(plot_b_cases_rate)
 # ggsave('results/Figure3.svg', plot_b_cases_rate, width = 15.75, height = 4.25)
 
-figS6 <- arrangeGrob(plot_a_cases_pre, plot_b_cases_pre, ncol = 1)
-figS7 <- arrangeGrob(plot_a_vacc, plot_b_vacc, ncol = 1)
+# ---------------------------------------------------------------------------------------------------------------------
 
-plot(figS6)
-# ggsave('results/FigureS6.svg', figS6, width = 13.125, height = 8.5)
 ### Compare to linear models ###
 
 # Fit linear models:
@@ -500,8 +497,6 @@ AIC(n3b_linear, n3b_full)
 AIC(n4b_linear, n4b_full)
 AIC(n5b_linear, n5b_full)
 
-plot(figS7)
-# ggsave('results/FigureS7.svg', figS7, width = 10, height = 8.5)
 # Clean up:
 rm(n1_1a_linear, n1_2a_linear, n1_1b_linear, n1_2b_linear, n2a_linear, n2b_linear,
    n3a_linear, n3b_linear, n4a_linear, n4b_linear, n5a_linear, n5b_linear)

@@ -351,9 +351,9 @@ plot_b_GISD_Score <- ggplot(data = pred_GISD_Score, aes(group = type)) +
   scale_fill_brewer(palette = 'Set1') +
   labs(x = 'GISD', y = 'Relative Change (CFR)', fill = '', col = '', tag = 'B')
 
-figS11 <- arrangeGrob(plot_a_GISD_Score, plot_b_GISD_Score, ncol = 1)
-plot(figS11)
-# ggsave('results/FigureS11.svg', figS11, width = 19.6875, height = 8.5)
+figS10 <- arrangeGrob(plot_a_GISD_Score, plot_b_GISD_Score, ncol = 1)
+plot(figS10)
+# ggsave('results/FigureS10.svg', figS10, width = 19.6875, height = 8.5)
 
 # Plot interactions with GISD_Score:
 pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'),
