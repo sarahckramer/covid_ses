@@ -9,6 +9,7 @@ library(tidyverse)
 library(ISOweek)
 library(testthat)
 library(jsonlite)
+library(gridExtra)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -316,6 +317,145 @@ write_csv(vacc_dat, file = 'data/formatted/independent_vars/vacc_dat.csv')
 write_csv(vacc_dat_regional, file = 'data/formatted/independent_vars/vacc_dat_REGIONAL.csv')
 write_csv(vacc_dat_regional_60plus, file = 'data/formatted/independent_vars/BYAGE_60plus_vacc_dat_REGIONAL.csv')
 write_csv(vacc_dat_regional_15thru59, file = 'data/formatted/independent_vars/BYAGE_15thru59_vacc_dat_REGIONAL.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Plot timeline of government response/testing/vaccination:
+stringency_dat <- read_csv('data/raw/revision1/OxCGRT_compact_national_v1.csv') %>%
+  filter(CountryName == 'Germany') %>%
+  mutate(Date = as.Date(paste0(str_sub(Date, 1, 4), '-', str_sub(Date, 5, 6), '-', str_sub(Date, 7, 8)), format = '%Y-%m-%d')) %>%
+  select(Date:C4M_Flag, `C8EV_International travel controls`, `H2_Testing policy`, `H6M_Facial Coverings`:H7_Flag, contains('V2'), StringencyIndex_Average, ContainmentHealthIndex_Average) %>%
+  filter(Date <= '2022-05-29') %>%
+  filter(Date >= '2020-02-23')
+
+test_dat <- read_csv('data/raw/revision1/SARS-CoV-2-PCR-Testungen_in_Deutschland.csv') %>%
+  select(date, tests_total, tests_positive, tests_positive_ratio) %>%
+  mutate(year = as.numeric(str_sub(date, 1, 4)),
+         week = as.numeric(str_sub(date, 7, 8))) %>%
+  mutate(time = week,
+         time = if_else(year == 2021, time + 53, time),
+         time = if_else(year == 2022, time + 53 + 52, time)) %>%
+  filter(year < 2022 | (year == 2022 & week <= 30))
+pop_dat <- read_csv('data/raw/cdp/bevoelkerung.csv') %>%
+  select(ags5, kr_ew_20) %>%
+  rename('lk' = 'ags5',
+         'pop' = 'kr_ew_20')
+test_dat <- test_dat %>%
+  mutate(pop = sum(pop_dat$pop)) %>%
+  mutate(tests_per_pop = tests_total / pop * 10000)
+
+vacc_dat_rki <- read_csv('data/raw/revision1/Deutschland_Landkreise_COVID-19-Impfungen.csv') %>%
+  group_by(Impfdatum, Impfschutz) %>%
+  summarise(Anzahl = sum(Anzahl)) %>%
+  ungroup() %>%
+  group_by(Impfschutz) %>%
+  mutate(tot_vacc = cumsum(Anzahl)) %>%
+  select(-Anzahl) %>%
+  ungroup() %>%
+  pivot_wider(names_from = Impfschutz, names_prefix = 'vacc_', values_from = tot_vacc) %>%
+  select(Impfdatum:vacc_2)
+week_ends <- unique(vacc_dat_rki$Impfdatum)[format(unique(as.Date(vacc_dat_rki$Impfdatum)), '%w') == '0']
+vacc_dat_rki <- vacc_dat_rki %>%
+  filter(Impfdatum %in% week_ends) %>%
+  mutate(Date = as.Date(Impfdatum),
+         Year = format(Date, '%Y'),
+         Week = format(Date, '%V'),
+         .after = Date) %>%
+  select(Date:Week, vacc_1:vacc_2) %>%
+  mutate(Year = if_else(Week == 53, '2020', Year),
+         Year = if_else(Week == 52 & Year == '2022', '2021', Year)) %>%
+  mutate(year = as.numeric(Year),
+         week = as.numeric(Week))
+rm(week_ends)
+vacc_dat_rki <- vacc_dat_rki %>%
+  filter(Year %in% c('2020', '2021') | (Year == '2022' & as.numeric(Week) <= 21))
+vacc_dat_rki <- vacc_dat_rki %>% mutate(pop = sum(pop_dat$pop))
+vacc_dat_rki <- test_dat %>%
+  select(year:time) %>%
+  left_join(vacc_dat_rki, by = c('year', 'week'))
+
+x_breaks <- c(9, 17 + 5/7, 26 + 3/7, 35 + 2/7, 44,
+              52 + 5/7, 61 + 1/7, 69 + 6/7, 78 + 4/7, 87 + 3/7, 96 + 1/7,
+              104 + 6/7, 113 + 2/7, 122)
+x_labs <- c('Mar 2020', 'May 2020', 'Jul 2020', 'Sep 2020', 'Nov 2020',
+            'Jan 2021', 'Mar 2021', 'May 2021', 'Jul 2021', 'Sep 2021', 'Nov 2021',
+            'Jan 2022', 'Mar 2022', 'May 2022')
+
+p_timeline1 <- ggplot(data = stringency_dat) +
+  geom_rect(data = stringency_dat[1, ], aes(xmin = as.Date('2020-02-23'), xmax = as.Date('2020-05-17'), ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
+  geom_rect(data = stringency_dat[1, ], aes(xmin = as.Date('2020-09-27'), xmax = as.Date('2021-02-28'), ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
+  geom_rect(data = stringency_dat[1, ], aes(xmin = as.Date('2021-02-28'), xmax = as.Date('2021-05-30'), ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
+  geom_rect(data = stringency_dat[1, ], aes(xmin = as.Date('2021-08-08'), xmax = as.Date('2021-12-26'), ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#984ea3') +
+  geom_rect(data = stringency_dat[1, ], aes(xmin = as.Date('2021-12-26'), xmax = as.Date('2022-05-29'), ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#f781bf') +
+  geom_vline(xintercept = as.Date('2022-04-03'), lty = 2, lwd = 1.0, col = 'gray70') +
+  geom_line(aes(x = Date, y = StringencyIndex_Average), lwd = 1.0) +
+  geom_segment(x = as.Date('2020-03-22'), xend = as.Date('2020-04-20'), y = 92, yend = 92, lwd = 2.0) +
+  geom_segment(x = as.Date('2020-11-02'), xend = as.Date('2020-12-13'), y = 92, yend = 92, lwd = 2.0) +
+  geom_segment(x = as.Date('2020-11-14'), xend = as.Date('2020-11-17'), y = 92, yend = 92, lwd = 2.0, col = 'white') +
+  geom_segment(x = as.Date('2020-11-28'), xend = as.Date('2020-12-01'), y = 92, yend = 92, lwd = 2.0, col = 'white') +
+  geom_segment(x = as.Date('2020-12-16'), xend = as.Date('2021-03-03'), y = 92, yend = 92, lwd = 2.0) +
+  geom_label(label = 'LD 1', x = as.Date('2020-03-15'), y = 92, size = 3, hjust = 1, inherit.aes = FALSE) +
+  geom_label(label = 'LD Light', x = as.Date('2020-10-26'), y = 92, size = 3, hjust = 1, inherit.aes = FALSE) +
+  geom_label(label = 'LD 2', x = as.Date('2021-03-10'), y = 92, size = 3, hjust = 0, inherit.aes = FALSE) +
+  geom_label(label = 'End of most control measures', x = as.Date('2022-03-27'), y = 92, size = 3, hjust = 1, inherit.aes = FALSE) +
+  # geom_vline(xintercept = as.Date('2022-04-03'), lty = 2, lwd = 1.0, col = 'gray70') +
+  theme_classic() +
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(angle = 35, vjust = 0.62),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.065, 0.95)) +
+  scale_x_date(breaks = c(as.Date('2020-03-01'), as.Date('2020-05-01'), as.Date('2020-07-01'), as.Date('2020-09-01'), as.Date('2020-11-01'),
+                          as.Date('2021-01-01'), as.Date('2021-03-01'), as.Date('2021-05-01'), as.Date('2021-07-01'), as.Date('2021-09-01'),
+                          as.Date('2021-11-01'), as.Date('2022-01-01'), as.Date('2022-03-01'), as.Date('2022-05-01')),
+               labels = x_labs) +
+  scale_y_continuous(n.breaks = 6, limits = c(0, 100), expand = c(0, 0)) +
+  labs(x = 'Date', y = 'Stringency Index', tag = 'A')
+
+p_timeline2 <- ggplot(data = test_dat %>% filter(time <= 126)) +
+  geom_rect(data = test_dat[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
+  geom_rect(data = test_dat[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
+  geom_rect(data = test_dat[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
+  geom_rect(data = test_dat[1, ], aes(xmin = 84, xmax = 104, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#984ea3') +
+  geom_rect(data = test_dat[1, ], aes(xmin = 104, xmax = 126, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#f781bf') +
+  geom_line(aes(x = time, y = tests_per_pop), lwd = 1.0) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(angle = 35, vjust = 0.62),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.065, 0.95)) +
+  scale_x_continuous(breaks = x_breaks, labels = x_labs) +
+  scale_y_continuous(n.breaks = 10, limits = c(0, 320), expand = c(0, 0)) +
+  labs(x = 'Date', y = '# of Tests per 10,000 Population', tag = 'B')
+
+p_timeline3 <- ggplot(vacc_dat_rki %>% filter(time <= 126)) +
+  geom_rect(data = vacc_dat_rki[1, ], aes(xmin = 9, xmax = 20, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#e41a1c') +
+  geom_rect(data = vacc_dat_rki[1, ], aes(xmin = 39, xmax = 61, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#4daf4a') +
+  geom_rect(data = vacc_dat_rki[1, ], aes(xmin = 61, xmax = 74, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#377eb8') +
+  geom_rect(data = vacc_dat_rki[1, ], aes(xmin = 84, xmax = 104, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#984ea3') +
+  geom_rect(data = vacc_dat_rki[1, ], aes(xmin = 104, xmax = 126, ymin = -Inf, ymax = Inf), alpha = 0.1, fill = '#f781bf') +
+  geom_vline(xintercept = 52, lty = 2, lwd = 1.0, col = 'gray70') +
+  geom_vline(xintercept = 76, lty = 2, lwd = 1.0, col = 'gray70') +
+  geom_vline(xintercept = 103, lty = 2, lwd = 1.0, col = 'gray70') +
+  geom_point(data = vacc_dat_regional, x = 68, aes(y = vacc_w3 * 100), size = 1.5, alpha = 0.01) +
+  geom_point(data = vacc_dat_regional, x = 94, aes(y = vacc_w4 * 100), size = 1.5, alpha = 0.01) +
+  geom_point(data = vacc_dat_regional, x = 115, aes(y = vacc_w5 * 100), size = 1.5, alpha = 0.01) +
+  geom_line(aes(x = time, y = vacc_2 / pop * 100), lwd = 1.0) +
+  geom_label(label = 'First vaccines administered', x = 51.25, y = 90, size = 3, hjust = 1, inherit.aes = FALSE) +
+  geom_label(label = 'End of prioritization', x = 75.25, y = 90, size = 3, hjust = 1, inherit.aes = FALSE) +
+  geom_label(label = 'Vaccines available to all age 5+', x = 102.25, y = 90, size = 3, hjust = 1, inherit.aes = FALSE) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(angle = 35, vjust = 0.62),
+        plot.tag = element_text(size = 20),
+        plot.tag.position = c(0.065, 0.95)) +
+  scale_x_continuous(breaks = x_breaks, labels = x_labs) +
+  scale_y_continuous(n.breaks = 6, limits = c(0, 100), expand = c(0, 0)) +
+  labs(x = 'Date', y = '% Fully Vaccinated', tag = 'C')
+
+grid.arrange(p_timeline1, p_timeline2, p_timeline3, ncol = 1)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

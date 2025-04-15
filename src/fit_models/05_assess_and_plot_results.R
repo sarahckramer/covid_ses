@@ -14,6 +14,7 @@ library(gridExtra)
 library(patchwork)
 library(viridis)
 library(psych)
+library(mgcv)
 
 # Load necessary functions:
 source('src/functions/assess_results_fxns.R')
@@ -169,10 +170,10 @@ p_legend_b <- ggplotGrob(p_legend_b)$grobs[[which(sapply(ggplotGrob(p_legend_b)$
 # grid.arrange(p1a, p2a, p3a, p4a, p1b, p2b, p3b, p4b, ncol = 4)
 # fig1 <- (p1a + p2a + p3a + p4a + p5a + plot_layout(nrow = 1)) / (p1b + p2b + p3b + p4b + p5b + plot_layout(nrow = 1))
 
-figS4 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 2.25)),
+figS5 <- arrangeGrob(arrangeGrob(arrangeGrob(p1a, p2a, p3a, p4a, p5a, nrow = 1), p_legend_a, nrow = 1, widths = c(15, 2.25)),
                      arrangeGrob(arrangeGrob(p1b, p2b, p3b, p4b, p5b, nrow = 1), p_legend_b, nrow = 1, widths = c(15, 2.25)))
-plot(figS4)
-# ggsave('results/FigureS4.svg', figS4, width = 16.5, height = 9.25)
+plot(figS5)
+# ggsave('results/FigureS5.svg', figS5, width = 16.5, height = 9.25)
 
 # Significant clustering by Moran's I?:
 # https://keen-swartz-3146c4.netlify.app/spatautocorr.html
@@ -276,7 +277,7 @@ map_gisd <- map_base %>%
             by = c('ARS' = 'lk')) %>%
   mutate(GISD_quint = ntile(GISD_Score, 5))
 
-figS2 <- ggplot() +
+figS3 <- ggplot() +
   geom_sf(data = map_gisd, fill = 'gray60', col = 'black', lwd = 0.5) +
   geom_sf(data = map_gisd %>% drop_na(), aes(fill = as.character(GISD_quint)), col = 'black', lwd = 0.5) +
   geom_sf(data = map_bl, fill = NA, lwd = 1.0, col = 'black') +
@@ -290,8 +291,8 @@ figS2 <- ggplot() +
         legend.key.width = unit(1.0, 'cm'),
         legend.key.height = unit(1.0, 'cm'),
         legend.key.spacing.y = unit(3, 'pt'))
-print(figS2)
-# ggsave('results/FigureS2.svg', figS2, width = 5, height = 5.25)
+print(figS3)
+# ggsave('results/FigureS3.svg', figS3, width = 5, height = 5.25)
 
 rm(map_gisd)
 
@@ -397,9 +398,9 @@ fig2 <- plot_b_GISD_Score + plot_b_hosp_beds + plot_b_care_home_beds + plot_layo
 pred_GISD_Score_popdens <- get_marginal_prediction(dat_cumulative, c('GISD_Score', 'pop_dens'), 'cfr', mod_list, standardize = TRUE)
 plot_b_GISD_Score_popdens <- plot_marginal_prediction(pred_GISD_Score_popdens, c('GISD_Score', 'pop_dens'), 'CFR', single_plot = TRUE, which_waves = 3)
 
-figS5 <- plot_b_GISD_Score_popdens[[1]] + labs(x = 'GISD', col = 'Population Density\n(100s / km2)', fill = 'Population Density\n(100s / km2)')
-print(figS5)
-# ggsave('results/FigureS5.svg', figS5, width = 6, height = 4.0)
+figS6 <- plot_b_GISD_Score_popdens[[1]] + labs(x = 'GISD', col = 'Population Density\n(100s / km2)', fill = 'Population Density\n(100s / km2)')
+print(figS6)
+# ggsave('results/FigureS6.svg', figS6, width = 6, height = 4.0)
 
 pred_cases_rate <- get_marginal_prediction(dat_cumulative, 'cases_rate', 'cfr', mod_list, standardize = TRUE)
 
@@ -423,14 +424,82 @@ plot_b_vacc <- plot_b_vacc + labs(x = 'Proportion Fully Vaccinated at Wave Midpo
 print(plot_b_cases_rate)
 # ggsave('results/Figure3.svg', plot_b_cases_rate, width = 15.75, height = 4.25)
 
-figS6 <- arrangeGrob(plot_a_cases_pre, plot_b_cases_pre, ncol = 1)
-figS7 <- arrangeGrob(plot_a_vacc, plot_b_vacc, ncol = 1)
+# ---------------------------------------------------------------------------------------------------------------------
 
-plot(figS6)
-# ggsave('results/FigureS6.svg', figS6, width = 13.125, height = 8.5)
+### Compare to linear models ###
 
-plot(figS7)
-# ggsave('results/FigureS7.svg', figS7, width = 10, height = 8.5)
+# Fit linear models:
+# Wave 1:
+n1_1a_linear <- gam(cases_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 45) + s(ags2, bs = 're', k = 16) +
+                      perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production +
+                      offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1_2a_linear <- gam(cases_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 80) + s(ags2, bs = 're', k = 16) +
+                      perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production + s(cases_wave1_1_rate) +
+                      offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+n1_1b_linear <- gam(deaths_wave1_1 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                      hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave1_1_rate) +
+                      offset(log(cases_wave1_1)), data = dat_cumulative, family = 'nb', method = 'ML')
+n1_2b_linear <- gam(deaths_wave1_2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                      hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave1_1_rate) + s(cases_wave1_2_rate) +
+                      offset(log(cases_wave1_2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+# Wave 2:
+n2a_linear <- gam(cases_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 70) + s(ags2, bs = 're', k = 16) +
+                    perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production +
+                    s(cases_pre2_rate) + offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n2b_linear <- gam(deaths_wave2 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                    hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave2_rate) +
+                    s(cases_pre2_rate) + offset(log(cases_wave2)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+# Wave 3:
+n3a_linear <- gam(cases_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 80) + s(ags2, bs = 're', k = 16) +
+                    perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production +
+                    s(cases_pre3_rate) + s(vacc_w3_reg) +
+                    offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n3b_linear <- gam(deaths_wave3 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 50) + s(ags2, bs = 're', k = 16) +
+                    hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave3_rate, k = 25) +
+                    s(cases_pre3_rate) + s(vacc_w3_reg) + ti(pop_dens, GISD_Score) +
+                    offset(log(cases_wave3)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+# Wave 4:
+n4a_linear <- gam(cases_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                    perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production +
+                    s(cases_pre4_rate) + s(vacc_w4_reg) +
+                    offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n4b_linear <- gam(deaths_wave4 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 40) + s(ags2, bs = 're', k = 16) +
+                    hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave4_rate) +
+                    s(cases_pre4_rate) + s(vacc_w4_reg) +
+                    offset(log(cases_wave4)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+# Wave 5:
+n5a_linear <- gam(cases_wave5 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 60) + s(ags2, bs = 're', k = 16) +
+                    perc_18to64 + perc_lessthan18 + care_home_beds + GISD_Score + pop_dens + perc_service + perc_production +
+                    s(cases_pre5_rate, k = 25) + s(vacc_w5_reg) +
+                    offset(log(pop)), data = dat_cumulative, family = 'nb', method = 'ML')
+n5b_linear <- gam(deaths_wave5 ~ s(long, lat, bs = 'ds', m = c(1.0, 0.5), k = 30) + s(ags2, bs = 're', k = 16) +
+                    hosp_beds + care_home_beds + GISD_Score + pop_dens + s(cases_wave5_rate) +
+                    s(cases_pre5_rate) + s(vacc_w5_reg) +
+                    offset(log(cases_wave5)), data = dat_cumulative, family = 'nb', method = 'ML')
+
+# Compare:
+AIC(n1_1a_linear, n1_1a_full)
+AIC(n1_2a_linear, n1_2a_full)
+AIC(n2a_linear, n2a_full)
+AIC(n3a_linear, n3a_full)
+AIC(n4a_linear, n4a_full)
+AIC(n5a_linear, n5a_full)
+
+AIC(n1_1b_linear, n1_1b_full)
+AIC(n1_2b_linear, n1_2b_full)
+AIC(n2b_linear, n2b_full)
+AIC(n3b_linear, n3b_full)
+AIC(n4b_linear, n4b_full)
+AIC(n5b_linear, n5b_full)
+
+# Clean up:
+rm(n1_1a_linear, n1_2a_linear, n1_1b_linear, n1_2b_linear, n2a_linear, n2b_linear,
+   n3a_linear, n3b_linear, n4a_linear, n4b_linear, n5a_linear, n5b_linear)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

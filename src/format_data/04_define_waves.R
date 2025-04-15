@@ -5,6 +5,9 @@
 # Load libraries:
 library(tidyverse)
 library(gridExtra)
+library(viridis)
+library(mgcv)
+library(sf)
 
 # Read in data:
 dat_inc_wk <- read_csv('data/formatted/STAND_weekly_covid_deaths_by_lk_CUMULATIVE_CDP.csv')
@@ -112,6 +115,8 @@ plot(figs1)
 
 # Clean up:
 rm(dat_inc_DE, dat_inc_wk_i, p1, p2, p3, p4, p.s1.a, p.s1.b)
+
+# ---------------------------------------------------------------------------------------------------------------------
 
 # Calculate total cases/deaths for each wave/partial waves:
 dat_cases_cumulative <- dat_inc_wk %>%
@@ -377,8 +382,6 @@ dat_plot_agestrat <- dat_cumulative_agestrat %>%
   filter((str_detect(outcome, 'cases_wave') & str_detect(outcome, 'rate') & !str_detect(outcome, '_1') & !str_detect(outcome, '_2')) |
            str_detect(outcome, 'cfr') & !str_detect(outcome, 'summer') & !str_detect(outcome, '_1') & !str_detect(outcome, '_2'))
 
-library(viridis)
-
 p5 <- ggplot(dat_plot, aes(x = bundesland, y = val, group = bundesland)) +
   geom_boxplot(fill = 'steelblue2') + theme_classic() +
   facet_wrap(~ outcome, scales = 'free_y')
@@ -404,18 +407,209 @@ p8 <- ggplot(dat_plot %>%
 grid.arrange(p6, p7, p8, ncol = 1)
 
 p6_age <- ggplot(dat_plot_agestrat %>%
-               filter(str_detect(outcome, 'cases')),
-             aes(x = outcome, y = val, group = paste(outcome, age), fill = age)) +
+                   filter(str_detect(outcome, 'cases')),
+                 aes(x = outcome, y = val, group = paste(outcome, age), fill = age)) +
   geom_boxplot() + theme_classic() + scale_fill_viridis(discrete = TRUE)
 p8_age <- ggplot(dat_plot_agestrat %>%
-               filter(str_detect(outcome, 'cfr')),
-             aes(x = outcome, y = val, group = paste(outcome, age), fill = age)) +
+                   filter(str_detect(outcome, 'cfr')),
+                 aes(x = outcome, y = val, group = paste(outcome, age), fill = age)) +
   geom_boxplot() + theme_classic() + scale_fill_viridis(discrete = TRUE)
 grid.arrange(p6_age, p8_age, ncol = 1)
 
 # Write cumulative counts/rates to file:
 write_csv(dat_cumulative, file = 'data/formatted/STAND_cumulative_cases_and_deaths.csv')
 write_csv(dat_cumulative_agestrat, file = 'data/formatted/BYAGE_cumulative_cases_and_deaths.csv')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compare reported to excess deaths (at Bundesland level):
+
+# Read in data:
+euro_dat <- read_tsv('data/raw/revision1/excess_deaths/eurostat_nuts3_estat_demo_r_mweek3.tsv')
+# https://ec.europa.eu/eurostat/cache/metadata/en/demomwk_esms.htm#shortmeta_last_updateDisseminated
+
+# Clean up/format:
+euro_dat <- euro_dat %>%
+  rename('all_info' = 1) %>%
+  pivot_longer(-1, names_to = 'date', values_to = 'deaths')# %>%
+
+euro_dat <- euro_dat %>%
+  filter(str_detect(all_info, 'DE')) %>%
+  mutate(sex = str_split(all_info, ',', simplify = TRUE)[, 3],
+         age = str_split(all_info, ',', simplify = TRUE)[, 4],
+         geo = str_split(all_info, ',', simplify = TRUE)[, 5]) %>%
+  select(-all_info)
+
+euro_dat <- euro_dat %>%
+  mutate(deaths = as.numeric(deaths)) %>%
+  mutate(year = str_sub(date, 1, 4),
+         week = str_sub(date, -2, -1)) %>%
+  mutate(year = as.numeric(year),
+         week = as.numeric(week))
+
+# Keep only data of interest:
+euro_dat <- euro_dat %>%
+  filter(sex == 'T', age != 'UNK', geo != 'DEX') %>%
+  filter(!is.na(deaths)) %>%
+  select(-sex)
+euro_dat <- euro_dat %>%
+  filter(year >= 2015 & year < 2023)
+
+# Get BL-level data:
+euro_dat_ALL <- euro_dat
+euro_dat <- euro_dat %>%
+  filter(geo != 'DE') %>%
+  select(-age)
+
+# Fit GAM of year/week for years 2015-2019, for each BL:
+mod_list <- vector('list', 16)
+pred_list <- vector('list', 16)
+
+for (i in 1:16) {
+  
+  region <- unique(euro_dat$geo)[i]
+  
+  df_temp <- euro_dat %>%
+    filter(geo == region)
+  df_temp <- df_temp %>%
+    filter(year < 2020)
+  
+  # Fit GAM:
+  m1 <- gam(deaths ~ year + s(week, bs = 'cc', k = 53), data = df_temp, family = 'nb', method = 'ML')
+  mod_list[[i]] <- m1
+  
+  # Predict deaths for 2020-22:
+  df_pred <- euro_dat %>%
+    filter(geo == region) %>%
+    filter(year == 2020)
+  
+  ilink <- family(m1)$linkinv
+  
+  df_pred <- df_pred %>%
+    bind_cols(predict(m1, df_pred, type = 'link', se.fit = TRUE)) %>%
+    mutate(fitted = ilink(fit),
+           lower = ilink(fit - (2 * se.fit)),
+           upper = ilink(fit + (2 * se.fit))) %>%
+    select(geo, week, fitted:upper)
+  
+  pred_list[[i]] <- df_pred
+  
+}
+rm(i, region, df_temp, df_pred, m1, ilink)
+
+# Join with observed death data:
+euro_dat <- euro_dat %>%
+  filter(year >= 2020) %>%
+  select(geo, date, year:week, deaths) %>%
+  left_join(bind_rows(pred_list),
+            by = c('geo', 'week'))
+
+# Sum over waves for observed and expected:
+df_reported <- euro_dat %>%
+  select(geo, date, deaths) %>%
+  pivot_wider(names_from = date, values_from = deaths) %>%
+  rowwise() %>%
+  mutate(reported_wave1 = rowSums(across(`2020-W11`:`2020-W22`)),
+         # reported_wave1_1 = rowSums(across(`2020-W11`:`2020-W16`)),
+         # reported_wave1_2 = rowSums(across(`2020-W17`:`2020-W22`)),
+         reported_wave2 = rowSums(across(`2020-W42`:`2021-W10`)),
+         reported_wave3 = rowSums(across(`2021-W11`:`2021-W23`)),
+         reported_wave4 = rowSums(across(`2021-W34`:`2022-W01`)),
+         reported_wave5 = rowSums(across(`2022-W02`:`2022-W23`))) %>%
+  select(geo, contains('reported')) %>%
+  pivot_longer(-geo, names_to = 'wave', values_to = 'reported') %>%
+  mutate(wave = str_remove(wave, 'reported_'))
+
+df_predicted <- euro_dat %>%
+  select(geo, date, fitted) %>%
+  pivot_wider(names_from = date, values_from = fitted) %>%
+  rowwise() %>%
+  mutate(fitted_wave1 = rowSums(across(`2020-W11`:`2020-W22`)),
+         # fitted_wave1_1 = rowSums(across(`2020-W11`:`2020-W16`)),
+         # fitted_wave1_2 = rowSums(across(`2020-W17`:`2020-W22`)),
+         fitted_wave2 = rowSums(across(`2020-W42`:`2021-W10`)),
+         fitted_wave3 = rowSums(across(`2021-W11`:`2021-W23`)),
+         fitted_wave4 = rowSums(across(`2021-W34`:`2022-W01`)),
+         fitted_wave5 = rowSums(across(`2022-W02`:`2022-W23`))) %>%
+  select(geo, contains('fitted')) %>%
+  pivot_longer(-geo, names_to = 'wave', values_to = 'fitted') %>%
+  mutate(wave = str_remove(wave, 'fitted_'))
+
+# Calculate excess deaths by Bundesland and wave:
+df_excess <- df_reported %>%
+  left_join(df_predicted,
+            by = c('geo', 'wave')) %>%
+  mutate(excess = reported - fitted)
+# rm(df_reported, df_predicted)
+
+# Calculate Bundesland-level reported COVID deaths:
+dat_cumulative <- dat_cumulative %>%
+  filter(str_detect(outcome, 'deaths_wave') & !str_detect(outcome, 'rate')) %>%
+  select(ags2:bundesland, outcome, pop, val) %>%
+  pivot_wider(names_from = outcome, values_from = val) %>%
+  select(!contains('1_') & !contains('2_') & !contains('3_') & !contains('4_') & !contains('5_')) %>%
+  group_by(ags2, bundesland) %>%
+  summarise(across(everything(), ~ sum(.x)))# %>%
+# mutate(mortality_wave1_1 = deaths_wave1_1 / pop * 10000,
+#        mortality_wave1_2 = deaths_wave1_2 / pop * 10000,
+#        mortality_wave2 = deaths_wave2 / pop * 10000,
+#        mortality_wave3 = deaths_wave3 / pop * 10000,
+#        mortality_wave4 = deaths_wave4 / pop * 10000,
+#        mortality_wave5 = deaths_wave5 / pop * 10000) %>%
+# select(ags2, bundesland, pop, contains('mortality'))
+
+# Join and compare:
+map_bl <- st_read(dsn = 'data/raw/map/vg2500_12-31.gk3.shape/vg2500/VG2500_LAN.shp')[1:16, ]
+
+df_comp <- map_bl %>%
+  as_tibble() %>%
+  select(NUTS, ARS) %>%
+  left_join(df_excess %>%
+              select(geo, wave, excess),
+            by = c('NUTS' = 'geo')) %>%
+  left_join(dat_cumulative %>%
+              pivot_longer(contains('deaths'), names_to = 'wave', values_to = 'covid_deaths') %>%
+              mutate(wave = str_remove(wave, 'deaths_')),
+            by = c('ARS' = 'ags2', 'wave' = 'wave')) %>%
+  mutate(excess = excess / pop * 10000,
+         covid_deaths = covid_deaths / pop * 10000) %>%
+  select(NUTS:ARS, bundesland, wave, pop, covid_deaths, excess)
+
+figS11 <- ggplot(data = df_comp, aes(x = covid_deaths, y = excess, col = paste0('Wave ', str_sub(wave, 5)))) +
+  geom_rect(data = df_comp[1, ], aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0), alpha = 0.4, fill = 'gray90', col = 'white') +
+  geom_abline(slope = 1, intercept = 0, lty = 2, col = 'gray60') +
+  geom_point(size = 2.0) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 13),
+        legend.text = element_text(size = 13),
+        legend.position = 'right') +#,
+  # legend.position.inside = c(0.898, 0.278)) + # c(0.092, 0.85)
+  labs(x = 'Reported COVID-19 Deaths (per 10,000 Pop.)',
+       y = 'Excess Deaths (per 10,000 Pop.)',
+       col = '') +
+  geom_text(label = 'rho = 0.00', x = 12, y = 5, col = 'black') +
+  scale_x_continuous(transform = 'pseudo_log', expand = c(0.022, 0), breaks = c(0, 1, 2, 5, 10, 15)) +
+  scale_y_continuous(transform = 'pseudo_log', breaks = c(-1, 0, 1, 2, 5, 10, 20)) +
+  scale_color_manual(values = c('#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#f781bf'))
+ggsave('results/FigureS11_NEW.svg', figS11, width = 8.0, height = 4.267)
+
+cor.test(df_comp$covid_deaths, df_comp$excess)
+
+df_comp <- df_comp %>%
+  mutate(undercount = excess / covid_deaths)
+
+df_comp %>%
+  group_by(wave) %>%
+  summarise(perc_pos = length(undercount[undercount > 0])/length(undercount),
+            perc_over1 = length(undercount[undercount > 1]) / length(undercount[undercount > 0]))
+
+# df_comp %>%
+#   mutate(undercount = excess / covid_deaths) %>%
+#   filter(undercount > 0) %>%
+#   ggplot(aes(x = bundesland, y = undercount, col = wave, group = wave)) +
+#   geom_point() + geom_line() +
+#   theme_classic()
 
 # Clean up:
 rm(list = ls())

@@ -617,9 +617,9 @@ plot_b <- plot_marginal_prediction(pred_b_GISD_Score %>% filter(!str_detect(wave
                                    'GISD_Score', 'CFR', single_plot = FALSE)
 plot_b <- plot_b + labs(x = 'GISD', tag = 'B') + theme(plot.tag = element_text(size = 20), plot.tag.position = c(0.005, 0.98))
 
-figS8 <- arrangeGrob(plot_a, plot_b, nrow = 2)
-plot(figS8)
-# ggsave('results/FigureS8.svg', figS8, width = 13.125, height = 8.5)
+figS7 <- arrangeGrob(plot_a, plot_b, nrow = 2)
+plot(figS7)
+# ggsave('results/FigureS7.svg', figS7, width = 13.125, height = 8.5)
 
 # Plot interactions with GISD_Score, if present:
 mod_list <- list(n1_1b_full, n1_2b_full, n2_1b_full, n2_2b_full, n3_1b_full, n3_2b_full, n4_1b_full, n4_2b_full, n5_1b_full, n5_2b_full)
